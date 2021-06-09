@@ -35,7 +35,7 @@ struct swapchain_context
     VkDeviceSize                           offset);
 
   vk_types::swapchain                  swapchain_;
-  std::vector<vk_types::image_view>    image_views_;
+  utility::slice<vk_types::image_view> image_views_;
   vk_types::render_pass                render_pass_;
   vk_types::descriptor_set_layout      descriptor_set_layout_;
   vk_types::pipeline_layout            pipeline_layout_;

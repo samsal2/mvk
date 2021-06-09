@@ -9,6 +9,12 @@ namespace mvk::vk_types
 class window
 {
 public:
+  struct extent
+  {
+    int width_;
+    int height_;
+  };
+
   constexpr window() noexcept = default;
   window(int width, int height);
 
@@ -23,6 +29,9 @@ public:
 
   [[nodiscard]] std::vector<char const *>
   required_extensions() const noexcept;
+
+  [[nodiscard]] extent
+  query_framebuffer_size() const noexcept;
 
 private:
   struct deleter

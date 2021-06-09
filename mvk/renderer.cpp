@@ -126,15 +126,7 @@ swapchain_context::swapchain_context(
   uint32_t const                         indices_size,
   VkDeviceSize const                     offset)
 {
-  auto width  = 0;
-  auto height = 0;
-  glfwGetFramebufferSize(ctx.window_.get(), &width, &height);
-
-  while (width == 0 || height == 0)
-  {
-    glfwGetFramebufferSize(ctx.window_.get(), &width, &height);
-    glfwWaitEvents();
-  }
+  auto [width, height] = ctx.window_.query_framebuffer_size();
 
   ctx.device_.wait_idle();
 
@@ -143,18 +135,12 @@ swapchain_context::swapchain_context(
     ctx.surface_,
     {static_cast<uint32_t>(width), static_cast<uint32_t>(height)});
 
-  auto const & images      = swapchain_.images();
-  auto const   images_size = std::size(images);
+  auto const images      = swapchain_.images();
+  auto const images_size = std::size(images);
+
   render_pass_ = factories::create_render_pass(ctx.device_, ctx.surface_);
 
-  image_views_.reserve(std::size(images));
-
-  auto const add_image_view = [this, &ctx](auto const & image)
-  {
-    image_views_.push_back(
-      factories::create_image_view(ctx.device_, ctx.surface_, image));
-  };
-  std::for_each(std::begin(images), std::end(images), add_image_view);
+  image_views_ = swapchain_.image_views();
 
   descriptor_set_layout_ =
     factories::create_descriptor_set_layout(ctx.device_);

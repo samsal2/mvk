@@ -1,17 +1,16 @@
 #ifndef MVK_VK_TYPES_SWAPCHAIN_HPP_INCLUDED
 #define MVK_VK_TYPES_SWAPCHAIN_HPP_INCLUDED
 
+#include "utility/slice.hpp"
 #include "vk_types/common.hpp"
 #include "vk_types/detail/wrapper.hpp"
+#include "vk_types/image_view.hpp"
 
 #include <optional>
 #include <vector>
 
 namespace mvk::vk_types
 {
-
-class semaphore;
-class fence;
 
 class swapchain : public detail::wrapper<VkSwapchainKHR, vkDestroySwapchainKHR>
 {
@@ -23,21 +22,31 @@ public:
   [[nodiscard]] constexpr VkExtent2D
   extent() const noexcept;
 
-  [[nodiscard]] constexpr std::vector<VkImage> const &
+  [[nodiscard]] constexpr utility::slice<VkImage>
   images() const noexcept;
+
+  [[nodiscard]] constexpr utility::slice<image_view>
+  image_views() const noexcept;
 
   [[nodiscard]] std::optional<uint32_t>
   next_image(VkSemaphore semaphore, VkFence fence = nullptr) const noexcept;
 
 private:
-  std::vector<VkImage> images_;
-  VkExtent2D           extent_ = {};
+  std::vector<VkImage>    images_;
+  std::vector<image_view> image_views_;
+  VkExtent2D              extent_ = {};
 };
 
-[[nodiscard]] constexpr std::vector<VkImage> const &
+[[nodiscard]] constexpr utility::slice<VkImage>
 swapchain::images() const noexcept
 {
-  return images_;
+  return {images_};
+}
+
+[[nodiscard]] constexpr utility::slice<image_view>
+swapchain::image_views() const noexcept
+{
+  return {image_views_};
 }
 
 [[nodiscard]] constexpr VkExtent2D

@@ -4,7 +4,6 @@
 #include "vk_types/detail/misc.hpp"
 #include "vk_types/fence.hpp"
 #include "vk_types/semaphore.hpp"
-#include "vulkan/vulkan_core.h"
 
 namespace mvk::vk_types
 {
@@ -25,6 +24,34 @@ swapchain::swapchain(
 
   images_.resize(images_size);
   vkGetSwapchainImagesKHR(parent(), get(), &images_size, std::data(images_));
+
+  image_views_.reserve(images_size);
+
+  auto const add_image_view = [this, &create_info](auto const image)
+  {
+    auto const image_view_create_info = [&create_info, image]
+    {
+      auto info         = VkImageViewCreateInfo();
+      info.sType        = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+      info.image        = image;
+      info.viewType     = VK_IMAGE_VIEW_TYPE_2D;
+      info.format       = create_info.imageFormat;
+      info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+      info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+      info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+      info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+      info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+      info.subresourceRange.baseMipLevel   = 0;
+      info.subresourceRange.levelCount     = 1;
+      info.subresourceRange.baseArrayLayer = 0;
+      info.subresourceRange.layerCount     = 1;
+      return info;
+    }();
+
+    image_views_.emplace_back(parent(), image_view_create_info);
+  };
+
+  std::for_each(std::begin(images_), std::end(images_), add_image_view);
 }
 
 [[nodiscard]] std::optional<uint32_t>

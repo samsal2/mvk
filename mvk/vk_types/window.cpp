@@ -72,4 +72,20 @@ window::required_extensions() const noexcept
   return extensions;
 }
 
+[[nodiscard]] window::extent
+window::query_framebuffer_size() const noexcept
+{
+
+  auto width  = 0;
+  auto height = 0;
+
+  do
+  {
+    glfwGetFramebufferSize(get(), &width, &height);
+    glfwWaitEvents();
+  } while (width == 0 || height == 0);
+
+  return {width, height};
+}
+
 } // namespace mvk::vk_types
