@@ -9,15 +9,13 @@ namespace detail
 {
 
 static constexpr VkBufferUsageFlags
-get_usage(buffer_type type) noexcept;
+get_usage(buffer_type type);
 
 } // namespace detail
 
 buffer_manager::buffer_manager(vk_types::device * const device, vk_types::command_pool * const command_pool, buffer_type const type,
-                               VkDeviceSize const default_size) noexcept
-        : device_(device),
-          command_pool_(command_pool),
-          type_(type)
+                               VkDeviceSize const default_size)
+        : device_(device), command_pool_(command_pool), type_(type)
 {
         create_new_buffers_and_memories(default_size);
 }
@@ -107,7 +105,6 @@ buffer_manager::create_new_buffers_and_memories(VkDeviceSize const size)
 void
 buffer_manager::add_current_buffers_and_memories_to_garbage()
 {
-
         auto const buffer_to_garbage = [this](auto & buffer)
         {
                 auto & buffers = current_garbage_buffers();
@@ -136,7 +133,7 @@ namespace detail
 {
 
 static constexpr VkBufferUsageFlags
-get_usage(buffer_type const type) noexcept
+get_usage(buffer_type const type)
 {
         switch (type)
         {
@@ -149,9 +146,8 @@ get_usage(buffer_type const type) noexcept
                 case buffer_type::ubo:
                         return VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 
-                // FIXME(samuel): if passing none it's prob an error
                 case buffer_type::none:
-                        return VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+                        MVK_VERIFY_NOT_REACHED();
         }
 }
 

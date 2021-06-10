@@ -11,6 +11,7 @@ class instance : public detail::wrapper<VkInstance, vkDestroyInstance>
 {
 public:
         constexpr instance() noexcept = default;
+
         explicit instance(VkInstanceCreateInfo const & create_info);
 };
 

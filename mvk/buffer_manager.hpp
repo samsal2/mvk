@@ -29,8 +29,7 @@ public:
 
         constexpr buffer_manager() noexcept = default;
 
-        buffer_manager(vk_types::device * device, vk_types::command_pool * command_pool, buffer_type type,
-                       VkDeviceSize default_size = default_buffer_size) noexcept;
+        buffer_manager(vk_types::device * device, vk_types::command_pool * command_pool, buffer_type type, VkDeviceSize default_size = default_buffer_size);
 
         struct allocation
         {

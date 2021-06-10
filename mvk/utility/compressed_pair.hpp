@@ -89,8 +89,7 @@ public:
 
         template <typename U1, typename U2>
         constexpr compressed_pair(U1 && first, U2 && second) noexcept
-                : first_element_type(std::forward<U1>(first)),
-                  second_element_type(std::forward<U2>(second))
+                : first_element_type(std::forward<U1>(first)), second_element_type(std::forward<U2>(second))
         {
         }
 

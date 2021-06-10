@@ -9,9 +9,7 @@ namespace mvk::vk_types
 {
 
 swapchain::swapchain(VkDevice const device, VkSwapchainCreateInfoKHR const & create_info)
-        : wrapper(nullptr, make_deleter(device)),
-          extent_(create_info.imageExtent),
-          format_(create_info.imageFormat)
+        : wrapper(nullptr, make_deleter(device)), extent_(create_info.imageExtent), format_(create_info.imageFormat)
 {
         [[maybe_unused]] auto const result = vkCreateSwapchainKHR(parent(), &create_info, nullptr, &reference());
 
