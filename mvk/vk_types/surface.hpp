@@ -18,15 +18,18 @@ public:
   template <typename Checker = decltype(detail::default_format_checker)>
   requires detail::requirement_checker<Checker>
   [[nodiscard]] VkSurfaceFormatKHR
-  find_format(
+  query_format(
     VkPhysicalDevice physical_device,
     Checker &&       check = detail::default_format_checker) const noexcept;
+
+  [[nodiscard]] VkSurfaceCapabilitiesKHR
+  query_capabilities(VkPhysicalDevice physical_device) const noexcept;
 };
 
 template <typename Checker>
 requires detail::requirement_checker<Checker>
 [[nodiscard]] VkSurfaceFormatKHR
-surface::find_format(VkPhysicalDevice const physical_device, Checker && check)
+surface::query_format(VkPhysicalDevice const physical_device, Checker && check)
   const noexcept
 {
   return detail::choose_surface_format(

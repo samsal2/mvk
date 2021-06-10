@@ -206,7 +206,7 @@ create_image_view(
   info.sType        = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   info.image        = image;
   info.viewType     = VK_IMAGE_VIEW_TYPE_2D;
-  info.format       = surface.find_format(device.physical_device()).format;
+  info.format       = surface.query_format(device.physical_device()).format;
   info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
   info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
   info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -551,7 +551,7 @@ create_render_pass(
   vk_types::device const &  device,
   vk_types::surface const & surface)
 {
-  auto const format = surface.find_format(device.physical_device()).format;
+  auto const format = surface.query_format(device.physical_device()).format;
 
   auto const color_attachment = [&format]
   {
@@ -696,7 +696,7 @@ create_swapchain(
   auto const & physical_device_handle = device.physical_device();
 
   // FIXME(samuel): shouldn't need to call so many times format
-  auto const surface_format = surface.find_format(physical_device_handle);
+  auto const surface_format = surface.query_format(physical_device_handle);
 
   auto const present_mode =
     detail::choose_present_mode(physical_device_handle, surface_handle);
@@ -706,11 +706,7 @@ create_swapchain(
   auto const present_index                   = present_queue.index();
   auto const family_indices = std::array{graphics_index, present_index};
 
-  auto capabilities = VkSurfaceCapabilitiesKHR();
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-    physical_device_handle,
-    surface_handle,
-    &capabilities);
+  auto capabilities = surface.query_capabilities(physical_device_handle);
 
   auto const swapchain_extent = detail::choose_extent(capabilities, extent);
   auto const image_count      = detail::choose_image_count(capabilities);

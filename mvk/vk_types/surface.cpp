@@ -12,4 +12,15 @@ surface::surface(VkInstance const instance, GLFWwindow * const window)
   MVK_VERIFY(VK_SUCCESS == result);
 }
 
+[[nodiscard]] VkSurfaceCapabilitiesKHR
+surface::query_capabilities(VkPhysicalDevice physical_device) const noexcept
+{
+  auto capabilities = VkSurfaceCapabilitiesKHR();
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+    physical_device,
+    get(),
+    &capabilities);
+  return capabilities;
+}
+
 } // namespace mvk::vk_types
