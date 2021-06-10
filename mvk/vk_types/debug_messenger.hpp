@@ -10,11 +10,13 @@ namespace mvk::vk_types
 
 class instance;
 
-class debug_messenger : public detail::wrapper<VkDebugUtilsMessengerEXT, validation::destroy_debug_messenger>
+class debug_messenger
+  : public detail::
+      wrapper<VkDebugUtilsMessengerEXT, validation::destroy_debug_messenger>
 {
 public:
-        constexpr debug_messenger() noexcept = default;
-        explicit debug_messenger(VkInstance instance);
+  constexpr debug_messenger() noexcept = default;
+  explicit debug_messenger(VkInstance instance);
 };
 
 } // namespace mvk::vk_types

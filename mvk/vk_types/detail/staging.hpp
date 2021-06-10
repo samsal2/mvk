@@ -14,13 +14,19 @@ namespace mvk::vk_types::detail
 {
 
 [[nodiscard]] std::pair<buffer, device_memory>
-create_staging_buffer_and_memory(device const & device, utility::slice<std::byte> data_source);
+create_staging_buffer_and_memory(
+  device const &            device,
+  utility::slice<std::byte> data_source);
 
 [[nodiscard]] command_buffers
-create_staging_command_buffer(device const & device, command_pool const & command_pool);
+create_staging_command_buffer(
+  device const &       device,
+  command_pool const & command_pool);
 
 void
-submit_staging_command_buffer(device const & device, command_buffers const & command_buffer);
+submit_staging_command_buffer(
+  device const &          device,
+  command_buffers const & command_buffer);
 
 } // namespace mvk::vk_types::detail
 

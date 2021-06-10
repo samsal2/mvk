@@ -10,8 +10,8 @@ namespace mvk::vk_types
 class sampler : public detail::wrapper<VkSampler, vkDestroySampler>
 {
 public:
-        constexpr sampler() noexcept = default;
-        sampler(VkDevice device, VkSamplerCreateInfo const & create_info);
+  constexpr sampler() noexcept = default;
+  sampler(VkDevice device, VkSamplerCreateInfo const & create_info);
 };
 
 } // namespace mvk::vk_types

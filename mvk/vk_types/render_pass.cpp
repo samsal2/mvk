@@ -3,11 +3,15 @@
 namespace mvk::vk_types
 {
 
-render_pass::render_pass(VkDevice const device, VkRenderPassCreateInfo const & create_info) : wrapper(nullptr, make_deleter(device))
+render_pass::render_pass(
+  VkDevice const                 device,
+  VkRenderPassCreateInfo const & create_info)
+  : wrapper(nullptr, make_deleter(device))
 {
-        [[maybe_unused]] auto const result = vkCreateRenderPass(parent(), &create_info, nullptr, &reference());
+  [[maybe_unused]] auto const result =
+    vkCreateRenderPass(parent(), &create_info, nullptr, &reference());
 
-        MVK_VERIFY(VK_SUCCESS == result);
+  MVK_VERIFY(VK_SUCCESS == result);
 }
 
 } // namespace mvk::vk_types

@@ -1,6 +1,6 @@
 ﻿---
-AccessModifierOffset: '-8'
-AlignAfterOpenBracket: Align
+AccessModifierOffset: '-2'
+AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveMacros: 'true'
 AlignConsecutiveAssignments: Consecutive
 AlignConsecutiveDeclarations: Consecutive
@@ -8,7 +8,7 @@ AlignEscapedNewlines: Right
 AlignOperands: 'true'
 AlignTrailingComments: 'true'
 AllowAllArgumentsOnNextLine: 'false'
-AllowAllConstructorInitializersOnNextLine: 'true'
+AllowAllConstructorInitializersOnNextLine: 'false'
 AllowAllParametersOfDeclarationOnNextLine: 'false'
 AllowShortBlocksOnASingleLine: 'true'
 AllowShortFunctionsOnASingleLine: None
@@ -19,25 +19,25 @@ AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: All
 AlwaysBreakBeforeMultilineStrings: 'false'
 AlwaysBreakTemplateDeclarations: 'Yes'
-BinPackArguments: 'true'
-BinPackParameters: 'true'
+BinPackArguments: 'false'
+BinPackParameters: 'false'
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Allman
 BreakBeforeTernaryOperators: 'false'
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
 BreakStringLiterals: 'false'
-ColumnLimit: '159'
+ColumnLimit: '79'
 CompactNamespaces: 'false'
 ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
-ConstructorInitializerIndentWidth: '8'
-ContinuationIndentWidth: '8'
+ConstructorInitializerIndentWidth: '2'
+ContinuationIndentWidth: '2'
 DerivePointerAlignment: 'false'
 FixNamespaceComments: 'true'
 IncludeBlocks: Regroup
 IndentCaseLabels: 'true'
 IndentPPDirectives: AfterHash
-IndentWidth: 8
+IndentWidth: 2
 IndentWrappedFunctionNames: 'false'
 Language: Cpp
 NamespaceIndentation: None
@@ -61,7 +61,7 @@ SpacesInContainerLiterals: 'false'
 SpacesInParentheses: 'false'
 SpacesInSquareBrackets: 'false'
 Standard: Auto
-TabWidth: '8'
+TabWidth: '2'
 UseTab: Never
 
 ...

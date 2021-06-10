@@ -10,9 +10,9 @@ namespace mvk::vk_types
 class instance : public detail::wrapper<VkInstance, vkDestroyInstance>
 {
 public:
-        constexpr instance() noexcept = default;
+  constexpr instance() noexcept = default;
 
-        explicit instance(VkInstanceCreateInfo const & create_info);
+  explicit instance(VkInstanceCreateInfo const & create_info);
 };
 
 } // namespace mvk::vk_types

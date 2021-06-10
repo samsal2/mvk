@@ -10,8 +10,8 @@ namespace mvk::vk_types
 class framebuffer : public detail::wrapper<VkFramebuffer, vkDestroyFramebuffer>
 {
 public:
-        constexpr framebuffer() noexcept = default;
-        framebuffer(VkDevice device, VkFramebufferCreateInfo const & create_info);
+  constexpr framebuffer() noexcept = default;
+  framebuffer(VkDevice device, VkFramebufferCreateInfo const & create_info);
 };
 
 } // namespace mvk::vk_types

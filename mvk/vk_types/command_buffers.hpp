@@ -8,14 +8,18 @@
 namespace mvk::vk_types
 {
 
-class command_buffers : public detail::wrapper<VkCommandBuffer, vkFreeCommandBuffers>
+class command_buffers
+  : public detail::wrapper<VkCommandBuffer, vkFreeCommandBuffers>
 {
 public:
-        constexpr command_buffers() noexcept = default;
-        command_buffers(VkDevice device, VkCommandBufferAllocateInfo const & allocate_info);
+  constexpr command_buffers() noexcept = default;
+  command_buffers(
+    VkDevice                            device,
+    VkCommandBufferAllocateInfo const & allocate_info);
 
-        [[nodiscard]] single_command_buffer
-        begin(size_t index, VkCommandBufferBeginInfo const & begin_info) const noexcept;
+  [[nodiscard]] single_command_buffer
+  begin(size_t index, VkCommandBufferBeginInfo const & begin_info)
+    const noexcept;
 };
 
 } // namespace mvk::vk_types

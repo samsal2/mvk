@@ -7,11 +7,14 @@
 namespace mvk::vk_types
 {
 
-class pipeline_layout : public detail::wrapper<VkPipelineLayout, vkDestroyPipelineLayout>
+class pipeline_layout
+  : public detail::wrapper<VkPipelineLayout, vkDestroyPipelineLayout>
 {
 public:
-        constexpr pipeline_layout() noexcept = default;
-        pipeline_layout(VkDevice device, VkPipelineLayoutCreateInfo const & create_info);
+  constexpr pipeline_layout() noexcept = default;
+  pipeline_layout(
+    VkDevice                           device,
+    VkPipelineLayoutCreateInfo const & create_info);
 };
 
 } // namespace mvk::vk_types

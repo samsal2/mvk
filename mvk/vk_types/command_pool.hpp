@@ -7,14 +7,15 @@
 namespace mvk::vk_types
 {
 
-class command_pool : public detail::wrapper<VkCommandPool, vkDestroyCommandPool>
+class command_pool
+  : public detail::wrapper<VkCommandPool, vkDestroyCommandPool>
 {
 public:
-        constexpr command_pool() noexcept = default;
-        command_pool(VkDevice device, VkCommandPoolCreateInfo const & create_info);
+  constexpr command_pool() noexcept = default;
+  command_pool(VkDevice device, VkCommandPoolCreateInfo const & create_info);
 
-        void
-        reset(VkCommandPoolResetFlags reset_flags) const;
+  void
+  reset(VkCommandPoolResetFlags reset_flags) const;
 };
 
 } // namespace mvk::vk_types
