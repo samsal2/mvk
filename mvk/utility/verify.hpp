@@ -1,6 +1,8 @@
 #ifndef MVK_UTILITY_COMMON_HPP
 #define MVK_UTILITY_COMMON_HPP
 
+#include "utility/trace.hpp"
+
 #include <string>
 
 namespace mvk::utility
@@ -25,6 +27,7 @@ private:
 #else
 #        define MVK_VERIFY_NOT_REACHED()
 #endif
+
 namespace detail
 {
 
