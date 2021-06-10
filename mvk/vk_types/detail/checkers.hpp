@@ -13,13 +13,13 @@ namespace mvk::vk_types::detail
 template <typename Callable>
 concept requirement_checker = requires
 {
-  {utility::callable<Callable, bool, VkSurfaceFormatKHR const &>};
+        {utility::callable<Callable, bool, VkSurfaceFormatKHR const &>};
 };
 
 template <typename Callable>
 concept result_checker = requires
 {
-  {utility::callable<Callable, void, VkResult>};
+        {utility::callable<Callable, void, VkResult>};
 };
 
 void
@@ -36,8 +36,7 @@ namespace mvk::vk_types::detail
 [[nodiscard]] static constexpr bool
 default_format_checker(VkSurfaceFormatKHR const & format) noexcept
 {
-  return (format.format == VK_FORMAT_B8G8R8A8_SRGB) &&
-         (format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
+        return (format.format == VK_FORMAT_B8G8R8A8_SRGB) && (format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
 }
 
 } // namespace mvk::vk_types::detail

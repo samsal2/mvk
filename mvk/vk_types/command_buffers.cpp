@@ -5,27 +5,20 @@
 namespace mvk::vk_types
 {
 
-command_buffers::command_buffers(
-  VkDevice const                      device,
-  VkCommandBufferAllocateInfo const & allocate_info)
-  : wrapper(
-      std::vector<VkCommandBuffer>(allocate_info.commandBufferCount),
-      make_deleter(device, allocate_info.commandPool))
+command_buffers::command_buffers(VkDevice const device, VkCommandBufferAllocateInfo const & allocate_info)
+        : wrapper(std::vector<VkCommandBuffer>(allocate_info.commandBufferCount), make_deleter(device, allocate_info.commandPool))
 {
-  [[maybe_unused]] auto const result =
-    vkAllocateCommandBuffers(parent(), &allocate_info, std::data(reference()));
+        [[maybe_unused]] auto const result = vkAllocateCommandBuffers(parent(), &allocate_info, std::data(reference()));
 
-  MVK_VERIFY(VK_SUCCESS == result);
+        MVK_VERIFY(VK_SUCCESS == result);
 }
 
 [[nodiscard]] single_command_buffer
-command_buffers::begin(
-  size_t const                     index,
-  VkCommandBufferBeginInfo const & begin_info) const noexcept
+command_buffers::begin(size_t const index, VkCommandBufferBeginInfo const & begin_info) const noexcept
 {
-  auto const current_command_buffer = get()[index];
-  vkBeginCommandBuffer(current_command_buffer, &begin_info);
-  return single_command_buffer(current_command_buffer);
+        auto const current_command_buffer = get()[index];
+        vkBeginCommandBuffer(current_command_buffer, &begin_info);
+        return single_command_buffer(current_command_buffer);
 }
 
 } // namespace mvk::vk_types

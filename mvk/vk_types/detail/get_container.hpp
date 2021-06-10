@@ -9,13 +9,13 @@ namespace mvk::vk_types::detail
 template <typename T, bool IsAllocation>
 struct get_container
 {
-  using type = std::vector<T>;
+        using type = std::vector<T>;
 };
 
 template <typename T>
 struct get_container<T, false>
 {
-  using type = T;
+        using type = T;
 };
 
 template <typename T, bool IsAllocation>

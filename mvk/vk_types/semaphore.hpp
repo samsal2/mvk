@@ -10,8 +10,8 @@ namespace mvk::vk_types
 class semaphore : public detail::wrapper<VkSemaphore, vkDestroySemaphore>
 {
 public:
-  constexpr semaphore() noexcept = default;
-  semaphore(VkDevice device, VkSemaphoreCreateInfo const & create_info);
+        constexpr semaphore() noexcept = default;
+        semaphore(VkDevice device, VkSemaphoreCreateInfo const & create_info);
 };
 
 } // namespace mvk::vk_types

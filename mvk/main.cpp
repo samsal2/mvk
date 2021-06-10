@@ -4,18 +4,16 @@
 int
 main()
 {
-  try
-  {
-    constexpr auto width  = 600;
-    constexpr auto height = 600;
+        try
+        {
+                auto rdr = mvk::renderer();
+                rdr.init();
+                rdr.run();
+        }
+        catch (mvk::utility::verify_error error)
+        {
+                std::cerr << error.what() << '\n';
+        }
 
-    auto rdr = mvk::renderer(width, height);
-    rdr.run();
-  }
-  catch (mvk::utility::verify_error error)
-  {
-    std::cerr << error.what() << '\n';
-  }
-
-  return 0;
+        return 0;
 }

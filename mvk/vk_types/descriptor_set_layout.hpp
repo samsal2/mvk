@@ -7,14 +7,11 @@
 namespace mvk::vk_types
 {
 
-class descriptor_set_layout
-  : public detail::wrapper<VkDescriptorSetLayout, vkDestroyDescriptorSetLayout>
+class descriptor_set_layout : public detail::wrapper<VkDescriptorSetLayout, vkDestroyDescriptorSetLayout>
 {
 public:
-  constexpr descriptor_set_layout() noexcept = default;
-  descriptor_set_layout(
-    VkDevice                                device,
-    VkDescriptorSetLayoutCreateInfo const & create_info);
+        constexpr descriptor_set_layout() noexcept = default;
+        descriptor_set_layout(VkDevice device, VkDescriptorSetLayoutCreateInfo const & create_info);
 };
 
 } // namespace mvk::vk_types

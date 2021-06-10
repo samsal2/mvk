@@ -15,40 +15,36 @@ class command_pool;
 class buffer : public detail::wrapper<VkBuffer, vkDestroyBuffer>
 {
 public:
-  constexpr buffer() noexcept = default;
-  buffer(VkDevice device, VkBufferCreateInfo const & create_info);
+        constexpr buffer() noexcept = default;
+        buffer(VkDevice device, VkBufferCreateInfo const & create_info);
 
-  [[nodiscard]] constexpr VkDeviceSize
-  size() const noexcept;
+        [[nodiscard]] constexpr VkDeviceSize
+        size() const noexcept;
 
-  [[nodiscard]] constexpr VkMemoryRequirements
-  memory_requirements() const noexcept;
+        [[nodiscard]] constexpr VkMemoryRequirements
+        memory_requirements() const noexcept;
 
-  // TODO(samuel): At the moment the staging calls create a new buffer and
-  // it's memory when called, not good
+        // TODO(samuel): At the moment the staging calls create a new buffer and
+        // it's memory when called, not good
 
-  // When calling buffer must've had been bound before hand
-  buffer &
-  stage(
-    device const &            device,
-    command_pool const &      command_pool,
-    utility::slice<std::byte> data_source,
-    VkDeviceSize              offset = 0);
+        // When calling buffer must've had been bound before hand
+        buffer &
+        stage(device const & device, command_pool const & command_pool, utility::slice<std::byte> data_source, VkDeviceSize offset = 0);
 
 private:
-  VkMemoryRequirements memory_requirements_ = {};
+        VkMemoryRequirements memory_requirements_ = {};
 };
 
 [[nodiscard]] constexpr VkDeviceSize
 buffer::size() const noexcept
 {
-  return memory_requirements_.size;
+        return memory_requirements_.size;
 }
 
 [[nodiscard]] constexpr VkMemoryRequirements
 buffer::memory_requirements() const noexcept
 {
-  return memory_requirements_;
+        return memory_requirements_;
 }
 
 } // namespace mvk::vk_types

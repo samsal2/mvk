@@ -3,15 +3,11 @@
 namespace mvk::vk_types
 {
 
-descriptor_pool::descriptor_pool(
-  VkDevice const                     device,
-  VkDescriptorPoolCreateInfo const & create_info)
-  : wrapper(nullptr, make_deleter(device))
+descriptor_pool::descriptor_pool(VkDevice const device, VkDescriptorPoolCreateInfo const & create_info) : wrapper(nullptr, make_deleter(device))
 {
-  [[maybe_unused]] auto const result =
-    vkCreateDescriptorPool(parent(), &create_info, nullptr, &reference());
+        [[maybe_unused]] auto const result = vkCreateDescriptorPool(parent(), &create_info, nullptr, &reference());
 
-  MVK_VERIFY(VK_SUCCESS == result);
+        MVK_VERIFY(VK_SUCCESS == result);
 }
 
 } // namespace mvk::vk_types

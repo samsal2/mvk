@@ -10,13 +10,13 @@ namespace mvk::vk_types
 class fence : public detail::wrapper<VkFence, vkDestroyFence>
 {
 public:
-  constexpr fence() noexcept = default;
-  fence(VkDevice device, VkFenceCreateInfo const & create_info);
+        constexpr fence() noexcept = default;
+        fence(VkDevice device, VkFenceCreateInfo const & create_info);
 
-  fence &
-  reset();
-  fence &
-  wait();
+        fence &
+        reset();
+        fence &
+        wait();
 };
 
 } // namespace mvk::vk_types

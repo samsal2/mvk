@@ -7,14 +7,11 @@
 namespace mvk::vk_types
 {
 
-class descriptor_pool
-  : public detail::wrapper<VkDescriptorPool, vkDestroyDescriptorPool>
+class descriptor_pool : public detail::wrapper<VkDescriptorPool, vkDestroyDescriptorPool>
 {
 public:
-  constexpr descriptor_pool() noexcept = default;
-  descriptor_pool(
-    VkDevice                           device,
-    VkDescriptorPoolCreateInfo const & create_info);
+        constexpr descriptor_pool() noexcept = default;
+        descriptor_pool(VkDevice device, VkDescriptorPoolCreateInfo const & create_info);
 };
 
 } // namespace mvk::vk_types

@@ -9,51 +9,55 @@ namespace mvk::vk_types
 class window
 {
 public:
-  struct extent
-  {
-    int width_;
-    int height_;
-  };
+        struct extent
+        {
+                int width_;
+                int height_;
+        };
 
-  constexpr window() noexcept = default;
-  window(int width, int height);
+        constexpr window() noexcept = default;
 
-  [[nodiscard]] constexpr GLFWwindow *
-  get() const noexcept;
+        window(extent extent);
 
-  void
-  set_framebuffer_resized(bool resized) noexcept;
+        [[nodiscard]] constexpr GLFWwindow *
+        get() const noexcept;
 
-  [[nodiscard]] constexpr bool
-  framebuffer_resized() const noexcept;
+        void
+        set_framebuffer_resized(bool resized) noexcept;
 
-  [[nodiscard]] std::vector<char const *>
-  required_extensions() const noexcept;
+        [[nodiscard]] constexpr bool
+        framebuffer_resized() const noexcept;
 
-  [[nodiscard]] extent
-  query_framebuffer_size() const noexcept;
+        [[nodiscard]] std::vector<char const *>
+        required_extensions() const noexcept;
+
+        [[nodiscard]] extent
+        query_framebuffer_size() const noexcept;
+
+        [[nodiscard]] bool
+        should_close() const noexcept;
 
 private:
-  struct deleter
-  {
-    void
-    operator()(GLFWwindow * window) const noexcept;
-  };
+        struct deleter
+        {
+                void
+                operator()(GLFWwindow * window) const noexcept;
+        };
 
-  std::unique_ptr<GLFWwindow, deleter> instance_;
-  bool                                 framebuffer_resized_ = false;
+        std::unique_ptr<GLFWwindow, deleter> instance_;
+        bool                                 framebuffer_resized_ = false;
 };
 
 [[nodiscard]] constexpr GLFWwindow *
 window::get() const noexcept
 {
-  return instance_.get();
+        return instance_.get();
 }
 
 [[nodiscard]] constexpr bool
 window::framebuffer_resized() const noexcept
 {
-  return framebuffer_resized_;
+        return framebuffer_resized_;
 }
 
 } // namespace mvk::vk_types

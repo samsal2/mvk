@@ -1,6 +1,6 @@
 ﻿---
-AccessModifierOffset: '-2'
-AlignAfterOpenBracket: AlwaysBreak
+AccessModifierOffset: '-8'
+AlignAfterOpenBracket: Align
 AlignConsecutiveMacros: 'true'
 AlignConsecutiveAssignments: Consecutive
 AlignConsecutiveDeclarations: Consecutive
@@ -19,25 +19,25 @@ AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: All
 AlwaysBreakBeforeMultilineStrings: 'false'
 AlwaysBreakTemplateDeclarations: 'Yes'
-BinPackArguments: 'false'
-BinPackParameters: 'false'
+BinPackArguments: 'true'
+BinPackParameters: 'true'
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Allman
 BreakBeforeTernaryOperators: 'false'
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
 BreakStringLiterals: 'false'
-ColumnLimit: '79'
+ColumnLimit: '159'
 CompactNamespaces: 'false'
 ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
-ConstructorInitializerIndentWidth: '2'
-ContinuationIndentWidth: '2'
+ConstructorInitializerIndentWidth: '8'
+ContinuationIndentWidth: '8'
 DerivePointerAlignment: 'false'
 FixNamespaceComments: 'true'
 IncludeBlocks: Regroup
 IndentCaseLabels: 'true'
 IndentPPDirectives: AfterHash
-IndentWidth: 2
+IndentWidth: 8
 IndentWrappedFunctionNames: 'false'
 Language: Cpp
 NamespaceIndentation: None
@@ -61,7 +61,7 @@ SpacesInContainerLiterals: 'false'
 SpacesInParentheses: 'false'
 SpacesInSquareBrackets: 'false'
 Standard: Auto
-TabWidth: '2'
+TabWidth: '8'
 UseTab: Never
 
 ...
