@@ -36,11 +36,9 @@ single_command_buffer::pipeline_barrier(VkPipelineStageFlags const source_stage,
                                         utility::slice<VkBufferMemoryBarrier> buffer_memory_barriers,
                                         utility::slice<VkImageMemoryBarrier>  image_memory_barriers) noexcept
 {
-        auto const [memory_barriers_data, memory_barriers_size] = utility::bind_data_and_size(memory_barriers);
-
+        auto const [memory_barriers_data, memory_barriers_size]               = utility::bind_data_and_size(memory_barriers);
         auto const [buffer_memory_barriers_data, buffer_memory_barriers_size] = utility::bind_data_and_size(buffer_memory_barriers);
-
-        auto const [image_memory_barriers_data, image_memory_barriers_size] = utility::bind_data_and_size(image_memory_barriers);
+        auto const [image_memory_barriers_data, image_memory_barriers_size]   = utility::bind_data_and_size(image_memory_barriers);
 
         vkCmdPipelineBarrier(command_buffer_, source_stage, destination_stage, dependency_flags, static_cast<uint32_t>(memory_barriers_size),
                              memory_barriers_data, static_cast<uint32_t>(buffer_memory_barriers_size), buffer_memory_barriers_data,

@@ -46,8 +46,7 @@ renderer::init_vulkan()
                 return info;
         }();
 
-        using vk_types::validation::validation_layers_data;
-        auto const validation_layers   = validation_layers_data();
+        auto const validation_layers   = vk_types::validation::validation_layers_data();
         auto const required_extensions = window_.required_extensions();
 
         auto instance_create_info = [validation_layers, &required_extensions, &application_info]
@@ -55,11 +54,9 @@ renderer::init_vulkan()
                 auto const [validation_data, validation_count] = utility::bind_data_and_size(validation_layers);
                 auto const [required_data, required_count]     = utility::bind_data_and_size(required_extensions);
 
-                using vk_types::validation::debug_create_info_ref;
-
                 auto info                    = VkInstanceCreateInfo();
                 info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-                info.pNext                   = debug_create_info_ref();
+                info.pNext                   = vk_types::validation::debug_create_info_ref();
                 info.pApplicationInfo        = &application_info;
                 info.enabledLayerCount       = static_cast<uint32_t>(validation_count);
                 info.ppEnabledLayerNames     = validation_data;
@@ -279,7 +276,6 @@ renderer::preload_stuff()
 
         image_        = vk_types::image(device_.get(), image_create_info);
         image_memory_ = detail::create_device_memory(device_, image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
         image_.transition_layout(device_, command_pool_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         image_.stage(device_, command_pool_, texture_);
         image_.generate_mipmaps(device_, command_pool_, texture_.width(), texture_.height());
@@ -982,17 +978,14 @@ renderer::run()
                 auto ubo = pvm();
 
                 ubo.model = glm::rotate(glm::mat4(1.0F), time * turn_rate, glm::vec3(0.0F, 0.0F, 1.0F));
-
-                ubo.view = glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F), glm::vec3(0.0F, 0.0F, 1.0F));
+                ubo.view  = glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F), glm::vec3(0.0F, 0.0F, 1.0F));
 
                 auto const ratio = static_cast<float>(swapchain_.extent().width) / static_cast<float>(swapchain_.extent().height);
 
                 ubo.proj = glm::perspective(glm::radians(45.0F), ratio, 0.1F, 10.0F);
-
                 ubo.proj[1][1] *= -1;
 
                 auto & current_ubo_memory = uniform_buffers_memory_[current_index];
-
                 current_ubo_memory.copy_data({utility::force_cast_to_byte(&ubo), sizeof(ubo)});
 
                 auto const submit_info = [this, &wait_semaphores, &signal_semaphores, &wait_stages, current_index]
@@ -1023,8 +1016,7 @@ renderer::run()
                 auto const present_info = [&signal_semaphores, &swapchains, &current_index]
                 {
                         auto const wait_semaphore_count = static_cast<uint32_t>(std::size(signal_semaphores));
-
-                        auto const swapchain_count = static_cast<uint32_t>(std::size(swapchains));
+                        auto const swapchain_count      = static_cast<uint32_t>(std::size(swapchains));
 
                         auto info               = VkPresentInfoKHR();
                         info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

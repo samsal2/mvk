@@ -81,10 +81,8 @@ buffer_manager::create_new_buffers_and_memories(VkDeviceSize const size)
                 return required_size + required_alignment - aligned_module;
         }();
 
-        auto const physical_device = device_->physical_device();
-
-        using vk_types::detail::find_memory_type;
-        auto const memory_type_index = find_memory_type(physical_device, requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        auto const physical_device   = device_->physical_device();
+        auto const memory_type_index = vk_types::detail::find_memory_type(physical_device, requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
         MVK_VERIFY(memory_type_index.has_value());
 
