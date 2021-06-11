@@ -48,7 +48,7 @@ create_staging_buffer_and_memory(
   }();
 
   buffer_memory.bind(staging_buffer).map(size).copy_data(data_source).unmap();
-  return std::make_pair(std::move(staging_buffer), std::move(buffer_memory));
+  return {std::move(staging_buffer), std::move(buffer_memory)};
 }
 
 [[nodiscard]] command_buffers
@@ -62,7 +62,7 @@ create_staging_command_buffer(
   info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   info.commandBufferCount = 1;
 
-  return command_buffers(device.get(), info);
+  return {device.get(), info};
 }
 
 void

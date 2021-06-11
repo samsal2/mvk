@@ -50,7 +50,7 @@ next_swapchain_image(
 
   if (result != VK_ERROR_OUT_OF_DATE_KHR)
   {
-    return std::make_optional(index);
+    return index;
   }
 
   return std::nullopt;
