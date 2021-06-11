@@ -7,11 +7,11 @@
 namespace mvk::vk_types
 {
 
-class render_pass : public detail::wrapper<VkRenderPass, vkDestroyRenderPass>
+class render_pass : public detail::unique_wrapper_with_parent<VkRenderPass, VkDevice, vkDestroyRenderPass>
 {
 public:
-  constexpr render_pass() noexcept = default;
-  render_pass(VkDevice device, VkRenderPassCreateInfo const & create_info);
+    constexpr render_pass() noexcept = default;
+    render_pass(VkDevice device, VkRenderPassCreateInfo const & create_info);
 };
 
 } // namespace mvk::vk_types

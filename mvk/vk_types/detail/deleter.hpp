@@ -2,9 +2,8 @@
 #define MVK_VK_TYPE_DETAIL_DELETER_HPP_INCLUDED
 
 #include "utility/misc.hpp"
+#include "utility/slice.hpp"
 #include "vk_types/common.hpp"
-#include "vk_types/detail/deleter_base.hpp"
-#include "vk_types/detail/get_container.hpp"
 
 namespace mvk::vk_types::detail
 {
@@ -12,113 +11,59 @@ namespace mvk::vk_types::detail
 template <auto DeleterCall, typename = decltype(DeleterCall)>
 struct deleter;
 
-template <auto DeleterCall, typename Instance>
-struct deleter<DeleterCall, void (*)(Instance, VkAllocationCallbacks const *)>
-  : public deleter_base<Instance>
+template <auto DeleterCall, typename Handle>
+struct deleter<DeleterCall, void (*)(Handle, VkAllocationCallbacks const *)>
 {
-  using deleter_base = deleter_base<Instance>;
-  using deleter_base::deleter_base;
+    using handle_type = Handle;
 
-  static constexpr auto is_allocation = deleter_base::is_allocation::value;
-  using container_type = detail::get_container_t<Instance, is_allocation>;
-
-  void
-  operator()(container_type const instance) const noexcept
-  {
-    DeleterCall(instance, nullptr);
-  }
-};
-
-template <auto DeleterCall, typename Parent, typename Instance>
-struct deleter<
-  DeleterCall,
-  void (*)(Parent, Instance, VkAllocationCallbacks const *)>
-  : public deleter_base<Instance, Parent>
-{
-  using deleter_base = deleter_base<Instance, Parent>;
-  using deleter_base::deleter_base;
-
-  static constexpr auto is_allocation = deleter_base::is_allocation::value;
-  using container_type = detail::get_container_t<Instance, is_allocation>;
-
-  void
-  operator()(container_type const instance) const noexcept
-  {
-    auto const parent = deleter_base::parent();
-    if (parent != nullptr) [[likely]]
+    void
+    operator()(Handle handle) const noexcept
     {
-      DeleterCall(parent, instance, nullptr);
+        DeleterCall(handle, nullptr);
     }
-  }
 };
 
-template <auto DeleterCall, typename Parent, typename Pool, typename Instance>
-struct deleter<DeleterCall, void (*)(Parent, Pool, uint32_t, Instance const *)>
-  : public deleter_base<Instance, Parent, Pool>
+template <auto DeleterCall, typename Parent, typename Handle>
+struct deleter<DeleterCall, void (*)(Parent, Handle, VkAllocationCallbacks const *)>
 {
-public:
-  using deleter_base = deleter_base<Instance, Parent, Pool>;
-  using deleter_base::deleter_base;
+    using handle_type = Handle;
+    using parent_type = Parent;
 
-  static constexpr auto is_allocation = deleter_base::is_allocation::value;
-  using container_type = detail::get_container_t<Instance, is_allocation>;
-
-  void
-  operator()(container_type const & instance_source) const noexcept
-  {
-    auto const parent = deleter_base::parent();
-    auto const pool   = deleter_base::pool();
-    if (parent != nullptr && pool != nullptr) [[likely]]
+    void
+    operator()(Parent parent, Handle handle) const noexcept
     {
-      auto const [data, size] = utility::bind_data_and_size(instance_source);
-      DeleterCall(parent, pool, static_cast<uint32_t>(size), data);
+        DeleterCall(parent, handle, nullptr);
     }
-  }
 };
 
-template <auto DeleterCall, typename Parent, typename Pool, typename Instance>
-struct deleter<
-  DeleterCall,
-  VkResult (*)(Parent, Pool, uint32_t, Instance const *)>
-  : public deleter_base<Instance, Parent, Pool>
+template <auto DeleterCall, typename Parent, typename Pool, typename Handle>
+struct deleter<DeleterCall, void (*)(Parent, Pool, uint32_t, Handle const *)>
 {
-  using deleter_base = deleter_base<Instance, Parent, Pool>;
-  using deleter_base::deleter_base;
+    using handle_type = Handle;
+    using parent_type = Parent;
+    using pool_type   = Pool;
 
-  static constexpr auto is_allocation = deleter_base::is_allocation::value;
-  using container_type = detail::get_container_t<Instance, is_allocation>;
-
-  void
-  operator()(container_type const & instance_source) const noexcept
-  {
-    auto const parent = deleter_base::parent();
-    auto const pool   = deleter_base::pool();
-    if (parent != nullptr && pool != nullptr) [[likely]]
+    void
+    operator()(Parent parent, Pool pool, utility::slice<Handle> handles) const noexcept
     {
-      auto const [data, size] = utility::bind_data_and_size(instance_source);
-      [[maybe_unused]] auto const result =
+        auto const [data, size] = utility::bind_data_and_size(handles);
         DeleterCall(parent, pool, static_cast<uint32_t>(size), data);
     }
-  }
 };
 
-template <typename Deleter>
-concept with_parent = requires(Deleter deleter)
+template <auto DeleterCall, typename Parent, typename Pool, typename Handle>
+struct deleter<DeleterCall, VkResult (*)(Parent, Pool, uint32_t, Handle const *)>
 {
-  {deleter.parent()};
-};
+    using handle_type = Handle;
+    using parent_type = Parent;
+    using pool_type   = Pool;
 
-template <typename Deleter>
-concept with_pool = requires(Deleter deleter)
-{
-  {deleter.pool()};
-};
-
-template <typename Deleter>
-concept with_parent_and_pool = requires
-{
-  {with_parent<Deleter>};
-  {with_pool<Deleter>};
+    void
+    operator()(Parent parent, Pool pool, utility::slice<Handle> handles) const noexcept
+    {
+        auto const [data, size]      = utility::bind_data_and_size(handles);
+        [[maybe_unused]] auto result = DeleterCall(parent, pool, static_cast<uint32_t>(size), data);
+    }
 };
 
 } // namespace mvk::vk_types::detail

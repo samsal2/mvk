@@ -5,10 +5,7 @@
 namespace mvk::vk_types
 {
 
-debug_messenger::debug_messenger(VkInstance const instance)
-  : wrapper(
-      validation::setup_debug_messenger(instance),
-      make_deleter(instance))
+debug_messenger::debug_messenger(VkInstance const instance) : unique_wrapper_with_parent(validation::setup_debug_messenger(instance), instance)
 {
 }
 

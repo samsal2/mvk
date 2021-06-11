@@ -1,89 +1,262 @@
 #ifndef MVK_VK_TYPES_WRAPPER_HPP_INCLUDED
 #define MVK_VK_TYPES_WRAPPER_HPP_INCLUDED
 
+#include "utility/compressed_pair.hpp"
 #include "utility/types.hpp"
-#include "utility/unique_wrapper.hpp"
 #include "utility/verify.hpp"
 #include "vk_types/detail/deleter.hpp"
+
+#include <vector>
 
 namespace mvk::vk_types::detail
 {
 
-template <typename Handle, auto DeleterCall>
-class wrapper
+template <typename Handle, typename Parent, typename Pool, auto DeleterCall>
+class unique_wrapper_with_parent_and_pool_allocated
 {
 public:
-  using handle_type = Handle;
+    using deleter_type   = deleter<DeleterCall>;
+    using container_type = utility::compressed_pair<std::vector<Handle>, deleter_type>;
 
-private:
-  using deleter_type = deleter<DeleterCall>;
+    static_assert(std::is_same_v<Handle, typename deleter_type::handle_type>);
+    static_assert(std::is_same_v<Parent, typename deleter_type::parent_type>);
+    static_assert(std::is_same_v<Pool, typename deleter_type::pool_type>);
 
-  static constexpr auto is_allocation = deleter_type::is_allocation::value;
-  static constexpr auto default_deleter =
-    std::is_default_constructible_v<deleter_type>;
+    constexpr unique_wrapper_with_parent_and_pool_allocated() noexcept = default;
 
-public:
-  using container_type = detail::get_container_t<Handle, is_allocation>;
+    unique_wrapper_with_parent_and_pool_allocated(std::vector<Handle> handles, Parent parent, Pool pool)
+        : container_(typename container_type::first_tag(), std::move(handles)), parent_(parent), pool_(pool)
+    {
+    }
 
-  constexpr wrapper() noexcept = default;
+    unique_wrapper_with_parent_and_pool_allocated(unique_wrapper_with_parent_and_pool_allocated const & other) noexcept = delete;
 
-  template <typename... Us>
-  [[nodiscard]] static constexpr deleter_type
-  make_deleter(Us &&... args) noexcept
-  {
-    return deleter_type(std::forward<Us>(args)...);
-  }
+    unique_wrapper_with_parent_and_pool_allocated(unique_wrapper_with_parent_and_pool_allocated && other) noexcept
+    {
+        container_.swap(other.container_);
+        std::swap(parent_, other.parent_);
+        std::swap(pool_, other.pool_);
+    }
 
-  template <typename U>
-  constexpr explicit wrapper(container_type container, U && deleter) noexcept
-    : container_(std::move(container), std::forward<U>(deleter))
-  {
-  }
+    unique_wrapper_with_parent_and_pool_allocated &
+    operator=(unique_wrapper_with_parent_and_pool_allocated const & other) noexcept = delete;
 
-  [[nodiscard]] constexpr utility::const_trivial_t<container_type>
-  get() const noexcept
-  {
-    return container_.get();
-  }
+    unique_wrapper_with_parent_and_pool_allocated &
+    operator=(unique_wrapper_with_parent_and_pool_allocated && other) noexcept
+    {
+        container_.swap(other.container_);
+        std::swap(parent_, other.parent_);
+        std::swap(pool_, other.pool_);
+        return *this;
+    }
 
-  template <typename U = deleter_type>
-  [[nodiscard]] constexpr decltype(std::declval<U &>().parent())
-  parent() const noexcept
-  {
-    return container_.deleter().parent();
-  }
+    [[nodiscard]] std::vector<Handle> const &
+    get() const noexcept
+    {
+        return container_.first();
+    }
 
-  template <typename U = deleter_type>
-  [[nodiscard]] constexpr decltype(std::declval<U &>().pool())
-  pool() const noexcept
-  {
-    return container_.deleter().pool();
-  }
+    [[nodiscard]] Parent
+    parent() const noexcept
+    {
+        return parent_;
+    }
 
-  constexpr void
-  release() noexcept
-  {
-    container_ = utility::unique_wrapper<container_type, deleter_type>();
-  }
+    [[nodiscard]] Pool
+    pool() const noexcept
+    {
+        return pool_;
+    }
+
+    void
+    release() noexcept
+    {
+        if (parent_ != nullptr && pool_ != nullptr)
+        {
+            deleter()(parent_, pool_, get());
+
+            parent_ = nullptr;
+            pool_   = nullptr;
+            reference().clear();
+        }
+    }
+
+    ~unique_wrapper_with_parent_and_pool_allocated() noexcept
+    {
+        release();
+    }
 
 protected:
-  constexpr container_type &
-  reference() noexcept
-  {
-    return container_.get();
-  }
+    [[nodiscard]] std::vector<Handle> &
+    reference() noexcept
+    {
+        return container_.first();
+    }
+
+    [[nodiscard]] deleter_type const &
+    deleter() noexcept
+    {
+        return container_.second();
+    }
 
 private:
-  utility::unique_wrapper<container_type, deleter_type> container_;
+    container_type container_;
+    Parent         parent_ = nullptr;
+    Pool           pool_   = nullptr;
+};
+
+template <typename Handle, typename Parent, auto DeleterCall>
+class unique_wrapper_with_parent
+{
+public:
+    using deleter_type   = deleter<DeleterCall>;
+    using container_type = utility::compressed_pair<Handle, deleter_type>;
+
+    static_assert(std::is_same_v<Handle, typename deleter_type::handle_type>);
+    static_assert(std::is_same_v<Parent, typename deleter_type::parent_type>);
+
+    constexpr unique_wrapper_with_parent() noexcept = default;
+
+    constexpr unique_wrapper_with_parent(Handle handle, Parent parent) noexcept : container_(typename container_type::first_tag(), handle), parent_(parent)
+    {
+    }
+
+    unique_wrapper_with_parent(unique_wrapper_with_parent const & other) noexcept = delete;
+    unique_wrapper_with_parent(unique_wrapper_with_parent && other) noexcept
+    {
+        container_.swap(other.container_);
+        std::swap(parent_, other.parent_);
+    }
+
+    unique_wrapper_with_parent &
+    operator=(unique_wrapper_with_parent const & other) noexcept = delete;
+    unique_wrapper_with_parent &
+    operator=(unique_wrapper_with_parent && other) noexcept
+    {
+        container_.swap(other.container_);
+        std::swap(parent_, other.parent_);
+        return *this;
+    }
+
+    [[nodiscard]] Handle
+    get() const noexcept
+    {
+        return container_.first();
+    }
+
+    [[nodiscard]] Parent
+    parent() const noexcept
+    {
+        return parent_;
+    }
+
+    void
+    release() noexcept
+    {
+        if (parent_ != nullptr)
+        {
+            deleter()(parent_, get());
+
+            parent_     = nullptr;
+            reference() = nullptr;
+        }
+    }
+
+    ~unique_wrapper_with_parent() noexcept
+    {
+        release();
+    }
+
+protected:
+    [[nodiscard]] Handle &
+    reference() noexcept
+    {
+        return container_.first();
+    }
+
+    [[nodiscard]] deleter_type const &
+    deleter() noexcept
+    {
+        return container_.second();
+    }
+
+private:
+    container_type container_;
+    Parent         parent_ = nullptr;
+};
+
+template <typename Handle, auto DeleterCall>
+class unique_wrapper
+{
+public:
+    using deleter_type   = deleter<DeleterCall>;
+    using container_type = utility::compressed_pair<Handle, deleter_type>;
+
+    static_assert(std::is_same_v<Handle, typename deleter_type::handle_type>);
+
+    constexpr unique_wrapper() noexcept = default;
+
+    explicit unique_wrapper(Handle handle) noexcept : container_(typename container_type::first_tag(), handle)
+    {
+    }
+
+    unique_wrapper(unique_wrapper const & other) noexcept = delete;
+    unique_wrapper(unique_wrapper && other) noexcept
+    {
+        container_.swap(other.container_);
+    }
+
+    unique_wrapper &
+    operator=(unique_wrapper const & other) noexcept = delete;
+    unique_wrapper &
+    operator=(unique_wrapper && other) noexcept
+    {
+        container_.swap(other.container_);
+        return *this;
+    }
+
+    [[nodiscard]] Handle
+    get() const noexcept
+    {
+        return container_.first();
+    }
+
+    void
+    release() noexcept
+    {
+        deleter()(get());
+        reference() = nullptr;
+    }
+
+    ~unique_wrapper() noexcept
+    {
+        release();
+    }
+
+protected:
+    [[nodiscard]] Handle &
+    reference() noexcept
+    {
+        return container_.first();
+    }
+
+    [[nodiscard]] deleter_type const &
+    deleter() noexcept
+    {
+        return container_.second();
+    }
+
+private:
+    container_type container_;
 };
 
 template <typename First, typename... Others>
 constexpr decltype(std::declval<First &>().parent())
 find_parent(First const & val, [[maybe_unused]] Others const &... vals)
 {
-  auto parent = val.parent();
-  MVK_VERIFY(((vals.parent() == parent) && ...));
-  return parent;
+    auto parent = val.parent();
+    MVK_VERIFY(((vals.parent() == parent) && ...));
+    return parent;
 }
 
 } // namespace mvk::vk_types::detail

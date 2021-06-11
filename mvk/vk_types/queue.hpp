@@ -12,55 +12,51 @@ class fence;
 class queue
 {
 public:
-  constexpr queue() noexcept = default;
+    constexpr queue() noexcept = default;
 
-  queue(VkDevice device, uint32_t index);
+    queue(VkDevice device, uint32_t index);
 
-  [[nodiscard]] constexpr VkQueue
-  get() const noexcept;
+    [[nodiscard]] constexpr VkQueue
+    get() const noexcept;
 
-  [[nodiscard]] constexpr uint32_t
-  index() const noexcept;
+    [[nodiscard]] constexpr uint32_t
+    index() const noexcept;
 
-  queue &
-  wait_idle() noexcept;
+    queue &
+    wait_idle() noexcept;
 
-  queue &
-  submit(VkSubmitInfo const & submit_info);
-  queue &
-  submit(VkSubmitInfo const & submit_info, fence const & fence);
+    queue &
+    submit(VkSubmitInfo const & submit_info);
+    queue &
+    submit(VkSubmitInfo const & submit_info, fence const & fence);
 
-  template <typename Checker = decltype(detail::default_result_checker)>
-  requires detail::result_checker<Checker> 
-	queue &
-	present(
-		VkPresentInfoKHR const & present_info,
-		Checker &&               check = detail::default_result_checker);
+    template <typename Checker = decltype(detail::default_result_checker)>
+    requires detail::result_checker<Checker> queue &
+                                             present(VkPresentInfoKHR const & present_info, Checker && check = detail::default_result_checker);
 
 private:
-  VkQueue  instance_ = nullptr;
-  uint32_t index_    = 0;
+    VkQueue  instance_ = nullptr;
+    uint32_t index_    = 0;
 };
 
 [[nodiscard]] constexpr VkQueue
 queue::get() const noexcept
 {
-  return instance_;
+    return instance_;
 }
 
 [[nodiscard]] constexpr uint32_t
 queue::index() const noexcept
 {
-  return index_;
+    return index_;
 }
 
 template <typename Checker>
-requires detail::result_checker<Checker> 
-queue &
-queue::present(VkPresentInfoKHR const & present_info, Checker && check)
+requires detail::result_checker<Checker> queue &
+                                         queue::present(VkPresentInfoKHR const & present_info, Checker && check)
 {
-  std::forward<Checker>(check)(vkQueuePresentKHR(get(), &present_info));
-  return *this;
+    std::forward<Checker>(check)(vkQueuePresentKHR(get(), &present_info));
+    return *this;
 }
 
 } // namespace mvk::vk_types

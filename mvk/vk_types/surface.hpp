@@ -9,33 +9,27 @@
 namespace mvk::vk_types
 {
 
-class surface : public detail::wrapper<VkSurfaceKHR, vkDestroySurfaceKHR>
+class surface : public detail::unique_wrapper_with_parent<VkSurfaceKHR, VkInstance, vkDestroySurfaceKHR>
 {
 public:
-  constexpr surface() noexcept = default;
-  surface(VkInstance instance, GLFWwindow * window);
+    constexpr surface() noexcept = default;
+    surface(VkInstance instance, GLFWwindow * window);
 
-  template <typename Checker = decltype(detail::default_format_checker)>
-  requires detail::requirement_checker<Checker>
-  [[nodiscard]] VkSurfaceFormatKHR
-  query_format(
-    VkPhysicalDevice physical_device,
-    Checker &&       check = detail::default_format_checker) const noexcept;
+    template <typename Checker = decltype(detail::default_format_checker)>
+    requires detail::requirement_checker<Checker>
+    [[nodiscard]] VkSurfaceFormatKHR
+    query_format(VkPhysicalDevice physical_device, Checker && check = detail::default_format_checker) const noexcept;
 
-  [[nodiscard]] VkSurfaceCapabilitiesKHR
-  query_capabilities(VkPhysicalDevice physical_device) const noexcept;
+    [[nodiscard]] VkSurfaceCapabilitiesKHR
+    query_capabilities(VkPhysicalDevice physical_device) const noexcept;
 };
 
 template <typename Checker>
 requires detail::requirement_checker<Checker>
 [[nodiscard]] VkSurfaceFormatKHR
-surface::query_format(VkPhysicalDevice const physical_device, Checker && check)
-  const noexcept
+surface::query_format(VkPhysicalDevice const physical_device, Checker && check) const noexcept
 {
-  return detail::choose_surface_format(
-    physical_device,
-    get(),
-    std::forward<Checker>(check));
+    return detail::choose_surface_format(physical_device, get(), std::forward<Checker>(check));
 }
 
 } // namespace mvk::vk_types

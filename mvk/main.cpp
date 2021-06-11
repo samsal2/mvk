@@ -4,16 +4,16 @@
 int
 main()
 {
-  try
-  {
-    auto rdr = mvk::renderer();
-    rdr.init();
-    rdr.run();
-  }
-  catch (mvk::utility::verify_error error)
-  {
-    std::cerr << error.what() << '\n';
-  }
+    try
+    {
+        auto rdr = mvk::renderer();
+        rdr.init();
+        rdr.run();
+    }
+    catch (mvk::utility::verify_error error)
+    {
+        std::cerr << error.what() << '\n';
+    }
 
-  return 0;
+    return 0;
 }

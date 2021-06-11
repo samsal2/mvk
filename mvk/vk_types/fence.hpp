@@ -7,16 +7,16 @@
 namespace mvk::vk_types
 {
 
-class fence : public detail::wrapper<VkFence, vkDestroyFence>
+class fence : public detail::unique_wrapper_with_parent<VkFence, VkDevice, vkDestroyFence>
 {
 public:
-  constexpr fence() noexcept = default;
-  fence(VkDevice device, VkFenceCreateInfo const & create_info);
+    constexpr fence() noexcept = default;
+    fence(VkDevice device, VkFenceCreateInfo const & create_info);
 
-  fence &
-  reset();
-  fence &
-  wait();
+    fence &
+    reset();
+    fence &
+    wait();
 };
 
 } // namespace mvk::vk_types

@@ -3,20 +3,11 @@
 namespace mvk::vk_types
 {
 
-pipeline::pipeline(
-  VkDevice const                       device,
-  VkGraphicsPipelineCreateInfo const & create_info)
-  : wrapper(nullptr, make_deleter(device))
+pipeline::pipeline(VkDevice const device, VkGraphicsPipelineCreateInfo const & create_info) : unique_wrapper_with_parent(nullptr, device)
 {
-  [[maybe_unused]] auto const result = vkCreateGraphicsPipelines(
-    parent(),
-    nullptr,
-    1,
-    &create_info,
-    nullptr,
-    &reference());
+    [[maybe_unused]] auto const result = vkCreateGraphicsPipelines(parent(), nullptr, 1, &create_info, nullptr, &reference());
 
-  MVK_VERIFY(VK_SUCCESS == result);
+    MVK_VERIFY(VK_SUCCESS == result);
 }
 
 } // namespace mvk::vk_types

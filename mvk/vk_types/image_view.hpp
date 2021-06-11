@@ -7,11 +7,11 @@
 namespace mvk::vk_types
 {
 
-class image_view : public detail::wrapper<VkImageView, vkDestroyImageView>
+class image_view : public detail::unique_wrapper_with_parent<VkImageView, VkDevice, vkDestroyImageView>
 {
 public:
-  constexpr image_view() noexcept = default;
-  image_view(VkDevice device, VkImageViewCreateInfo const & create_info);
+    constexpr image_view() noexcept = default;
+    image_view(VkDevice device, VkImageViewCreateInfo const & create_info);
 };
 
 } // namespace mvk::vk_types

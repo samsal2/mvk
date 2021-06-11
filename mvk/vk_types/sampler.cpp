@@ -3,14 +3,10 @@
 namespace mvk::vk_types
 {
 
-sampler::sampler(
-  VkDevice const              device,
-  VkSamplerCreateInfo const & create_info)
-  : wrapper(nullptr, make_deleter(device))
+sampler::sampler(VkDevice const device, VkSamplerCreateInfo const & create_info) : unique_wrapper_with_parent(nullptr, device)
 {
-  [[maybe_unused]] auto const result =
-    vkCreateSampler(parent(), &create_info, nullptr, &reference());
-  MVK_VERIFY(VK_SUCCESS == result);
+    [[maybe_unused]] auto const result = vkCreateSampler(parent(), &create_info, nullptr, &reference());
+    MVK_VERIFY(VK_SUCCESS == result);
 }
 
 } // namespace mvk::vk_types
