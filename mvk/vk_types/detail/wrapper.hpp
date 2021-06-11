@@ -2,7 +2,6 @@
 #define MVK_VK_TYPES_WRAPPER_HPP_INCLUDED
 
 #include "utility/compressed_pair.hpp"
-#include "utility/types.hpp"
 #include "utility/verify.hpp"
 #include "vk_types/detail/deleter.hpp"
 
@@ -14,18 +13,17 @@ namespace mvk::vk_types::detail
 template <typename Handle, typename Parent, typename Pool, auto DeleterCall>
 class unique_wrapper_with_parent_and_pool_allocated
 {
-public:
-    using deleter_type   = deleter<DeleterCall>;
-    using container_type = utility::compressed_pair<std::vector<Handle>, deleter_type>;
+    using deleter_type = deleter<DeleterCall>;
 
     static_assert(std::is_same_v<Handle, typename deleter_type::handle_type>);
     static_assert(std::is_same_v<Parent, typename deleter_type::parent_type>);
     static_assert(std::is_same_v<Pool, typename deleter_type::pool_type>);
 
+public:
     constexpr unique_wrapper_with_parent_and_pool_allocated() noexcept = default;
 
     unique_wrapper_with_parent_and_pool_allocated(std::vector<Handle> handles, Parent parent, Pool pool)
-        : container_(typename container_type::first_tag(), std::move(handles)), parent_(parent), pool_(pool)
+        : container_(utility::first_tag(), std::move(handles)), parent_(parent), pool_(pool)
     {
     }
 
@@ -100,24 +98,23 @@ protected:
     }
 
 private:
-    container_type container_;
-    Parent         parent_ = nullptr;
-    Pool           pool_   = nullptr;
+    utility::compressed_pair<std::vector<Handle>, deleter_type> container_;
+    Parent                                                      parent_ = nullptr;
+    Pool                                                        pool_   = nullptr;
 };
 
 template <typename Handle, typename Parent, auto DeleterCall>
 class unique_wrapper_with_parent
 {
-public:
-    using deleter_type   = deleter<DeleterCall>;
-    using container_type = utility::compressed_pair<Handle, deleter_type>;
+    using deleter_type = deleter<DeleterCall>;
 
     static_assert(std::is_same_v<Handle, typename deleter_type::handle_type>);
     static_assert(std::is_same_v<Parent, typename deleter_type::parent_type>);
 
+public:
     constexpr unique_wrapper_with_parent() noexcept = default;
 
-    constexpr unique_wrapper_with_parent(Handle handle, Parent parent) noexcept : container_(typename container_type::first_tag(), handle), parent_(parent)
+    constexpr unique_wrapper_with_parent(Handle handle, Parent parent) noexcept : container_(utility::first_tag(), handle), parent_(parent)
     {
     }
 
@@ -181,22 +178,20 @@ protected:
     }
 
 private:
-    container_type container_;
-    Parent         parent_ = nullptr;
+    utility::compressed_pair<Handle, deleter_type> container_;
+    Parent                                         parent_ = nullptr;
 };
 
 template <typename Handle, auto DeleterCall>
 class unique_wrapper
 {
-public:
-    using deleter_type   = deleter<DeleterCall>;
-    using container_type = utility::compressed_pair<Handle, deleter_type>;
-
+    using deleter_type = deleter<DeleterCall>;
     static_assert(std::is_same_v<Handle, typename deleter_type::handle_type>);
 
+public:
     constexpr unique_wrapper() noexcept = default;
 
-    explicit unique_wrapper(Handle handle) noexcept : container_(typename container_type::first_tag(), handle)
+    explicit unique_wrapper(Handle handle) noexcept : container_(utility::first_tag(), handle)
     {
     }
 
@@ -247,17 +242,8 @@ protected:
     }
 
 private:
-    container_type container_;
+    utility::compressed_pair<Handle, deleter_type> container_;
 };
-
-template <typename First, typename... Others>
-constexpr decltype(std::declval<First &>().parent())
-find_parent(First const & val, [[maybe_unused]] Others const &... vals)
-{
-    auto parent = val.parent();
-    MVK_VERIFY(((vals.parent() == parent) && ...));
-    return parent;
-}
 
 } // namespace mvk::vk_types::detail
 

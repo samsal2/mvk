@@ -17,7 +17,7 @@ struct deleter<DeleterCall, void (*)(Handle, VkAllocationCallbacks const *)>
     using handle_type = Handle;
 
     void
-    operator()(Handle handle) const noexcept
+    operator()(Handle const handle) const noexcept
     {
         DeleterCall(handle, nullptr);
     }
@@ -30,7 +30,7 @@ struct deleter<DeleterCall, void (*)(Parent, Handle, VkAllocationCallbacks const
     using parent_type = Parent;
 
     void
-    operator()(Parent parent, Handle handle) const noexcept
+    operator()(Parent const parent, Handle const handle) const noexcept
     {
         DeleterCall(parent, handle, nullptr);
     }
@@ -44,7 +44,7 @@ struct deleter<DeleterCall, void (*)(Parent, Pool, uint32_t, Handle const *)>
     using pool_type   = Pool;
 
     void
-    operator()(Parent parent, Pool pool, utility::slice<Handle> handles) const noexcept
+    operator()(Parent const parent, Pool const pool, utility::slice<Handle> const handles) const noexcept
     {
         auto const [data, size] = utility::bind_data_and_size(handles);
         DeleterCall(parent, pool, static_cast<uint32_t>(size), data);
@@ -59,7 +59,7 @@ struct deleter<DeleterCall, VkResult (*)(Parent, Pool, uint32_t, Handle const *)
     using pool_type   = Pool;
 
     void
-    operator()(Parent parent, Pool pool, utility::slice<Handle> handles) const noexcept
+    operator()(Parent const parent, Pool const pool, utility::slice<Handle> const handles) const noexcept
     {
         auto const [data, size]      = utility::bind_data_and_size(handles);
         [[maybe_unused]] auto result = DeleterCall(parent, pool, static_cast<uint32_t>(size), data);

@@ -73,6 +73,12 @@ public:
 private:
     value_type value_;
 };
+struct first_tag
+{
+};
+struct second_tag
+{
+};
 
 template <typename First, typename Second>
 class compressed_pair : private compressed_pair_element<0, First>, private compressed_pair_element<1, Second>
@@ -92,18 +98,10 @@ public:
     {
     }
 
-    struct first_tag
-    {
-    };
-
     template <typename U1>
     constexpr compressed_pair([[maybe_unused]] first_tag tag, U1 && first) noexcept : first_element_type(std::forward<U1>(first))
     {
     }
-
-    struct second_tag
-    {
-    };
 
     template <typename U2>
     constexpr compressed_pair([[maybe_unused]] second_tag tag, U2 && second) noexcept : second_element_type(std::forward<U2>(second))
