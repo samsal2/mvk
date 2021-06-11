@@ -22,10 +22,8 @@ static constexpr auto g_validation_layers = std::array{"VK_LAYER_KHRONOS_validat
 static constexpr auto g_validation_instance_extensions = std::array{VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
 
 static VKAPI_ATTR VKAPI_CALL VkBool32
-debug_callback([[maybe_unused]] VkDebugUtilsMessageSeverityFlagBitsEXT       severity,
-               [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT              type,
-               [[maybe_unused]] VkDebugUtilsMessengerCallbackDataEXT const * data,
-               [[maybe_unused]] void *                                       p_user_data)
+debug_callback([[maybe_unused]] VkDebugUtilsMessageSeverityFlagBitsEXT severity, [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT type,
+               [[maybe_unused]] VkDebugUtilsMessengerCallbackDataEXT const * data, [[maybe_unused]] void * p_user_data)
 {
     std::cerr << data->pMessage << '\n';
     return VK_FALSE;

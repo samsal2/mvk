@@ -19,8 +19,8 @@ AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: All
 AlwaysBreakBeforeMultilineStrings: 'false'
 AlwaysBreakTemplateDeclarations: 'Yes'
-BinPackArguments: 'false'
-BinPackParameters: 'false'
+BinPackArguments: 'True'
+BinPackParameters: 'True'
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Allman
 BreakBeforeTernaryOperators: 'false'

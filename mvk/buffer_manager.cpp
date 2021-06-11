@@ -13,10 +13,8 @@ get_usage(buffer_type type);
 
 } // namespace detail
 
-buffer_manager::buffer_manager(vk_types::device * const       device,
-                               vk_types::command_pool * const command_pool,
-                               buffer_type const              type,
-                               VkDeviceSize const             default_size)
+buffer_manager::buffer_manager(vk_types::device * const device, vk_types::command_pool * const command_pool, buffer_type const type,
+                               VkDeviceSize const default_size)
     : device_(device), command_pool_(command_pool), type_(type)
 {
     create_new_buffers_and_memories(default_size);
