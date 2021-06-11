@@ -20,8 +20,7 @@ buffer &
 buffer::stage(device const & device, command_pool const & command_pool, utility::slice<std::byte> const data_source, VkDeviceSize const offset)
 {
     auto const [staging_buffer, staging_buffer_memory] = detail::create_staging_buffer_and_memory(device, data_source);
-
-    auto const staging_command_buffer = detail::create_staging_command_buffer(device, command_pool);
+    auto const staging_command_buffer                  = detail::create_staging_command_buffer(device, command_pool);
 
     auto const command_buffer_begin_info = []
     {
@@ -41,7 +40,7 @@ buffer::stage(device const & device, command_pool const & command_pool, utility:
         return region;
     }();
 
-    staging_command_buffer.begin(0, command_buffer_begin_info).copy_buffer(staging_buffer.get(), get(), {&copy_region, 1}).end();
+    staging_command_buffer.begin(0, command_buffer_begin_info).copy_buffer({staging_buffer.get(), get()}, {&copy_region, 1}).end();
 
     detail::submit_staging_command_buffer(device, staging_command_buffer);
     return *this;

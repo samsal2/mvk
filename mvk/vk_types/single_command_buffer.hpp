@@ -22,29 +22,39 @@ public:
 
     explicit single_command_buffer(VkCommandBuffer command_buffer);
 
-    single_command_buffer &
-    copy_buffer_to_image(VkBuffer                          source_buffer,
-                         VkImage                           destination_image,
-                         VkImageLayout                     destination_image_layout,
-                         utility::slice<VkBufferImageCopy> copy_regions) noexcept;
+    struct copy_buffer_to_image_information
+    {
+        VkBuffer      source_buffer_;
+        VkImage       destination_image_;
+        VkImageLayout destination_image_layout_;
+    };
 
     single_command_buffer &
-    copy_buffer(VkBuffer source_buffer, VkBuffer destination_buffer, utility::slice<VkBufferCopy> copy_regions) noexcept;
+    copy_buffer_to_image(copy_buffer_to_image_information information, utility::slice<VkBufferImageCopy> copy_regions) noexcept;
+
+    struct copy_buffer_information
+    {
+        VkBuffer source_buffer_;
+        VkBuffer destination_buffer_;
+    };
 
     single_command_buffer &
-    pipeline_barrier(VkPipelineStageFlags                  source_stage,
-                     VkPipelineStageFlags                  destination_stage,
-                     VkDependencyFlags                     dependency_flags,
-                     utility::slice<VkMemoryBarrier>       memory_barriers,
-                     utility::slice<VkBufferMemoryBarrier> buffer_memory_barriers,
-                     utility::slice<VkImageMemoryBarrier>  image_memory_barriers) noexcept;
+    copy_buffer(copy_buffer_information information, utility::slice<VkBufferCopy> copy_regions) noexcept;
+
+    struct pipeline_barrier_information
+    {
+        VkPipelineStageFlags source_stage_;
+        VkPipelineStageFlags destination_stage_;
+        VkDependencyFlags    dependency_flags_;
+    };
 
     single_command_buffer &
-    bind_descriptor_sets(VkPipelineBindPoint bind_point,
-                         VkPipelineLayout    pipeline_layout,
-                         uint32_t            descriptor_set_first,
-                         uint32_t            descriptor_set_count,
-                         VkDescriptorSet     descriptor_set) noexcept;
+    pipeline_barrier(pipeline_barrier_information pipeline_barrier_information, utility::slice<VkMemoryBarrier> memory_barriers,
+                     utility::slice<VkBufferMemoryBarrier> buffer_memory_barriers, utility::slice<VkImageMemoryBarrier> image_memory_barriers) noexcept;
+
+    single_command_buffer &
+    bind_descriptor_sets(VkPipelineBindPoint bind_point, VkPipelineLayout pipeline_layout, uint32_t descriptor_set_first, uint32_t descriptor_set_count,
+                         VkDescriptorSet descriptor_set) noexcept;
 
     single_command_buffer &
     draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_vertex, int32_t vertex_offset, uint32_t first_instance) noexcept;
@@ -61,13 +71,14 @@ public:
     single_command_buffer &
     bind_index_buffer(VkBuffer buffer, VkDeviceSize offset = 0) noexcept;
 
+    struct blit_image_information
+    {
+        VkImage       image_;
+        VkImageLayout image_layout_;
+    };
+
     single_command_buffer &
-    blit_image(VkImage                     source_image,
-               VkImageLayout               source_image_layout,
-               VkImage                     destination_image,
-               VkImageLayout               destination_image_layout,
-               utility::slice<VkImageBlit> region,
-               VkFilter                    filter) noexcept;
+    blit_image(blit_image_information source, blit_image_information destination, utility::slice<VkImageBlit> regions, VkFilter filter) noexcept;
 
     single_command_buffer &
     end_render_pass() noexcept;
@@ -76,7 +87,7 @@ public:
     end() noexcept;
 
     single_command_buffer
-    bind_vertex_buffer(VkBuffer buffer, utility::slice<VkDeviceSize> offsets) noexcept;
+    bind_vertex_buffer(utility::slice<VkBuffer> buffers, utility::slice<VkDeviceSize> offsets) noexcept;
 
 private:
     VkCommandBuffer command_buffer_ = nullptr;

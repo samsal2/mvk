@@ -96,7 +96,7 @@ image::transition_layout(device const & device, command_pool const & command_poo
         return info;
     }();
 
-    command_buffer.begin(0, command_buffer_begin_info).pipeline_barrier(source_stage, destination_stage, 0, {}, {}, {&image_memory_barrier, 1}).end();
+    command_buffer.begin(0, command_buffer_begin_info).pipeline_barrier({source_stage, destination_stage, 0}, {}, {}, {&image_memory_barrier, 1}).end();
 
     detail::submit_staging_command_buffer(device, command_buffer);
     return *this;
@@ -138,7 +138,7 @@ image::stage(device const & device, command_pool const & command_pool, image::te
     }();
 
     staging_command_buffer.begin(0, command_buffer_begin_info)
-        .copy_buffer_to_image(staging_buffer.get(), get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, {&copy_region, 1})
+        .copy_buffer_to_image({staging_buffer.get(), get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL}, {&copy_region, 1})
         .end();
 
     detail::submit_staging_command_buffer(device, staging_command_buffer);
@@ -198,7 +198,7 @@ image::generate_mipmaps(device const & device, command_pool const & command_pool
         barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
 
-        current_command_buffer.pipeline_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, {}, {}, {&barrier, 1});
+        current_command_buffer.pipeline_barrier({VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0}, {}, {}, {&barrier, 1});
 
         auto blit                          = VkImageBlit();
         blit.srcOffsets[0].x               = 0;
@@ -222,15 +222,15 @@ image::generate_mipmaps(device const & device, command_pool const & command_pool
         blit.dstSubresource.baseArrayLayer = 0;
         blit.dstSubresource.layerCount     = 1;
 
-        current_command_buffer
-            .blit_image(get(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, {&blit, 1}, VK_FILTER_LINEAR);
+        current_command_buffer.blit_image({get(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL}, {get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL}, {&blit, 1},
+                                          VK_FILTER_LINEAR);
 
         barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-        current_command_buffer.pipeline_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, {}, {}, {&barrier, 1});
+        current_command_buffer.pipeline_barrier({VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0}, {}, {}, {&barrier, 1});
     }
 
     barrier.subresourceRange.baseMipLevel = mipmap_levels() - 1;
@@ -240,7 +240,7 @@ image::generate_mipmaps(device const & device, command_pool const & command_pool
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-    current_command_buffer.pipeline_barrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, {}, {}, {&barrier, 1});
+    current_command_buffer.pipeline_barrier({VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0}, {}, {}, {&barrier, 1});
 
     current_command_buffer.end();
 

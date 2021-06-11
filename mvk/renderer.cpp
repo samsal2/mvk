@@ -899,10 +899,12 @@ renderer::load_mesh()
         command_buffer_begin_info.flags            = 0;
         command_buffer_begin_info.pInheritanceInfo = nullptr;
 
+        auto const vertex_buffers = std::array{vertex_buffer.get()};
+
         command_buffers_.begin(i, command_buffer_begin_info)
             .begin_render_pass(render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE)
             .bind_pipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.get())
-            .bind_vertex_buffer(vertex_buffer.get(), {&vertex_offset, 1})
+            .bind_vertex_buffer(vertex_buffers, {&vertex_offset, 1})
             .bind_index_buffer(index_buffer.get(), index_offset)
             .bind_descriptor_sets(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_.get(), 0, 1, descriptor_sets_.get()[i])
             .draw_indexed(static_cast<uint32_t>(std::size(indices_)), 1, 0, 0, 0)
