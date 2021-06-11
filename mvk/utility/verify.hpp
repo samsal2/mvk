@@ -22,12 +22,8 @@ private:
   std::string line_;
 };
 
-#ifndef NDEBUG
-#  define MVK_VERIFY_NOT_REACHED()                                            \
-    throw ::mvk::utility::verify_error(__FILE__, __LINE__)
-#else
-#  define MVK_VERIFY_NOT_REACHED()
-#endif
+#define MVK_VERIFY_NOT_REACHED()                                              \
+  throw ::mvk::utility::verify_error(__FILE__, __LINE__)
 
 namespace detail
 {

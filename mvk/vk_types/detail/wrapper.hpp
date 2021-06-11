@@ -79,7 +79,7 @@ private:
 
 template <typename First, typename... Others>
 constexpr decltype(std::declval<First &>().parent())
-find_parent(First const & val, Others const &... vals)
+find_parent(First const & val, [[maybe_unused]] Others const &... vals)
 {
   auto parent = val.parent();
   MVK_VERIFY(((vals.parent() == parent) && ...));
