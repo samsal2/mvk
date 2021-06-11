@@ -2,7 +2,7 @@
 #define MVK_VK_TYPES_DEBUG_MESSENGER_HPP_INCLUDED
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrapper.hpp"
+#include "vk_types/detail/wrappers.hpp"
 #include "vk_types/validation/validation.hpp"
 
 namespace mvk::vk_types

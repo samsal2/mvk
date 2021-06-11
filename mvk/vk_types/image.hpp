@@ -2,7 +2,7 @@
 #define MVK_VK_TYPES_IMAGE_HPP_INCLUDE
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrapper.hpp"
+#include "vk_types/detail/wrappers.hpp"
 
 #include <filesystem>
 

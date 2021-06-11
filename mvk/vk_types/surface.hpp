@@ -4,7 +4,7 @@
 #include "vk_types/common.hpp"
 #include "vk_types/detail/checkers.hpp"
 #include "vk_types/detail/misc.hpp"
-#include "vk_types/detail/wrapper.hpp"
+#include "vk_types/detail/wrappers.hpp"
 
 namespace mvk::vk_types
 {

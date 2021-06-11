@@ -2,7 +2,7 @@
 #define MVK_VK_TYPES_FRAMEBUFFER_HPP_INCLUDED
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrapper.hpp"
+#include "vk_types/detail/wrappers.hpp"
 
 namespace mvk::vk_types
 {

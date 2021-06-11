@@ -2,7 +2,7 @@
 #define MVK_VK_TYPES_COMMAND_BUFFERS_HPP_INCLUDED
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrapper.hpp"
+#include "vk_types/detail/wrappers.hpp"
 #include "vk_types/single_command_buffer.hpp"
 
 namespace mvk::vk_types

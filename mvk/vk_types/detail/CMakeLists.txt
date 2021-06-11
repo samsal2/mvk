@@ -5,4 +5,4 @@ target_sources(${PROJECT_NAME} PRIVATE checkers.hpp
                                        deleter.hpp
                                        misc.cpp
                                        misc.hpp
-                                       wrapper.hpp)
+                                       wrappers.hpp)
