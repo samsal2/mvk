@@ -28,7 +28,6 @@ public:
     }
 
     unique_wrapper_with_parent_and_pool_allocated(unique_wrapper_with_parent_and_pool_allocated const & other) noexcept = delete;
-
     unique_wrapper_with_parent_and_pool_allocated(unique_wrapper_with_parent_and_pool_allocated && other) noexcept
     {
         container_.swap(other.container_);
@@ -48,50 +47,55 @@ public:
         return *this;
     }
 
-    [[nodiscard]] std::vector<Handle> const &
+    [[nodiscard]] constexpr std::vector<Handle> const &
     get() const noexcept
     {
         return container_.first();
     }
 
-    [[nodiscard]] Parent
+    [[nodiscard]] constexpr Parent
     parent() const noexcept
     {
         return parent_;
     }
 
-    [[nodiscard]] Pool
+    [[nodiscard]] constexpr Pool
     pool() const noexcept
     {
         return pool_;
     }
 
-    void
+    constexpr void
     release() noexcept
     {
-        if (parent_ != nullptr && pool_ != nullptr)
-        {
-            deleter()(parent_, pool_, get());
-
-            parent_ = nullptr;
-            pool_   = nullptr;
-            reference().clear();
-        }
+        destroy();
+        parent_ = nullptr;
+        pool_   = nullptr;
+        reference().clear();
     }
 
     ~unique_wrapper_with_parent_and_pool_allocated() noexcept
     {
-        release();
+        destroy();
     }
 
 protected:
-    [[nodiscard]] std::vector<Handle> &
+    constexpr void
+    destroy()
+    {
+        if (parent_ != nullptr && pool_ != nullptr)
+        {
+            deleter()(parent_, pool_, get());
+        }
+    }
+
+    [[nodiscard]] constexpr std::vector<Handle> &
     reference() noexcept
     {
         return container_.first();
     }
 
-    [[nodiscard]] deleter_type const &
+    [[nodiscard]] constexpr deleter_type const &
     deleter() noexcept
     {
         return container_.second();
@@ -135,43 +139,48 @@ public:
         return *this;
     }
 
-    [[nodiscard]] Handle
+    [[nodiscard]] constexpr Handle
     get() const noexcept
     {
         return container_.first();
     }
 
-    [[nodiscard]] Parent
+    [[nodiscard]] constexpr Parent
     parent() const noexcept
     {
         return parent_;
     }
 
-    void
+    constexpr void
     release() noexcept
     {
-        if (parent_ != nullptr)
-        {
-            deleter()(parent_, get());
-
-            parent_     = nullptr;
-            reference() = nullptr;
-        }
+        destroy();
+        parent_     = nullptr;
+        reference() = nullptr;
     }
 
     ~unique_wrapper_with_parent() noexcept
     {
-        release();
+        destroy();
     }
 
 protected:
-    [[nodiscard]] Handle &
+    constexpr void
+    destroy() noexcept
+    {
+        if (parent_ != nullptr)
+        {
+            deleter()(parent_, get());
+        }
+    }
+
+    [[nodiscard]] constexpr Handle &
     reference() noexcept
     {
         return container_.first();
     }
 
-    [[nodiscard]] deleter_type const &
+    [[nodiscard]] constexpr deleter_type const &
     deleter() noexcept
     {
         return container_.second();
@@ -210,32 +219,38 @@ public:
         return *this;
     }
 
-    [[nodiscard]] Handle
+    [[nodiscard]] constexpr Handle
     get() const noexcept
     {
         return container_.first();
     }
 
-    void
+    constexpr void
     release() noexcept
     {
-        deleter()(get());
+        destroy();
         reference() = nullptr;
     }
 
     ~unique_wrapper() noexcept
     {
-        release();
+        destroy();
     }
 
 protected:
-    [[nodiscard]] Handle &
+    constexpr void
+    destroy() noexcept
+    {
+        deleter()(get());
+    }
+
+    [[nodiscard]] constexpr Handle &
     reference() noexcept
     {
         return container_.first();
     }
 
-    [[nodiscard]] deleter_type const &
+    [[nodiscard]] constexpr deleter_type const &
     deleter() noexcept
     {
         return container_.second();
