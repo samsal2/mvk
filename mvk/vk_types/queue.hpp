@@ -13,6 +13,7 @@ class queue
 {
 public:
   constexpr queue() noexcept = default;
+
   queue(VkDevice device, uint32_t index);
 
   [[nodiscard]] constexpr VkQueue

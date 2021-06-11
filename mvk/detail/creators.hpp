@@ -6,11 +6,11 @@
 namespace mvk::detail
 {
 
-template <typename T>
+template <typename Buffer>
 [[nodiscard]] vk_types::device_memory
 create_device_memory(
   vk_types::device const & device,
-  T const &                buffer,
+  Buffer const &           buffer,
   VkMemoryPropertyFlags    properties);
 
 [[nodiscard]] vk_types::shader_module
