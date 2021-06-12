@@ -17,11 +17,11 @@
 namespace mvk::types
 {
 
-image::image(VkDevice const device, VkImageCreateInfo const & create_info)
-    : wrapper(nullptr, device), mipmap_levels_(create_info.mipLevels)
+image::image(VkDevice const device, VkImageCreateInfo const & info)
+    : wrapper(nullptr, device), mipmap_levels_(info.mipLevels)
 {
   [[maybe_unused]] auto const result =
-      vkCreateImage(parent(), &create_info, nullptr, &reference());
+      vkCreateImage(parent(), &info, nullptr, &reference());
   MVK_VERIFY(VK_SUCCESS == result);
   vkGetImageMemoryRequirements(parent(), get(), &memory_requirements_);
 }
@@ -98,7 +98,7 @@ image::transition_layout(device const & device,
   auto command_buffer =
       detail::create_staging_command_buffer(device, command_pool);
 
-  auto const command_buffer_begin_info = []
+  auto const begin_info = []
   {
     auto info = VkCommandBufferBeginInfo();
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -107,7 +107,7 @@ image::transition_layout(device const & device,
     return info;
   }();
 
-  command_buffer.begin(0, command_buffer_begin_info)
+  command_buffer.begin(0, begin_info)
       .pipeline_barrier({source_stage, destination_stage, 0}, {}, {},
                         {&image_memory_barrier, 1})
       .end();
@@ -127,7 +127,7 @@ image::stage(device const & device, command_pool const & command_pool,
   auto staging_command_buffer =
       detail::create_staging_command_buffer(device, command_pool);
 
-  auto const command_buffer_begin_info = []
+  auto const begin_info = []
   {
     auto info = VkCommandBufferBeginInfo();
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -155,7 +155,7 @@ image::stage(device const & device, command_pool const & command_pool,
     return region;
   }();
 
-  staging_command_buffer.begin(0, command_buffer_begin_info)
+  staging_command_buffer.begin(0, begin_info)
       .copy_buffer_to_image(
           {staging_buffer.get(), get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL},
           {&copy_region, 1})
@@ -188,7 +188,7 @@ image::generate_mipmaps(device const & device,
   barrier.subresourceRange.layerCount = 1;
   barrier.subresourceRange.levelCount = 1;
 
-  auto const command_buffer_begin_info = []
+  auto const begin_info = []
   {
     auto info = VkCommandBufferBeginInfo();
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -197,8 +197,7 @@ image::generate_mipmaps(device const & device,
     return info;
   }();
 
-  auto current_command_buffer =
-      staging_command_buffer.begin(0, command_buffer_begin_info);
+  auto current_command_buffer = staging_command_buffer.begin(0, begin_info);
 
   auto mipmap_width = static_cast<int32_t>(width);
   auto mipmap_height = static_cast<int32_t>(height);

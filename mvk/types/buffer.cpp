@@ -9,11 +9,11 @@
 namespace mvk::types
 {
 
-buffer::buffer(VkDevice const device, VkBufferCreateInfo const & create_info)
+buffer::buffer(VkDevice const device, VkBufferCreateInfo const & info)
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateBuffer(parent(), &create_info, nullptr, &reference());
+      vkCreateBuffer(parent(), &info, nullptr, &reference());
   MVK_VERIFY(VK_SUCCESS == result);
   vkGetBufferMemoryRequirements(parent(), get(), &memory_requirements_);
 }
@@ -28,7 +28,7 @@ buffer::stage(device const & device, command_pool const & command_pool,
   auto const staging_command_buffer =
       detail::create_staging_command_buffer(device, command_pool);
 
-  auto const command_buffer_begin_info = []
+  auto const begin_info = []
   {
     auto info = VkCommandBufferBeginInfo();
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -46,7 +46,7 @@ buffer::stage(device const & device, command_pool const & command_pool,
     return region;
   }();
 
-  staging_command_buffer.begin(0, command_buffer_begin_info)
+  staging_command_buffer.begin(0, begin_info)
       .copy_buffer({staging_buffer.get(), get()}, {&copy_region, 1})
       .end();
 

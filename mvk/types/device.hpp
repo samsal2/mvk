@@ -20,8 +20,7 @@ public:
 
   constexpr device() noexcept = default;
 
-  device(VkPhysicalDevice physical_device,
-         VkDeviceCreateInfo const & create_info);
+  device(VkPhysicalDevice physical_device, VkDeviceCreateInfo const & info);
 
   [[nodiscard]] constexpr queues
   get_queues() const noexcept;

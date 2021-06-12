@@ -4,11 +4,11 @@ namespace mvk::types
 {
 
 pipeline::pipeline(VkDevice const device,
-                   VkGraphicsPipelineCreateInfo const & create_info)
+                   VkGraphicsPipelineCreateInfo const & info)
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result = vkCreateGraphicsPipelines(
-      parent(), nullptr, 1, &create_info, nullptr, &reference());
+      parent(), nullptr, 1, &info, nullptr, &reference());
   MVK_VERIFY(VK_SUCCESS == result);
 }
 

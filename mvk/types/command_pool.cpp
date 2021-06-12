@@ -4,11 +4,11 @@ namespace mvk::types
 {
 
 command_pool::command_pool(VkDevice const device,
-                           VkCommandPoolCreateInfo const & create_info)
+                           VkCommandPoolCreateInfo const & info)
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateCommandPool(parent(), &create_info, nullptr, &reference());
+      vkCreateCommandPool(parent(), &info, nullptr, &reference());
   MVK_VERIFY(VK_SUCCESS == result);
 }
 

@@ -13,7 +13,7 @@ class instance : public detail::wrapper<detail::deleter<vkDestroyInstance>,
 public:
   constexpr instance() noexcept = default;
 
-  explicit instance(VkInstanceCreateInfo const & create_info);
+  explicit instance(VkInstanceCreateInfo const & info);
 };
 
 } // namespace mvk::types

@@ -18,7 +18,7 @@ class buffer : public detail::wrapper<detail::deleter<vkDestroyBuffer>,
 {
 public:
   constexpr buffer() noexcept = default;
-  buffer(VkDevice device, VkBufferCreateInfo const & create_info);
+  buffer(VkDevice device, VkBufferCreateInfo const & info);
 
   [[nodiscard]] constexpr VkDeviceSize
   size() const noexcept;

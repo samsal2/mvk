@@ -17,8 +17,7 @@ class command_buffers
 public:
   constexpr command_buffers() noexcept = default;
 
-  command_buffers(VkDevice device,
-                  VkCommandBufferAllocateInfo const & allocate_info);
+  command_buffers(VkDevice device, VkCommandBufferAllocateInfo const & info);
 
   [[nodiscard]] single_command_buffer
   begin(size_t index,

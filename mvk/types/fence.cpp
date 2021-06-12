@@ -3,11 +3,11 @@
 namespace mvk::types
 {
 
-fence::fence(VkDevice const device, VkFenceCreateInfo const & create_info)
+fence::fence(VkDevice const device, VkFenceCreateInfo const & info)
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateFence(parent(), &create_info, nullptr, &reference());
+      vkCreateFence(parent(), &info, nullptr, &reference());
   MVK_VERIFY(VK_SUCCESS == result);
 }
 

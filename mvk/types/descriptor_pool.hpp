@@ -14,8 +14,8 @@ class descriptor_pool
 {
 public:
   constexpr descriptor_pool() noexcept = default;
-  descriptor_pool(VkDevice device,
-                  VkDescriptorPoolCreateInfo const & create_info);
+
+  descriptor_pool(VkDevice device, VkDescriptorPoolCreateInfo const & info);
 };
 
 } // namespace mvk::types

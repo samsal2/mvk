@@ -13,7 +13,8 @@ class image_view : public detail::wrapper<detail::deleter<vkDestroyImageView>,
 {
 public:
   constexpr image_view() noexcept = default;
-  image_view(VkDevice device, VkImageViewCreateInfo const & create_info);
+
+  image_view(VkDevice device, VkImageViewCreateInfo const & info);
 };
 
 } // namespace mvk::types

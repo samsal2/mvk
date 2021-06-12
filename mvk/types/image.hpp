@@ -18,7 +18,8 @@ class image : public detail::wrapper<detail::deleter<vkDestroyImage>,
 {
 public:
   constexpr image() noexcept = default;
-  image(VkDevice device, VkImageCreateInfo const & create_info);
+
+  image(VkDevice device, VkImageCreateInfo const & info);
 
   class texture
   {

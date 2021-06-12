@@ -5,13 +5,12 @@
 namespace mvk::types
 {
 
-command_buffers::command_buffers(
-    VkDevice const device, VkCommandBufferAllocateInfo const & allocate_info)
-    : wrapper({allocate_info.commandBufferCount, nullptr}, device,
-              allocate_info.commandPool)
+command_buffers::command_buffers(VkDevice const device,
+                                 VkCommandBufferAllocateInfo const & info)
+    : wrapper({info.commandBufferCount, nullptr}, device, info.commandPool)
 {
-  [[maybe_unused]] auto const result = vkAllocateCommandBuffers(
-      parent(), &allocate_info, std::data(reference()));
+  [[maybe_unused]] auto const result =
+      vkAllocateCommandBuffers(parent(), &info, std::data(reference()));
 
   MVK_VERIFY(VK_SUCCESS == result);
 }

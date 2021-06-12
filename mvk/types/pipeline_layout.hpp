@@ -15,8 +15,7 @@ class pipeline_layout
 public:
   constexpr pipeline_layout() noexcept = default;
 
-  pipeline_layout(VkDevice device,
-                  VkPipelineLayoutCreateInfo const & create_info);
+  pipeline_layout(VkDevice device, VkPipelineLayoutCreateInfo const & info);
 };
 
 } // namespace mvk::types

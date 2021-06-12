@@ -13,7 +13,7 @@ class pipeline : public detail::wrapper<detail::deleter<vkDestroyPipeline>,
 {
 public:
   constexpr pipeline() noexcept = default;
-  pipeline(VkDevice device, VkGraphicsPipelineCreateInfo const & create_info);
+  pipeline(VkDevice device, VkGraphicsPipelineCreateInfo const & info);
 };
 
 } // namespace mvk::types

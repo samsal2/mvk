@@ -3,13 +3,12 @@
 namespace mvk::types
 {
 
-descriptor_sets::descriptor_sets(
-    VkDevice const device, VkDescriptorSetAllocateInfo const & allocate_info)
-    : wrapper({allocate_info.descriptorSetCount, nullptr}, device,
-              allocate_info.descriptorPool)
+descriptor_sets::descriptor_sets(VkDevice const device,
+                                 VkDescriptorSetAllocateInfo const & info)
+    : wrapper({info.descriptorSetCount, nullptr}, device, info.descriptorPool)
 {
-  [[maybe_unused]] auto const result = vkAllocateDescriptorSets(
-      parent(), &allocate_info, std::data(reference()));
+  [[maybe_unused]] auto const result =
+      vkAllocateDescriptorSets(parent(), &info, std::data(reference()));
 
   MVK_VERIFY(VK_SUCCESS == result);
 }

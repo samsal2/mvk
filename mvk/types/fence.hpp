@@ -13,7 +13,8 @@ class fence : public detail::wrapper<detail::deleter<vkDestroyFence>,
 {
 public:
   constexpr fence() noexcept = default;
-  fence(VkDevice device, VkFenceCreateInfo const & create_info);
+
+  fence(VkDevice device, VkFenceCreateInfo const & info);
 
   fence &
   reset();

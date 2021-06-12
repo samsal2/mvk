@@ -16,8 +16,7 @@ class shader_module
 public:
   constexpr shader_module() noexcept = default;
 
-  shader_module(VkDevice device,
-                VkShaderModuleCreateInfo const & create_info);
+  shader_module(VkDevice device, VkShaderModuleCreateInfo const & info);
 };
 
 class shader_stage_builder

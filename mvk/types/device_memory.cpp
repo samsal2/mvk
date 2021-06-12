@@ -8,11 +8,11 @@ namespace mvk::types
 {
 
 device_memory::device_memory(VkDevice const device,
-                             VkMemoryAllocateInfo const & allocate_info)
+                             VkMemoryAllocateInfo const & info)
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkAllocateMemory(parent(), &allocate_info, nullptr, &reference());
+      vkAllocateMemory(parent(), &info, nullptr, &reference());
   MVK_VERIFY(VK_SUCCESS == result);
 }
 

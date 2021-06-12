@@ -4,11 +4,11 @@ namespace mvk::types
 {
 
 shader_module::shader_module(VkDevice const device,
-                             VkShaderModuleCreateInfo const & create_info)
+                             VkShaderModuleCreateInfo const & info)
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateShaderModule(parent(), &create_info, nullptr, &reference());
+      vkCreateShaderModule(parent(), &info, nullptr, &reference());
 
   MVK_VERIFY(VK_SUCCESS == result);
 }
