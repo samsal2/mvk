@@ -5,6 +5,6 @@ target_sources(${PROJECT_NAME} PRIVATE buffer_manager.hpp
                                        renderer.cpp
                                        main.cpp)
 
-add_subdirectory(vk_types)
+add_subdirectory(types)
 add_subdirectory(utility)
 add_subdirectory(detail)

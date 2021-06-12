@@ -13,8 +13,7 @@ get_usage(buffer_type type);
 
 } // namespace detail
 
-buffer_manager::buffer_manager(vk_types::device * const device, vk_types::command_pool * const command_pool, buffer_type const type,
-                               VkDeviceSize const default_size)
+buffer_manager::buffer_manager(types::device * const device, types::command_pool * const command_pool, buffer_type const type, VkDeviceSize const default_size)
     : device_(device), command_pool_(command_pool), type_(type)
 {
     create_new_buffers_and_memories(default_size);
@@ -58,7 +57,7 @@ buffer_manager::create_new_buffers_and_memories(VkDeviceSize const size)
 
     auto const create_buffer = [this, &vertex_buffer_create_info]
     {
-        return vk_types::buffer(device_->get(), vertex_buffer_create_info);
+        return types::buffer(device_->get(), vertex_buffer_create_info);
     };
 
     std::generate(std::begin(buffers_), std::end(buffers_), create_buffer);
@@ -82,7 +81,7 @@ buffer_manager::create_new_buffers_and_memories(VkDeviceSize const size)
     }();
 
     auto const physical_device   = device_->physical_device();
-    auto const memory_type_index = vk_types::detail::find_memory_type(physical_device, requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    auto const memory_type_index = types::detail::find_memory_type(physical_device, requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     MVK_VERIFY(memory_type_index.has_value());
 
@@ -91,7 +90,7 @@ buffer_manager::create_new_buffers_and_memories(VkDeviceSize const size)
     allocate_info.allocationSize  = std::size(buffers_) * aligned_size_;
     allocate_info.memoryTypeIndex = memory_type_index.value();
 
-    buffers_memory_ = vk_types::device_memory(device_->get(), allocate_info);
+    buffers_memory_ = types::device_memory(device_->get(), allocate_info);
 
     for (size_t i = 0; i < std::size(buffers_); ++i)
     {

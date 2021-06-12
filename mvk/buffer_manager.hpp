@@ -1,8 +1,8 @@
 #ifndef MVK_BUFFER_MANAGER_HPP_INCLUDED
 #define MVK_BUFFER_MANAGER_HPP_INCLUDED
 
+#include "types/types.hpp"
 #include "utility/slice.hpp"
-#include "vk_types/vk_types.hpp"
 
 #include <array>
 #include <vector>
@@ -29,12 +29,12 @@ public:
 
     constexpr buffer_manager() noexcept = default;
 
-    buffer_manager(vk_types::device * device, vk_types::command_pool * command_pool, buffer_type type, VkDeviceSize default_size = default_buffer_size);
+    buffer_manager(types::device * device, types::command_pool * command_pool, buffer_type type, VkDeviceSize default_size = default_buffer_size);
 
     struct allocation
     {
-        vk_types::buffer & buffer;
-        VkDeviceSize       offset;
+        types::buffer & buffer;
+        VkDeviceSize    offset;
     };
 
     [[nodiscard]] allocation
@@ -53,22 +53,22 @@ protected:
     void
     clear_garbage();
 
-    [[nodiscard]] constexpr vk_types::buffer &
+    [[nodiscard]] constexpr types::buffer &
     current_buffer() noexcept;
 
-    [[nodiscard]] constexpr vk_types::buffer const &
+    [[nodiscard]] constexpr types::buffer const &
     current_buffer() const noexcept;
 
-    [[nodiscard]] constexpr std::vector<vk_types::buffer> &
+    [[nodiscard]] constexpr std::vector<types::buffer> &
     current_garbage_buffers() noexcept;
 
-    [[nodiscard]] constexpr std::vector<vk_types::buffer> const &
+    [[nodiscard]] constexpr std::vector<types::buffer> const &
     current_garbage_buffers() const noexcept;
 
-    [[nodiscard]] constexpr std::vector<vk_types::device_memory> &
+    [[nodiscard]] constexpr std::vector<types::device_memory> &
     current_garbage_memories() noexcept;
 
-    [[nodiscard]] constexpr std::vector<vk_types::device_memory> const &
+    [[nodiscard]] constexpr std::vector<types::device_memory> const &
     current_garbage_memories() const noexcept;
 
     [[nodiscard]] constexpr VkDeviceSize
@@ -79,15 +79,15 @@ protected:
 
 private:
     // TODO(samuel): use shared_ptr
-    vk_types::device *       device_       = nullptr;
-    vk_types::command_pool * command_pool_ = nullptr;
+    types::device *       device_       = nullptr;
+    types::command_pool * command_pool_ = nullptr;
 
-    std::array<vk_types::buffer, dynamic_buffer_count> buffers_        = {};
-    std::array<VkDeviceSize, dynamic_buffer_count>     offsets_        = {};
-    vk_types::device_memory                            buffers_memory_ = {};
+    std::array<types::buffer, dynamic_buffer_count> buffers_        = {};
+    std::array<VkDeviceSize, dynamic_buffer_count>  offsets_        = {};
+    types::device_memory                            buffers_memory_ = {};
 
-    std::array<std::vector<vk_types::buffer>, garbage_buffer_count>        garbage_buffers_          = {};
-    std::array<std::vector<vk_types::device_memory>, garbage_buffer_count> garbage_buffers_memories_ = {};
+    std::array<std::vector<types::buffer>, garbage_buffer_count>        garbage_buffers_          = {};
+    std::array<std::vector<types::device_memory>, garbage_buffer_count> garbage_buffers_memories_ = {};
 
     size_t current_buffer_index_  = 0;
     size_t current_garbage_index_ = 0;
@@ -96,37 +96,37 @@ private:
     buffer_type  type_         = buffer_type::none;
 };
 
-[[nodiscard]] constexpr vk_types::buffer &
+[[nodiscard]] constexpr types::buffer &
 buffer_manager::current_buffer() noexcept
 {
     return buffers_[current_buffer_index_];
 }
 
-[[nodiscard]] constexpr vk_types::buffer const &
+[[nodiscard]] constexpr types::buffer const &
 buffer_manager::current_buffer() const noexcept
 {
     return buffers_[current_buffer_index_];
 }
 
-[[nodiscard]] constexpr std::vector<vk_types::buffer> &
+[[nodiscard]] constexpr std::vector<types::buffer> &
 buffer_manager::current_garbage_buffers() noexcept
 {
     return garbage_buffers_[current_garbage_index_];
 }
 
-[[nodiscard]] constexpr std::vector<vk_types::buffer> const &
+[[nodiscard]] constexpr std::vector<types::buffer> const &
 buffer_manager::current_garbage_buffers() const noexcept
 {
     return garbage_buffers_[current_garbage_index_];
 }
 
-[[nodiscard]] constexpr std::vector<vk_types::device_memory> &
+[[nodiscard]] constexpr std::vector<types::device_memory> &
 buffer_manager::current_garbage_memories() noexcept
 {
     return garbage_buffers_memories_[current_garbage_index_];
 }
 
-[[nodiscard]] constexpr std::vector<vk_types::device_memory> const &
+[[nodiscard]] constexpr std::vector<types::device_memory> const &
 buffer_manager::current_garbage_memories() const noexcept
 {
     return garbage_buffers_memories_[current_garbage_index_];

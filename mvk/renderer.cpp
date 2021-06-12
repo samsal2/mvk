@@ -16,7 +16,7 @@ namespace mvk
 void
 renderer::init()
 {
-    window_ = vk_types::window({600, 600});
+    window_ = types::window({600, 600});
 
     init_vulkan();
     init_swapchain();
@@ -33,7 +33,7 @@ renderer::init()
 void
 renderer::init_vulkan()
 {
-    MVK_VERIFY(vk_types::validation::check_support());
+    MVK_VERIFY(types::validation::check_support());
 
     auto application_info = []
     {
@@ -46,7 +46,7 @@ renderer::init_vulkan()
         return info;
     }();
 
-    auto const validation_layers = vk_types::validation::validation_layers_data();
+    auto const validation_layers = types::validation::validation_layers_data();
 
     auto const required_extensions = window_.required_extensions();
 
@@ -57,7 +57,7 @@ renderer::init_vulkan()
 
         auto info                    = VkInstanceCreateInfo();
         info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        info.pNext                   = vk_types::validation::debug_create_info_ref();
+        info.pNext                   = types::validation::debug_create_info_ref();
         info.pApplicationInfo        = &application_info;
         info.enabledLayerCount       = static_cast<uint32_t>(validation_count);
         info.ppEnabledLayerNames     = validation_data;
@@ -66,9 +66,9 @@ renderer::init_vulkan()
         return info;
     }();
 
-    instance_        = vk_types::instance(instance_create_info);
-    surface_         = vk_types::surface(instance_.get(), window_.get());
-    debug_messenger_ = vk_types::debug_messenger(instance_.get());
+    instance_        = types::instance(instance_create_info);
+    surface_         = types::surface(instance_.get(), window_.get());
+    debug_messenger_ = types::debug_messenger(instance_.get());
 
     constexpr auto device_extensions    = std::array{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
     auto const     physical_device      = detail::choose_physical_device(surface_.parent(), surface_.get(), device_extensions);
@@ -127,7 +127,7 @@ renderer::init_vulkan()
         return info;
     }();
 
-    device_ = vk_types::device(physical_device, device_create_info);
+    device_ = types::device(physical_device, device_create_info);
 
     auto const command_pool_create_info = [this]
     {
@@ -140,7 +140,7 @@ renderer::init_vulkan()
         return info;
     }();
 
-    command_pool_ = vk_types::command_pool(device_.get(), command_pool_create_info);
+    command_pool_ = types::command_pool(device_.get(), command_pool_create_info);
 }
 
 void
@@ -192,7 +192,7 @@ renderer::init_swapchain()
         return info;
     }();
 
-    swapchain_ = vk_types::swapchain(device_.get(), swapchain_create_info);
+    swapchain_ = types::swapchain(device_.get(), swapchain_create_info);
 
     auto const depth_image_create_info = [this]
     {
@@ -214,7 +214,7 @@ renderer::init_swapchain()
         return info;
     }();
 
-    depth_image_        = vk_types::image(device_.get(), depth_image_create_info);
+    depth_image_        = types::image(device_.get(), depth_image_create_info);
     depth_image_memory_ = detail::create_device_memory(device_, depth_image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     auto const depth_image_view_create_info = [this]
@@ -236,7 +236,7 @@ renderer::init_swapchain()
         return info;
     }();
 
-    depth_image_view_ = vk_types::image_view(device_.get(), depth_image_view_create_info);
+    depth_image_view_ = types::image_view(device_.get(), depth_image_view_create_info);
     depth_image_.transition_layout(device_, command_pool_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
@@ -251,7 +251,7 @@ renderer::preload_stuff()
 
     builder_.add_stage(std::move(vertex_shader), VK_SHADER_STAGE_VERTEX_BIT).add_stage(std::move(fragment_shader), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    texture_ = vk_types::image::texture("../../assets/viking_room.png");
+    texture_ = types::image::texture("../../assets/viking_room.png");
 
     auto const image_create_info = [this]
     {
@@ -275,7 +275,7 @@ renderer::preload_stuff()
         return info;
     }();
 
-    image_        = vk_types::image(device_.get(), image_create_info);
+    image_        = types::image(device_.get(), image_create_info);
     image_memory_ = detail::create_device_memory(device_, image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     image_.transition_layout(device_, command_pool_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     image_.stage(device_, command_pool_, texture_);
@@ -300,7 +300,7 @@ renderer::preload_stuff()
         return info;
     }();
 
-    image_view_ = vk_types::image_view(device_.get(), image_view_create_info);
+    image_view_ = types::image_view(device_.get(), image_view_create_info);
 
     auto const sampler_create_info = [this]
     {
@@ -325,7 +325,7 @@ renderer::preload_stuff()
         return info;
     }();
 
-    sampler_ = vk_types::sampler(device_.get(), sampler_create_info);
+    sampler_ = types::sampler(device_.get(), sampler_create_info);
 
     vertex_buffer_manager_ = buffer_manager(&device_, &command_pool_, buffer_type::vertex);
     index_buffer_manager_  = buffer_manager(&device_, &command_pool_, buffer_type::index);
@@ -421,7 +421,7 @@ renderer::init_main_renderpass()
         return info;
     }();
 
-    render_pass_ = vk_types::render_pass(device_.get(), render_pass_create_info);
+    render_pass_ = types::render_pass(device_.get(), render_pass_create_info);
 }
 
 void
@@ -469,7 +469,7 @@ renderer::init_commands()
         return info;
     }();
 
-    command_buffers_ = vk_types::command_buffers(device_.get(), command_buffers_allocate_info);
+    command_buffers_ = types::command_buffers(device_.get(), command_buffers_allocate_info);
 }
 
 void
@@ -507,7 +507,7 @@ renderer::init_descriptors()
         return info;
     }();
 
-    descriptor_set_layout_ = vk_types::descriptor_set_layout(device_.get(), descriptor_set_layout_create_info);
+    descriptor_set_layout_ = types::descriptor_set_layout(device_.get(), descriptor_set_layout_create_info);
 
     auto const images_count = static_cast<uint32_t>(std::size(swapchain_.images()));
 
@@ -539,7 +539,7 @@ renderer::init_descriptors()
         return info;
     }();
 
-    descriptor_pool_ = vk_types::descriptor_pool(device_.get(), descriptor_pool_create_info);
+    descriptor_pool_ = types::descriptor_pool(device_.get(), descriptor_pool_create_info);
 
     auto const images_size = std::size(swapchain_.images());
 
@@ -557,7 +557,7 @@ renderer::init_descriptors()
         return info;
     }();
 
-    descriptor_sets_ = vk_types::descriptor_sets(device_.get(), descriptor_sets_allocate_info);
+    descriptor_sets_ = types::descriptor_sets(device_.get(), descriptor_sets_allocate_info);
 
     uniform_buffers_.reserve(images_size);
     uniform_buffers_memory_.reserve(images_size);
@@ -576,8 +576,7 @@ renderer::init_descriptors()
 
         uniform_buffers_.emplace_back(device_.get(), uniform_buffer_create_info);
 
-        auto uniform_buffer_memory =
-            detail::create_device_memory(device_, uniform_buffers_.back(), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        auto uniform_buffer_memory = detail::create_device_memory(device_, uniform_buffers_.back(), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
         uniform_buffers_memory_.push_back(std::move(uniform_buffer_memory));
 
@@ -623,7 +622,7 @@ renderer::init_descriptors()
                                                       return image;
                                                   }()};
 
-        vk_types::update_descriptor_sets(device_.get(), descriptor_writes, {});
+        types::update_descriptor_sets(device_.get(), descriptor_writes, {});
     }
 }
 
@@ -643,7 +642,7 @@ renderer::init_pipeline()
         return info;
     }();
 
-    pipeline_layout_ = vk_types::pipeline_layout(device_.get(), pipeline_layout_create_info);
+    pipeline_layout_ = types::pipeline_layout(device_.get(), pipeline_layout_create_info);
 
     auto const vertex_input_binding_description = []
     {
@@ -836,7 +835,7 @@ renderer::init_pipeline()
         return info;
     }();
 
-    pipeline_ = vk_types::pipeline(device_.get(), pipeline_create_info);
+    pipeline_ = types::pipeline(device_.get(), pipeline_create_info);
 }
 void
 renderer::init_sync()
@@ -858,9 +857,9 @@ renderer::init_sync()
 
     for (auto i = size_t(0); i < max_frames_in_flight; ++i)
     {
-        image_available_semaphores_.at(i) = vk_types::semaphore(device_.get(), semaphore_create_info);
-        render_finished_semaphores_.at(i) = vk_types::semaphore(device_.get(), semaphore_create_info);
-        frame_in_flight_fences_.at(i)     = vk_types::fence(device_.get(), fence_create_info);
+        image_available_semaphores_.at(i) = types::semaphore(device_.get(), semaphore_create_info);
+        render_finished_semaphores_.at(i) = types::semaphore(device_.get(), semaphore_create_info);
+        frame_in_flight_fences_.at(i)     = types::fence(device_.get(), fence_create_info);
     }
 
     image_in_flight_fences_.resize(std::size(swapchain_.images()), nullptr);

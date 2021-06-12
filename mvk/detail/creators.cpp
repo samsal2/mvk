@@ -3,8 +3,8 @@
 namespace mvk::detail
 {
 
-[[nodiscard]] vk_types::shader_module
-create_shader_module(vk_types::device const & device, utility::slice<char> const code)
+[[nodiscard]] types::shader_module
+create_shader_module(types::device const & device, utility::slice<char> const code)
 {
     auto info     = VkShaderModuleCreateInfo();
     info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

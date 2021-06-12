@@ -1,7 +1,7 @@
 #ifndef MVK_DETAIL_READERS_HPP_INCLUDED
 #define MVK_DETAIL_READERS_HPP_INCLUDED
 
-#include "vk_types/vk_types.hpp"
+#include "types/types.hpp"
 
 #include <filesystem>
 #include <utility>

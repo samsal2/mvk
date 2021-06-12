@@ -1,9 +1,9 @@
 #ifndef MVK_DETAIL_MISC_HPP_INCLUDED
 #define MVK_DETAIL_MISC_HPP_INCLUDED
 
+#include "types/types.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
-#include "vk_types/vk_types.hpp"
 
 namespace mvk::detail
 {
