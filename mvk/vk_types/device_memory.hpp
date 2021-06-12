@@ -5,14 +5,14 @@
 #include "utility/types.hpp"
 #include "vk_types/buffer.hpp"
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
 class image;
 
-class device_memory : public detail::unique_wrapper_with_parent<VkDeviceMemory, VkDevice, vkFreeMemory>
+class device_memory : public detail::wrapper<detail::deleter<vkFreeMemory>, detail::handle<VkDeviceMemory>, detail::parent<VkDevice>>
 {
 public:
     constexpr device_memory() noexcept = default;

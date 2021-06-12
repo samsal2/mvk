@@ -2,12 +2,12 @@
 #define MVK_VK_TYPES_SAMPLER_HPP_INCLUDE
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
-class sampler : public detail::unique_wrapper_with_parent<VkSampler, VkDevice, vkDestroySampler>
+class sampler : public detail::wrapper<detail::deleter<vkDestroySampler>, detail::handle<VkSampler>, detail::parent<VkDevice>>
 {
 public:
     constexpr sampler() noexcept = default;

@@ -4,12 +4,12 @@
 #include "vk_types/common.hpp"
 #include "vk_types/detail/checkers.hpp"
 #include "vk_types/detail/misc.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
-class surface : public detail::unique_wrapper_with_parent<VkSurfaceKHR, VkInstance, vkDestroySurfaceKHR>
+class surface : public detail::wrapper<detail::deleter<vkDestroySurfaceKHR>, detail::handle<VkSurfaceKHR>, detail::parent<VkInstance>>
 {
 public:
     constexpr surface() noexcept = default;

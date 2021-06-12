@@ -6,7 +6,7 @@ namespace mvk::vk_types
 {
 
 command_buffers::command_buffers(VkDevice const device, VkCommandBufferAllocateInfo const & allocate_info)
-    : unique_wrapper_with_parent_and_pool_allocated({allocate_info.commandBufferCount, nullptr}, device, allocate_info.commandPool)
+    : wrapper({allocate_info.commandBufferCount, nullptr}, device, allocate_info.commandPool)
 {
     [[maybe_unused]] auto const result = vkAllocateCommandBuffers(parent(), &allocate_info, std::data(reference()));
 

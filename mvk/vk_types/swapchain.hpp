@@ -3,7 +3,7 @@
 
 #include "utility/slice.hpp"
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 #include "vk_types/image_view.hpp"
 
 #include <optional>
@@ -12,7 +12,7 @@
 namespace mvk::vk_types
 {
 
-class swapchain : public detail::unique_wrapper_with_parent<VkSwapchainKHR, VkDevice, vkDestroySwapchainKHR>
+class swapchain : public detail::wrapper<detail::deleter<vkDestroySwapchainKHR>, detail::handle<VkSwapchainKHR>, detail::parent<VkDevice>>
 {
 public:
     swapchain() noexcept = default;

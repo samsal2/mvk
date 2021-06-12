@@ -17,7 +17,7 @@
 namespace mvk::vk_types
 {
 
-image::image(VkDevice const device, VkImageCreateInfo const & create_info) : unique_wrapper_with_parent(nullptr, device), mipmap_levels_(create_info.mipLevels)
+image::image(VkDevice const device, VkImageCreateInfo const & create_info) : wrapper(nullptr, device), mipmap_levels_(create_info.mipLevels)
 {
     [[maybe_unused]] auto const result = vkCreateImage(parent(), &create_info, nullptr, &reference());
     MVK_VERIFY(VK_SUCCESS == result);
@@ -250,9 +250,7 @@ image::generate_mipmaps(device const & device, command_pool const & command_pool
 
 image::texture::texture(std::filesystem::path const & path)
 {
-    [[maybe_unused]] auto const exists = std::filesystem::exists(path);
-
-    MVK_VERIFY(exists);
+    MVK_VERIFY(std::filesystem::exists(path));
 
     auto width    = 0;
     auto height   = 0;

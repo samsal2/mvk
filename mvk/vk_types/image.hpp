@@ -2,7 +2,7 @@
 #define MVK_VK_TYPES_IMAGE_HPP_INCLUDE
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 #include <filesystem>
 
@@ -12,7 +12,7 @@ namespace mvk::vk_types
 class device;
 class command_pool;
 
-class image : public detail::unique_wrapper_with_parent<VkImage, VkDevice, vkDestroyImage>
+class image : public detail::wrapper<detail::deleter<vkDestroyImage>, detail::handle<VkImage>, detail::parent<VkDevice>>
 {
 public:
     constexpr image() noexcept = default;

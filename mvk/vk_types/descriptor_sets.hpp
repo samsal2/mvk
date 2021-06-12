@@ -3,12 +3,13 @@
 
 #include "utility/slice.hpp"
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
-class descriptor_sets : public detail::unique_wrapper_with_parent_and_pool_allocated<VkDescriptorSet, VkDevice, VkDescriptorPool, vkFreeDescriptorSets>
+class descriptor_sets
+    : public detail::wrapper<detail::deleter<vkFreeDescriptorSets>, detail::handle<VkDescriptorSet>, detail::parent<VkDevice>, detail::pool<VkDescriptorPool>>
 {
 public:
     constexpr descriptor_sets() noexcept = default;

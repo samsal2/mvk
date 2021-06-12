@@ -7,14 +7,13 @@
 namespace mvk::vk_types
 {
 
-device_memory::device_memory(VkDevice const device, VkMemoryAllocateInfo const & allocate_info) : unique_wrapper_with_parent(nullptr, device)
+device_memory::device_memory(VkDevice const device, VkMemoryAllocateInfo const & allocate_info) : wrapper(nullptr, device)
 {
     [[maybe_unused]] auto const result = vkAllocateMemory(parent(), &allocate_info, nullptr, &reference());
-
     MVK_VERIFY(VK_SUCCESS == result);
 }
 
-device_memory::device_memory(device_memory && other) noexcept : unique_wrapper_with_parent(std::move(other))
+device_memory::device_memory(device_memory && other) noexcept : wrapper(std::move(other))
 {
     std::swap(data_, other.data_);
 }
@@ -23,7 +22,7 @@ device_memory &
 device_memory::operator=(device_memory && other) noexcept
 {
     std::swap(data_, other.data_);
-    unique_wrapper_with_parent::operator=(std::move(other));
+    wrapper::operator=(std::move(other));
     return *this;
 }
 
@@ -39,7 +38,6 @@ device_memory &
 device_memory::bind(buffer const & buffer, VkDeviceSize const offset)
 {
     [[maybe_unused]] auto const result = vkBindBufferMemory(parent(), buffer.get(), get(), offset);
-
     MVK_VERIFY(VK_SUCCESS == result);
     return *this;
 }
@@ -48,7 +46,6 @@ device_memory &
 device_memory::bind(image const & image, VkDeviceSize const offset)
 {
     [[maybe_unused]] auto const result = vkBindImageMemory(parent(), image.get(), get(), offset);
-
     MVK_VERIFY(VK_SUCCESS == result);
     return *this;
 }
@@ -57,7 +54,6 @@ device_memory &
 device_memory::map(VkDeviceSize const size, VkDeviceSize const offset)
 {
     [[maybe_unused]] auto const result = vkMapMemory(parent(), get(), offset, size, 0, &data_);
-
     MVK_VERIFY(VK_SUCCESS == result);
     return *this;
 }
@@ -67,12 +63,11 @@ device_memory::unmap() noexcept
 {
     vkUnmapMemory(parent(), get());
     data_ = nullptr;
-
     return *this;
 }
 
 device_memory &
-device_memory::copy_data(utility::slice<std::byte> data_source, VkDeviceSize const offset)
+device_memory::copy_data(utility::slice<std::byte> const data_source, VkDeviceSize const offset)
 {
     MVK_VERIFY(data_);
     auto const [data, size] = utility::bind_data_and_size(data_source);

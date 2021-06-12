@@ -3,7 +3,7 @@
 namespace mvk::vk_types
 {
 
-surface::surface(VkInstance const instance, GLFWwindow * const window) : unique_wrapper_with_parent(nullptr, instance)
+surface::surface(VkInstance const instance, GLFWwindow * const window) : wrapper(nullptr, instance)
 {
     [[maybe_unused]] auto const result = glfwCreateWindowSurface(parent(), window, nullptr, &reference());
 

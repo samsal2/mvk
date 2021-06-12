@@ -7,7 +7,7 @@
 namespace mvk::vk_types
 {
 
-device::device(VkPhysicalDevice physical_device, VkDeviceCreateInfo const & create_info) : unique_wrapper(nullptr), physical_device_(physical_device)
+device::device(VkPhysicalDevice physical_device, VkDeviceCreateInfo const & create_info) : wrapper(), physical_device_(physical_device)
 {
     [[maybe_unused]] auto const result = vkCreateDevice(physical_device_, &create_info, nullptr, &reference());
 

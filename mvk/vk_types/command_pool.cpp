@@ -3,7 +3,7 @@
 namespace mvk::vk_types
 {
 
-command_pool::command_pool(VkDevice const device, VkCommandPoolCreateInfo const & create_info) : unique_wrapper_with_parent(nullptr, device)
+command_pool::command_pool(VkDevice const device, VkCommandPoolCreateInfo const & create_info) : wrapper(nullptr, device)
 {
     [[maybe_unused]] auto const result = vkCreateCommandPool(parent(), &create_info, nullptr, &reference());
     MVK_VERIFY(VK_SUCCESS == result);

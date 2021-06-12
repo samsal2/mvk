@@ -2,12 +2,12 @@
 #define MVK_VK_TYPES_INSTANCE_HPP_INCLUDED
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
-class instance : public detail::unique_wrapper<VkInstance, vkDestroyInstance>
+class instance : public detail::wrapper<detail::deleter<vkDestroyInstance>, detail::handle<VkInstance>>
 {
 public:
     constexpr instance() noexcept = default;

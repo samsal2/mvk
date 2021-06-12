@@ -3,7 +3,7 @@
 namespace mvk::vk_types
 {
 
-shader_module::shader_module(VkDevice const device, VkShaderModuleCreateInfo const & create_info) : unique_wrapper_with_parent(nullptr, device)
+shader_module::shader_module(VkDevice const device, VkShaderModuleCreateInfo const & create_info) : wrapper(nullptr, device)
 {
     [[maybe_unused]] auto const result = vkCreateShaderModule(parent(), &create_info, nullptr, &reference());
 

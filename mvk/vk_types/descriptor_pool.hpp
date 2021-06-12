@@ -2,12 +2,12 @@
 #define MVK_VK_TYPES_DESCRIPTOR_POOL_HPP_INCLUDED
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
-class descriptor_pool : public detail::unique_wrapper_with_parent<VkDescriptorPool, VkDevice, vkDestroyDescriptorPool>
+class descriptor_pool : public detail::wrapper<detail::deleter<vkDestroyDescriptorPool>, detail::handle<VkDescriptorPool>, detail::parent<VkDevice>>
 {
 public:
     constexpr descriptor_pool() noexcept = default;

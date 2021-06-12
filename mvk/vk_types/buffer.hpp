@@ -4,7 +4,7 @@
 #include "utility/slice.hpp"
 #include "utility/types.hpp"
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
@@ -12,7 +12,7 @@ namespace mvk::vk_types
 class device;
 class command_pool;
 
-class buffer : public detail::unique_wrapper_with_parent<VkBuffer, VkDevice, vkDestroyBuffer>
+class buffer : public detail::wrapper<detail::deleter<vkDestroyBuffer>, detail::handle<VkBuffer>, detail::parent<VkDevice>>
 {
 public:
     constexpr buffer() noexcept = default;

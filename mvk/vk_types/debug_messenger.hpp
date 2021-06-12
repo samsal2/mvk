@@ -2,7 +2,7 @@
 #define MVK_VK_TYPES_DEBUG_MESSENGER_HPP_INCLUDED
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 #include "vk_types/validation/validation.hpp"
 
 namespace mvk::vk_types
@@ -10,7 +10,8 @@ namespace mvk::vk_types
 
 class instance;
 
-class debug_messenger : public detail::unique_wrapper_with_parent<VkDebugUtilsMessengerEXT, VkInstance, validation::destroy_debug_messenger>
+class debug_messenger
+    : public detail::wrapper<detail::deleter<validation::destroy_debug_messenger>, detail::handle<VkDebugUtilsMessengerEXT>, detail::parent<VkInstance>>
 {
 public:
     constexpr debug_messenger() noexcept = default;

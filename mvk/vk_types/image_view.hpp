@@ -2,12 +2,12 @@
 #define MVK_VK_TYPES_IMAGE_VIEW_HPP_INCLUDED
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
-class image_view : public detail::unique_wrapper_with_parent<VkImageView, VkDevice, vkDestroyImageView>
+class image_view : public detail::wrapper<detail::deleter<vkDestroyImageView>, detail::handle<VkImageView>, detail::parent<VkDevice>>
 {
 public:
     constexpr image_view() noexcept = default;

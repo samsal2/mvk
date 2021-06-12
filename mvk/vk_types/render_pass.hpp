@@ -2,12 +2,12 @@
 #define MVK_VK_TYPES_RENDER_PASS_HPP_INCLUDED
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
-class render_pass : public detail::unique_wrapper_with_parent<VkRenderPass, VkDevice, vkDestroyRenderPass>
+class render_pass : public detail::wrapper<detail::deleter<vkDestroyRenderPass>, detail::handle<VkRenderPass>, detail::parent<VkDevice>>
 {
 public:
     constexpr render_pass() noexcept = default;

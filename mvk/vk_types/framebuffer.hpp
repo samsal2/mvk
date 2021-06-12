@@ -2,12 +2,12 @@
 #define MVK_VK_TYPES_FRAMEBUFFER_HPP_INCLUDED
 
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
-class framebuffer : public detail::unique_wrapper_with_parent<VkFramebuffer, VkDevice, vkDestroyFramebuffer>
+class framebuffer : public detail::wrapper<detail::deleter<vkDestroyFramebuffer>, detail::handle<VkFramebuffer>, detail::parent<VkDevice>>
 {
 public:
     constexpr framebuffer() noexcept = default;

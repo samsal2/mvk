@@ -3,15 +3,16 @@
 
 #include "utility/slice.hpp"
 #include "vk_types/common.hpp"
-#include "vk_types/detail/wrappers.hpp"
+#include "vk_types/detail/wrapper.hpp"
 
 namespace mvk::vk_types
 {
 
-class shader_module : public detail::unique_wrapper_with_parent<VkShaderModule, VkDevice, vkDestroyShaderModule>
+class shader_module : public detail::wrapper<detail::deleter<vkDestroyShaderModule>, detail::handle<VkShaderModule>, detail::parent<VkDevice>>
 {
 public:
     constexpr shader_module() noexcept = default;
+
     shader_module(VkDevice device, VkShaderModuleCreateInfo const & create_info);
 };
 

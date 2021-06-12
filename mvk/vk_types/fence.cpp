@@ -3,7 +3,7 @@
 namespace mvk::vk_types
 {
 
-fence::fence(VkDevice const device, VkFenceCreateInfo const & create_info) : unique_wrapper_with_parent(nullptr, device)
+fence::fence(VkDevice const device, VkFenceCreateInfo const & create_info) : wrapper(nullptr, device)
 {
     [[maybe_unused]] auto const result = vkCreateFence(parent(), &create_info, nullptr, &reference());
     MVK_VERIFY(VK_SUCCESS == result);

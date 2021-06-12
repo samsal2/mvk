@@ -4,7 +4,7 @@ namespace mvk::vk_types
 {
 
 descriptor_sets::descriptor_sets(VkDevice const device, VkDescriptorSetAllocateInfo const & allocate_info)
-    : unique_wrapper_with_parent_and_pool_allocated({allocate_info.descriptorSetCount, nullptr}, device, allocate_info.descriptorPool)
+    : wrapper({allocate_info.descriptorSetCount, nullptr}, device, allocate_info.descriptorPool)
 {
     [[maybe_unused]] auto const result = vkAllocateDescriptorSets(parent(), &allocate_info, std::data(reference()));
 

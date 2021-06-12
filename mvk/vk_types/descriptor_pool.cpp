@@ -3,7 +3,7 @@
 namespace mvk::vk_types
 {
 
-descriptor_pool::descriptor_pool(VkDevice const device, VkDescriptorPoolCreateInfo const & create_info) : unique_wrapper_with_parent(nullptr, device)
+descriptor_pool::descriptor_pool(VkDevice const device, VkDescriptorPoolCreateInfo const & create_info) : wrapper(nullptr, device)
 {
     [[maybe_unused]] auto const result = vkCreateDescriptorPool(parent(), &create_info, nullptr, &reference());
 
