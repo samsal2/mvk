@@ -95,7 +95,9 @@ check_extension_support(
                                        std::data(extensions));
 
   auto is_present = [&extensions](auto const & extension)
-  { return is_extension_present(extension, extensions); };
+  {
+    return is_extension_present(extension, extensions);
+  };
 
   auto const begin_extensions = std::begin(device_extensions);
   auto const end_extensions = std::end(device_extensions);

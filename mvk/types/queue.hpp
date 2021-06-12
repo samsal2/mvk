@@ -23,16 +23,14 @@ public:
   index() const noexcept;
 
   queue &
-  wait_idle() noexcept;
+  wait_idle();
 
   queue &
-  submit(VkSubmitInfo const & submit_info);
-  queue &
-  submit(VkSubmitInfo const & submit_info, fence const & fence);
+  submit(VkSubmitInfo const & info, VkFence fence = nullptr);
 
   template <typename Checker = decltype(detail::default_result_checker)>
   requires detail::result_checker<Checker> queue &
-  present(VkPresentInfoKHR const & present_info,
+  present(VkPresentInfoKHR const & info,
           Checker && check = detail::default_result_checker);
 
 private:
@@ -54,9 +52,9 @@ queue::index() const noexcept
 
 template <typename Checker>
 requires detail::result_checker<Checker> queue &
-queue::present(VkPresentInfoKHR const & present_info, Checker && check)
+queue::present(VkPresentInfoKHR const & info, Checker && check)
 {
-  std::forward<Checker>(check)(vkQueuePresentKHR(get(), &present_info));
+  std::forward<Checker>(check)(vkQueuePresentKHR(get(), &info));
   return *this;
 }
 

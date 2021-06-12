@@ -225,25 +225,25 @@ slice(T const &) -> slice<detail::value_type_from_data_t<T>>;
 
 template <typename T, size_t E>
 [[nodiscard]] constexpr slice<std::byte, E * sizeof(T)>
-as_bytes(slice<T, E> const data_source) noexcept
+as_bytes(slice<T, E> const src) noexcept
 {
-  return {force_cast_to_byte(std::data(data_source)), E * sizeof(T)};
+  return {force_cast_to_byte(std::data(src)), E * sizeof(T)};
 }
 
 template <typename T>
 [[nodiscard]] constexpr slice<std::byte>
-as_bytes(slice<T> const data_source) noexcept
+as_bytes(slice<T> const src) noexcept
 {
-  auto const size = std::size(data_source);
-  return {force_cast_to_byte(std::data(data_source)), size * sizeof(T)};
+  auto const size = std::size(src);
+  return {force_cast_to_byte(std::data(src)), size * sizeof(T)};
 }
 
 template <typename Container>
 requires with_data_and_size<Container>
 [[nodiscard]] constexpr slice<std::byte>
-as_bytes(Container const & data_source) noexcept
+as_bytes(Container const & src) noexcept
 {
-  return as_bytes(slice(data_source));
+  return as_bytes(slice(src));
 }
 
 } // namespace mvk::utility

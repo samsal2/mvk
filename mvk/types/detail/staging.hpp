@@ -15,7 +15,7 @@ namespace mvk::types::detail
 
 [[nodiscard]] std::pair<buffer, device_memory>
 create_staging_buffer_and_memory(device const & device,
-                                 utility::slice<std::byte> data_source);
+                                 utility::slice<std::byte> src);
 
 [[nodiscard]] command_buffers
 create_staging_command_buffer(device const & device,

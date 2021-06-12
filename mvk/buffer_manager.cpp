@@ -16,7 +16,7 @@ get_usage(buffer_type type);
 buffer_manager::buffer_manager(types::device * const device,
                                types::command_pool * const command_pool,
                                buffer_type const type,
-                               VkDeviceSize const default_size)
+                               types::device_size const default_size)
     : device_(device), command_pool_(command_pool), type_(type)
 {
   create_new_buffers_and_memories(default_size);
@@ -26,9 +26,9 @@ buffer_manager::buffer_manager(types::device * const device,
 // as much with the downside of needed to call allocate on every element using
 // a buffer each time
 [[nodiscard]] buffer_manager::allocation
-buffer_manager::map(utility::slice<std::byte> const data_source)
+buffer_manager::map(utility::slice<std::byte> const src)
 {
-  auto const size = std::size(data_source);
+  auto const size = std::size(src);
   auto const next_offset = current_offset() + size;
   auto const buffer_size = std::size(current_buffer());
 
@@ -41,12 +41,12 @@ buffer_manager::map(utility::slice<std::byte> const data_source)
 
   auto const offset = current_offset();
   // TODO(samuel): stage creates a new staging buffer and memory on every call
-  current_buffer().stage(*device_, *command_pool_, data_source, offset);
+  current_buffer().stage(*device_, *command_pool_, src, offset);
   return {current_buffer(), update_current_offset(size)};
 }
 
 void
-buffer_manager::create_new_buffers_and_memories(VkDeviceSize const size)
+buffer_manager::create_new_buffers_and_memories(types::device_size const size)
 {
   auto const vertex_buffer_create_info = [this, size]
   {
@@ -59,7 +59,9 @@ buffer_manager::create_new_buffers_and_memories(VkDeviceSize const size)
   }();
 
   auto const create_buffer = [this, &vertex_buffer_create_info]
-  { return types::buffer(device_->get(), vertex_buffer_create_info); };
+  {
+    return types::buffer(device_->get(), vertex_buffer_create_info);
+  };
 
   std::generate(std::begin(buffers_), std::end(buffers_), create_buffer);
   std::fill(std::begin(offsets_), std::end(offsets_), 0);

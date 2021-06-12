@@ -1100,7 +1100,7 @@ renderer::run()
     frame_in_flight_fence.reset();
 
     auto [graphics_queue, present_queue] = device_.get_queues();
-    graphics_queue.submit(submit_info, frame_in_flight_fence);
+    graphics_queue.submit(submit_info, frame_in_flight_fence.get());
 
     auto const present_info =
         [&signal_semaphores, &swapchains, &current_index]
@@ -1123,7 +1123,9 @@ renderer::run()
 
     auto present_result = VK_ERROR_UNKNOWN;
     auto const check_present_result = [&present_result](auto const result)
-    { present_result = result; };
+    {
+      present_result = result;
+    };
 
     present_queue.present(present_info, check_present_result).wait_idle();
 

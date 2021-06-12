@@ -31,23 +31,23 @@ public:
 
   buffer_manager(types::device * device, types::command_pool * command_pool,
                  buffer_type type,
-                 VkDeviceSize default_size = default_buffer_size);
+                 types::device_size default_size = default_buffer_size);
 
   struct allocation
   {
     types::buffer & buffer;
-    VkDeviceSize offset;
+    types::device_size offset;
   };
 
   [[nodiscard]] allocation
-  map(utility::slice<std::byte> data_source);
+  map(utility::slice<std::byte> src);
 
   void
   next_frame();
 
 protected:
   void
-  create_new_buffers_and_memories(VkDeviceSize size);
+  create_new_buffers_and_memories(types::device_size size);
 
   void
   add_current_buffers_and_memories_to_garbage();
@@ -73,11 +73,11 @@ protected:
   [[nodiscard]] constexpr std::vector<types::device_memory> const &
   current_garbage_memories() const noexcept;
 
-  [[nodiscard]] constexpr VkDeviceSize
+  [[nodiscard]] constexpr types::device_size
   current_offset() const noexcept;
 
-  [[nodiscard]] constexpr VkDeviceSize
-  update_current_offset(VkDeviceSize size) noexcept;
+  [[nodiscard]] constexpr types::device_size
+  update_current_offset(types::device_size size) noexcept;
 
 private:
   // TODO(samuel): use shared_ptr
@@ -85,18 +85,20 @@ private:
   types::command_pool * command_pool_ = nullptr;
 
   std::array<types::buffer, dynamic_buffer_count> buffers_ = {};
-  std::array<VkDeviceSize, dynamic_buffer_count> offsets_ = {};
+  std::array<types::device_size, dynamic_buffer_count> offsets_ = {};
   types::device_memory buffers_memory_ = {};
 
-  std::array<std::vector<types::buffer>, garbage_buffer_count>
-      garbage_buffers_ = {};
-  std::array<std::vector<types::device_memory>, garbage_buffer_count>
-      garbage_buffers_memories_ = {};
+  template <typename T>
+  using garbage_collection_array =
+      std::array<std::vector<T>, garbage_buffer_count>;
+
+  garbage_collection_array<types::buffer> garbage_buffers_ = {};
+  garbage_collection_array<types::device_memory> garbage_memories_ = {};
 
   size_t current_buffer_index_ = 0;
   size_t current_garbage_index_ = 0;
 
-  VkDeviceSize aligned_size_ = 0;
+  types::device_size aligned_size_ = 0;
   buffer_type type_ = buffer_type::none;
 };
 
@@ -127,23 +129,23 @@ buffer_manager::current_garbage_buffers() const noexcept
 [[nodiscard]] constexpr std::vector<types::device_memory> &
 buffer_manager::current_garbage_memories() noexcept
 {
-  return garbage_buffers_memories_[current_garbage_index_];
+  return garbage_memories_[current_garbage_index_];
 }
 
 [[nodiscard]] constexpr std::vector<types::device_memory> const &
 buffer_manager::current_garbage_memories() const noexcept
 {
-  return garbage_buffers_memories_[current_garbage_index_];
+  return garbage_memories_[current_garbage_index_];
 }
 
-[[nodiscard]] constexpr VkDeviceSize
+[[nodiscard]] constexpr types::device_size
 buffer_manager::current_offset() const noexcept
 {
   return offsets_[current_buffer_index_];
 }
 
-[[nodiscard]] constexpr VkDeviceSize
-buffer_manager::update_current_offset(VkDeviceSize const size) noexcept
+[[nodiscard]] constexpr types::device_size
+buffer_manager::update_current_offset(types::device_size const size) noexcept
 {
   auto const past_offset = offsets_[current_buffer_index_];
   offsets_[current_buffer_index_] += size;

@@ -10,9 +10,9 @@ namespace mvk::types::detail
 
 [[nodiscard]] std::pair<buffer, device_memory>
 create_staging_buffer_and_memory(device const & device,
-                                 utility::slice<std::byte> const data_source)
+                                 utility::slice<std::byte> const src)
 {
-  auto const size = std::size(data_source);
+  auto const size = std::size(src);
 
   auto staging_buffer = [size, &device]
   {
@@ -46,7 +46,7 @@ create_staging_buffer_and_memory(device const & device,
     return device_memory(device.get(), info);
   }();
 
-  buffer_memory.bind(staging_buffer).map(size).copy_data(data_source).unmap();
+  buffer_memory.bind(staging_buffer).map(size).copy_data(src).unmap();
   return {std::move(staging_buffer), std::move(buffer_memory)};
 }
 

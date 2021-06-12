@@ -2,6 +2,7 @@
 #define MVK_TYPES_COMMON_HPP_INCLUDED
 
 #include "utility/verify.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <string>
 
@@ -19,6 +20,12 @@
 namespace mvk
 {
 
+namespace types
+{
+
+using device_size = VkDeviceSize;
+
+}
 struct vertex
 {
   glm::vec3 pos;

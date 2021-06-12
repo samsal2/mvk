@@ -20,11 +20,10 @@ buffer::buffer(VkDevice const device, VkBufferCreateInfo const & info)
 
 buffer &
 buffer::stage(device const & device, command_pool const & command_pool,
-              utility::slice<std::byte> const data_source,
-              VkDeviceSize const offset)
+              utility::slice<std::byte> const src, device_size const offset)
 {
   auto const [staging_buffer, staging_buffer_memory] =
-      detail::create_staging_buffer_and_memory(device, data_source);
+      detail::create_staging_buffer_and_memory(device, src);
   auto const staging_command_buffer =
       detail::create_staging_command_buffer(device, command_pool);
 

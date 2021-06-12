@@ -10,8 +10,8 @@ namespace mvk::utility
 
 template <typename Other, typename This>
 using is_not_this =
-    std::bool_constant<!std::is_same_v<Other, std::decay_t<This>> &&
-                       !std::is_base_of_v<Other, std::decay_t<This>>>;
+    std::bool_constant<!std::is_same_v<std::decay_t<Other>, This> &&
+                       !std::is_base_of_v<std::decay_t<Other>, This>>;
 
 template <typename T, typename = void, typename = void>
 struct has_data_and_size : std::false_type
@@ -45,38 +45,6 @@ force_cast_to_byte(T const * data) noexcept
 {
   return static_cast<std::byte const *>(static_cast<void const *>(data));
 }
-
-// Get the type by value if it's trivially copyable and constructible, else
-// get the reference
-template <typename T, bool = std::is_trivial_v<T>>
-struct const_trivial
-{
-  using type = std::remove_cvref_t<T>;
-};
-
-template <typename T>
-struct const_trivial<T, false>
-{
-  using type = std::remove_cvref_t<T> const &;
-};
-
-template <typename T>
-using const_trivial_t = typename const_trivial<T>::type;
-
-template <typename T, bool = std::is_trivial_v<T>>
-struct trivial
-{
-  using type = std::remove_cvref_t<T>;
-};
-
-template <typename T>
-struct trivial<T, false>
-{
-  using type = std::remove_cvref_t<T> &;
-};
-
-template <typename T>
-using trivial_t = typename trivial<T>::type;
 
 template <typename From, typename To>
 static constexpr inline auto is_convertible_as_array_v =

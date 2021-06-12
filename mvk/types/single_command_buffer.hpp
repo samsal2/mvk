@@ -82,7 +82,7 @@ public:
   bind_pipeline(VkPipelineBindPoint bind_point, VkPipeline pipeline) noexcept;
 
   single_command_buffer &
-  bind_index_buffer(VkBuffer buffer, VkDeviceSize offset = 0) noexcept;
+  bind_index_buffer(VkBuffer buffer, device_size offset = 0) noexcept;
 
   struct blit_image_information
   {
@@ -103,7 +103,7 @@ public:
 
   single_command_buffer
   bind_vertex_buffer(utility::slice<VkBuffer> buffers,
-                     utility::slice<VkDeviceSize> offsets) noexcept;
+                     utility::slice<device_size> offsets) noexcept;
 
 private:
   VkCommandBuffer command_buffer_ = nullptr;

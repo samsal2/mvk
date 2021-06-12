@@ -90,7 +90,7 @@ single_command_buffer::bind_pipeline(VkPipelineBindPoint const bind_point,
 
 single_command_buffer &
 single_command_buffer::bind_index_buffer(VkBuffer const buffer,
-                                         VkDeviceSize const offset) noexcept
+                                         device_size const offset) noexcept
 {
   vkCmdBindIndexBuffer(command_buffer_, buffer, offset, VK_INDEX_TYPE_UINT32);
   return *this;
@@ -166,7 +166,7 @@ single_command_buffer::end() noexcept
 single_command_buffer
 single_command_buffer::bind_vertex_buffer(
     utility::slice<VkBuffer> const buffers,
-    utility::slice<VkDeviceSize> const offsets) noexcept
+    utility::slice<device_size> const offsets) noexcept
 {
   auto const [buffers_data, buffers_size] =
       utility::bind_data_and_size(buffers);

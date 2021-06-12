@@ -77,7 +77,9 @@ check_support() noexcept
   vkEnumerateInstanceLayerProperties(&layer_count, std::data(availables));
 
   auto const exists = [](auto const & available_layer)
-  { return is_layer_present(available_layer, g_validation_layers); };
+  {
+    return is_layer_present(available_layer, g_validation_layers);
+  };
   return std::any_of(std::begin(availables), std::end(availables), exists);
 }
 

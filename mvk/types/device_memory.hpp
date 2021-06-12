@@ -33,10 +33,10 @@ public:
   ~device_memory() noexcept;
 
   device_memory &
-  bind(buffer const & buffer, VkDeviceSize offset = 0);
+  bind(buffer const & buffer, device_size offset = 0);
 
   device_memory &
-  bind(image const & image, VkDeviceSize offset = 0);
+  bind(image const & image, device_size offset = 0);
 
   // NOTE: the destructor also takes care of unmapping, so unless there is
   //       a requirement to map another size there is no need to call this
@@ -44,10 +44,10 @@ public:
   unmap() noexcept;
 
   device_memory &
-  map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+  map(device_size size = VK_WHOLE_SIZE, device_size offset = 0);
 
   device_memory &
-  copy_data(utility::slice<std::byte> data_source, VkDeviceSize offset = 0);
+  copy_data(utility::slice<std::byte> src, device_size offset = 0);
 
 private:
   void * data_ = nullptr;

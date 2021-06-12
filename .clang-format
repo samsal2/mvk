@@ -6,4 +6,6 @@ AlwaysBreakAfterReturnType: All
 PointerAlignment: Middle
 AlwaysBreakTemplateDeclarations: Yes
 UseTab: Never
+AllowShortFunctionsOnASingleLine: None
+AllowShortLambdasOnASingleLine: None
 ...

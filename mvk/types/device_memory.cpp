@@ -39,7 +39,7 @@ device_memory::~device_memory() noexcept
 }
 
 device_memory &
-device_memory::bind(buffer const & buffer, VkDeviceSize const offset)
+device_memory::bind(buffer const & buffer, device_size const offset)
 {
   [[maybe_unused]] auto const result =
       vkBindBufferMemory(parent(), buffer.get(), get(), offset);
@@ -48,7 +48,7 @@ device_memory::bind(buffer const & buffer, VkDeviceSize const offset)
 }
 
 device_memory &
-device_memory::bind(image const & image, VkDeviceSize const offset)
+device_memory::bind(image const & image, device_size const offset)
 {
   [[maybe_unused]] auto const result =
       vkBindImageMemory(parent(), image.get(), get(), offset);
@@ -57,7 +57,7 @@ device_memory::bind(image const & image, VkDeviceSize const offset)
 }
 
 device_memory &
-device_memory::map(VkDeviceSize const size, VkDeviceSize const offset)
+device_memory::map(device_size const size, device_size const offset)
 {
   [[maybe_unused]] auto const result =
       vkMapMemory(parent(), get(), offset, size, 0, &data_);
@@ -74,11 +74,11 @@ device_memory::unmap() noexcept
 }
 
 device_memory &
-device_memory::copy_data(utility::slice<std::byte> const data_source,
-                         VkDeviceSize const offset)
+device_memory::copy_data(utility::slice<std::byte> const src,
+                         device_size const offset)
 {
   MVK_VERIFY(data_);
-  auto const [data, size] = utility::bind_data_and_size(data_source);
+  auto const [data, size] = utility::bind_data_and_size(src);
   auto const destination = static_cast<std::byte *>(data_) + offset;
   std::memcpy(destination, data, size);
   return *this;

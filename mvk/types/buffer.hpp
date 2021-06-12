@@ -20,7 +20,7 @@ public:
   constexpr buffer() noexcept = default;
   buffer(VkDevice device, VkBufferCreateInfo const & info);
 
-  [[nodiscard]] constexpr VkDeviceSize
+  [[nodiscard]] constexpr device_size
   size() const noexcept;
 
   [[nodiscard]] constexpr VkMemoryRequirements
@@ -32,13 +32,13 @@ public:
   // When calling buffer must've had been bound before hand
   buffer &
   stage(device const & device, command_pool const & command_pool,
-        utility::slice<std::byte> data_source, VkDeviceSize offset = 0);
+        utility::slice<std::byte> src, device_size offset = 0);
 
 private:
   VkMemoryRequirements memory_requirements_ = {};
 };
 
-[[nodiscard]] constexpr VkDeviceSize
+[[nodiscard]] constexpr device_size
 buffer::size() const noexcept
 {
   return memory_requirements_.size;

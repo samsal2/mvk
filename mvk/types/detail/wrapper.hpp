@@ -36,10 +36,15 @@ class wrapper<deleter<DeleterCall>, handle<Handle>>
 public:
   constexpr wrapper() noexcept = default;
 
-  explicit wrapper(Handle handle) noexcept : handle_(handle) {}
+  explicit wrapper(Handle handle) noexcept : handle_(handle)
+  {
+  }
 
   wrapper(wrapper const & other) noexcept = delete;
-  wrapper(wrapper && other) noexcept { std::swap(handle_, other.handle_); }
+  wrapper(wrapper && other) noexcept
+  {
+    std::swap(handle_, other.handle_);
+  }
 
   wrapper &
   operator=(wrapper const & other) noexcept = delete;
@@ -63,7 +68,10 @@ public:
     reference() = nullptr;
   }
 
-  ~wrapper() noexcept { destroy(); }
+  ~wrapper() noexcept
+  {
+    destroy();
+  }
 
 protected:
   constexpr void
@@ -138,7 +146,10 @@ public:
     reference() = nullptr;
   }
 
-  ~wrapper() noexcept { destroy(); }
+  ~wrapper() noexcept
+  {
+    destroy();
+  }
 
 protected:
   constexpr void
@@ -228,7 +239,10 @@ public:
     reference().clear();
   }
 
-  ~wrapper() noexcept { destroy(); }
+  ~wrapper() noexcept
+  {
+    destroy();
+  }
 
 protected:
   constexpr void

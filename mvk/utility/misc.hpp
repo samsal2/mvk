@@ -27,17 +27,17 @@ struct data_and_size_as_bytes
 template <typename Container>
 requires with_data_and_size<Container>
 [[nodiscard]] static constexpr detail::data_and_size<Container>
-bind_data_and_size(Container & data_source) noexcept
+bind_data_and_size(Container & src) noexcept
 {
-  return {std::data(data_source), std::size(data_source)};
+  return {std::data(src), std::size(src)};
 }
 
 template <typename Container>
 requires with_data_and_size<Container>
 [[nodiscard]] static constexpr detail::data_and_size_as_bytes
-bind_data_and_size_as_bytes(Container const & data_source) noexcept
+bind_data_and_size_as_bytes(Container const & src) noexcept
 {
-  auto const [data, size] = bind_data_and_size(data_source);
+  auto const [data, size] = bind_data_and_size(src);
   size_t const data_size = size * sizeof(*data);
   return {force_cast_to_byte(data), data_size};
 }
