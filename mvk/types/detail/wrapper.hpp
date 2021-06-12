@@ -1,7 +1,6 @@
 #ifndef MVK_TYPES_WRAPPER_HPP_INCLUDED
 #define MVK_TYPES_WRAPPER_HPP_INCLUDED
 
-#include "glm/packing.hpp"
 #include "types/detail/deleter.hpp"
 #include "utility/verify.hpp"
 
@@ -94,7 +93,7 @@ protected:
     }
 
 private:
-    Handle handle_ = nullptr;
+    Handle handle_ = {};
 };
 
 template <auto DeleterCall, typename Handle, typename Parent>
@@ -174,8 +173,8 @@ protected:
     }
 
 private:
-    Handle handle_ = nullptr;
-    Parent parent_ = nullptr;
+    Handle handle_ = {};
+    Parent parent_ = {};
 };
 
 template <auto DeleterCall, typename Handle, typename Parent, typename Pool>
@@ -266,8 +265,8 @@ protected:
 
 private:
     Handle handles_ = {};
-    Parent parent_  = nullptr;
-    Pool   pool_    = nullptr;
+    Parent parent_  = {};
+    Pool   pool_    = {};
 };
 
 } // namespace mvk::types::detail

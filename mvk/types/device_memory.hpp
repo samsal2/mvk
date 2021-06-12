@@ -16,6 +16,7 @@ class device_memory : public detail::wrapper<detail::deleter<vkFreeMemory>, deta
 {
 public:
     constexpr device_memory() noexcept = default;
+
     device_memory(VkDevice device, VkMemoryAllocateInfo const & allocate_info);
 
     device_memory(device_memory const &) = delete;
