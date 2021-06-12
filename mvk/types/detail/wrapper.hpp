@@ -4,10 +4,7 @@
 #include "glm/packing.hpp"
 #include "types/detail/deleter.hpp"
 #include "utility/verify.hpp"
-#include "vulkan/vulkan_core.h"
 
-#include <locale>
-#include <type_traits>
 #include <vector>
 
 namespace mvk::types::detail
@@ -29,7 +26,6 @@ struct pool
 {
 };
 
-// Struct to see if a type is a tag
 template <typename... Arguments>
 class wrapper;
 
