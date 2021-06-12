@@ -7,11 +7,14 @@
 namespace mvk::types
 {
 
-class framebuffer : public detail::wrapper<detail::deleter<vkDestroyFramebuffer>, detail::handle<VkFramebuffer>, detail::parent<VkDevice>>
+class framebuffer
+    : public detail::wrapper<detail::deleter<vkDestroyFramebuffer>,
+                             detail::handle<VkFramebuffer>,
+                             detail::parent<VkDevice>>
 {
 public:
-    constexpr framebuffer() noexcept = default;
-    framebuffer(VkDevice device, VkFramebufferCreateInfo const & create_info);
+  constexpr framebuffer() noexcept = default;
+  framebuffer(VkDevice device, VkFramebufferCreateInfo const & create_info);
 };
 
 } // namespace mvk::types

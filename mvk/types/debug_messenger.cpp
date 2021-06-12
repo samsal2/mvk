@@ -5,7 +5,8 @@
 namespace mvk::types
 {
 
-debug_messenger::debug_messenger(VkInstance const instance) : wrapper(validation::setup_debug_messenger(instance), instance)
+debug_messenger::debug_messenger(VkInstance const instance)
+    : wrapper(validation::setup_debug_messenger(instance), instance)
 {
 }
 

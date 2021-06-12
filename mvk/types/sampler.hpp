@@ -7,11 +7,13 @@
 namespace mvk::types
 {
 
-class sampler : public detail::wrapper<detail::deleter<vkDestroySampler>, detail::handle<VkSampler>, detail::parent<VkDevice>>
+class sampler : public detail::wrapper<detail::deleter<vkDestroySampler>,
+                                       detail::handle<VkSampler>,
+                                       detail::parent<VkDevice>>
 {
 public:
-    constexpr sampler() noexcept = default;
-    sampler(VkDevice device, VkSamplerCreateInfo const & create_info);
+  constexpr sampler() noexcept = default;
+  sampler(VkDevice device, VkSamplerCreateInfo const & create_info);
 };
 
 } // namespace mvk::types

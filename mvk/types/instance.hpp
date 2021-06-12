@@ -7,12 +7,13 @@
 namespace mvk::types
 {
 
-class instance : public detail::wrapper<detail::deleter<vkDestroyInstance>, detail::handle<VkInstance>>
+class instance : public detail::wrapper<detail::deleter<vkDestroyInstance>,
+                                        detail::handle<VkInstance>>
 {
 public:
-    constexpr instance() noexcept = default;
+  constexpr instance() noexcept = default;
 
-    explicit instance(VkInstanceCreateInfo const & create_info);
+  explicit instance(VkInstanceCreateInfo const & create_info);
 };
 
 } // namespace mvk::types

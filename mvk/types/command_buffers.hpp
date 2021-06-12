@@ -8,15 +8,21 @@
 namespace mvk::types
 {
 
-class command_buffers : public detail::wrapper<detail::deleter<vkFreeCommandBuffers>, detail::handle<std::vector<VkCommandBuffer>>, detail::parent<VkDevice>, detail::pool<VkCommandPool>>
+class command_buffers
+    : public detail::wrapper<detail::deleter<vkFreeCommandBuffers>,
+                             detail::handle<std::vector<VkCommandBuffer>>,
+                             detail::parent<VkDevice>,
+                             detail::pool<VkCommandPool>>
 {
 public:
-    constexpr command_buffers() noexcept = default;
+  constexpr command_buffers() noexcept = default;
 
-    command_buffers(VkDevice device, VkCommandBufferAllocateInfo const & allocate_info);
+  command_buffers(VkDevice device,
+                  VkCommandBufferAllocateInfo const & allocate_info);
 
-    [[nodiscard]] single_command_buffer
-    begin(size_t index, VkCommandBufferBeginInfo const & begin_info) const noexcept;
+  [[nodiscard]] single_command_buffer
+  begin(size_t index,
+        VkCommandBufferBeginInfo const & begin_info) const noexcept;
 };
 
 } // namespace mvk::types

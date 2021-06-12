@@ -7,11 +7,13 @@
 namespace mvk::types
 {
 
-class pipeline : public detail::wrapper<detail::deleter<vkDestroyPipeline>, detail::handle<VkPipeline>, detail::parent<VkDevice>>
+class pipeline : public detail::wrapper<detail::deleter<vkDestroyPipeline>,
+                                        detail::handle<VkPipeline>,
+                                        detail::parent<VkDevice>>
 {
 public:
-    constexpr pipeline() noexcept = default;
-    pipeline(VkDevice device, VkGraphicsPipelineCreateInfo const & create_info);
+  constexpr pipeline() noexcept = default;
+  pipeline(VkDevice device, VkGraphicsPipelineCreateInfo const & create_info);
 };
 
 } // namespace mvk::types

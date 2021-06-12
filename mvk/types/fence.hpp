@@ -7,16 +7,18 @@
 namespace mvk::types
 {
 
-class fence : public detail::wrapper<detail::deleter<vkDestroyFence>, detail::handle<VkFence>, detail::parent<VkDevice>>
+class fence : public detail::wrapper<detail::deleter<vkDestroyFence>,
+                                     detail::handle<VkFence>,
+                                     detail::parent<VkDevice>>
 {
 public:
-    constexpr fence() noexcept = default;
-    fence(VkDevice device, VkFenceCreateInfo const & create_info);
+  constexpr fence() noexcept = default;
+  fence(VkDevice device, VkFenceCreateInfo const & create_info);
 
-    fence &
-    reset();
-    fence &
-    wait();
+  fence &
+  reset();
+  fence &
+  wait();
 };
 
 } // namespace mvk::types

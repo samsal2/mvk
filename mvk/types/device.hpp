@@ -8,43 +8,45 @@
 namespace mvk::types
 {
 
-class device : public detail::wrapper<detail::deleter<vkDestroyDevice>, detail::handle<VkDevice>>
+class device : public detail::wrapper<detail::deleter<vkDestroyDevice>,
+                                      detail::handle<VkDevice>>
 {
 public:
-    struct queues
-    {
-        queue graphics_queue_;
-        queue present_queue_;
-    };
+  struct queues
+  {
+    queue graphics_queue_;
+    queue present_queue_;
+  };
 
-    constexpr device() noexcept = default;
+  constexpr device() noexcept = default;
 
-    device(VkPhysicalDevice physical_device, VkDeviceCreateInfo const & create_info);
+  device(VkPhysicalDevice physical_device,
+         VkDeviceCreateInfo const & create_info);
 
-    [[nodiscard]] constexpr queues
-    get_queues() const noexcept;
+  [[nodiscard]] constexpr queues
+  get_queues() const noexcept;
 
-    [[nodiscard]] constexpr VkPhysicalDevice
-    physical_device() const noexcept;
+  [[nodiscard]] constexpr VkPhysicalDevice
+  physical_device() const noexcept;
 
-    void
-    wait_idle() const noexcept;
+  void
+  wait_idle() const noexcept;
 
 private:
-    VkPhysicalDevice physical_device_ = nullptr;
-    queues           queues_;
+  VkPhysicalDevice physical_device_ = nullptr;
+  queues queues_;
 };
 
 [[nodiscard]] constexpr device::queues
 device::get_queues() const noexcept
 {
-    return queues_;
+  return queues_;
 }
 
 [[nodiscard]] constexpr VkPhysicalDevice
 device::physical_device() const noexcept
 {
-    return physical_device_;
+  return physical_device_;
 }
 
 } // namespace mvk::types
