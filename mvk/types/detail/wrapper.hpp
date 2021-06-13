@@ -2,9 +2,9 @@
 #define MVK_TYPES_WRAPPER_HPP_INCLUDED
 
 #include "types/detail/deleter.hpp"
-#include "utility/meta/exists.hpp"
-#include "utility/meta/find_if.hpp"
-#include "utility/meta/pack.hpp"
+#include "utility/detail/exists.hpp"
+#include "utility/detail/find_if.hpp"
+#include "utility/detail/pack.hpp"
 #include "utility/verify.hpp"
 
 #include <vector>
@@ -65,10 +65,10 @@ private:
 };
 
 template <>
-class wrapper_handle_base<utility::meta::none>
+class wrapper_handle_base<utility::detail::none>
 {
 public:
-  [[nodiscard]] static constexpr utility::meta::none
+  [[nodiscard]] static constexpr utility::detail::none
   get() noexcept
   {
     return {};
@@ -107,10 +107,10 @@ private:
 };
 
 template <>
-class wrapper_parent_base<utility::meta::none>
+class wrapper_parent_base<utility::detail::none>
 {
 public:
-  [[nodiscard]] static constexpr utility::meta::none
+  [[nodiscard]] static constexpr utility::detail::none
   parent() noexcept
   {
     return {};
@@ -149,10 +149,10 @@ private:
 };
 
 template <>
-class wrapper_pool_base<utility::meta::none>
+class wrapper_pool_base<utility::detail::none>
 {
 public:
-  [[nodiscard]] static constexpr utility::meta::none
+  [[nodiscard]] static constexpr utility::detail::none
   pool() noexcept
   {
     return {};
@@ -161,33 +161,34 @@ public:
 
 template <typename... Arguments>
 class wrapper
-    : public wrapper_handle_base<decltype(utility::meta::unpack_tag(
-          utility::meta::find_if(utility::meta::pack<Arguments...>{},
-                                 utility::meta::tagged_with<handle>())))>,
-      public wrapper_parent_base<decltype(utility::meta::unpack_tag(
-          utility::meta::find_if(utility::meta::pack<Arguments...>{},
-                                 utility::meta::tagged_with<parent>())))>,
-      public wrapper_pool_base<decltype(utility::meta::unpack_tag(
-          utility::meta::find_if(utility::meta::pack<Arguments...>{},
-                                 utility::meta::tagged_with<pool>())))>
+    : public wrapper_handle_base<decltype(utility::detail::unpack_tag(
+          utility::detail::find_if(utility::detail::pack<Arguments...>{},
+                                   utility::detail::tagged_with<handle>())))>,
+      public wrapper_parent_base<decltype(utility::detail::unpack_tag(
+          utility::detail::find_if(utility::detail::pack<Arguments...>{},
+                                   utility::detail::tagged_with<parent>())))>,
+      public wrapper_pool_base<decltype(utility::detail::unpack_tag(
+          utility::detail::find_if(utility::detail::pack<Arguments...>{},
+                                   utility::detail::tagged_with<pool>())))>
 {
 
-  using handle_type = decltype(utility::meta::unpack_tag(
-      utility::meta::find_if(utility::meta::pack<Arguments...>{},
-                             utility::meta::tagged_with<handle>())));
+  using handle_type = decltype(utility::detail::unpack_tag(
+      utility::detail::find_if(utility::detail::pack<Arguments...>{},
+                               utility::detail::tagged_with<handle>())));
 
   using handle_base = wrapper_handle_base<handle_type>;
-  using parent_base = wrapper_parent_base<decltype(utility::meta::unpack_tag(
-      utility::meta::find_if(utility::meta::pack<Arguments...>{},
-                             utility::meta::tagged_with<parent>())))>;
+  using parent_base =
+      wrapper_parent_base<decltype(utility::detail::unpack_tag(
+          utility::detail::find_if(utility::detail::pack<Arguments...>{},
+                                   utility::detail::tagged_with<parent>())))>;
 
-  using pool_base = wrapper_pool_base<decltype(utility::meta::unpack_tag(
-      utility::meta::find_if(utility::meta::pack<Arguments...>{},
-                             utility::meta::tagged_with<pool>())))>;
+  using pool_base = wrapper_pool_base<decltype(utility::detail::unpack_tag(
+      utility::detail::find_if(utility::detail::pack<Arguments...>{},
+                               utility::detail::tagged_with<pool>())))>;
 
-  static constexpr auto call = utility::meta::unpack_tag(
-      utility::meta::find_if(utility::meta::pack<Arguments...>{},
-                             utility::meta::tagged_with<deleter>()));
+  static constexpr auto call = utility::detail::unpack_tag(
+      utility::detail::find_if(utility::detail::pack<Arguments...>{},
+                               utility::detail::tagged_with<deleter>()));
 
 public:
   constexpr wrapper() noexcept = default;
@@ -217,17 +218,18 @@ public:
   wrapper(wrapper const & other) noexcept = delete;
   wrapper(wrapper && other) noexcept
   {
-    if constexpr (!decltype(utility::meta::is_none(handle_base::get())){})
+    if constexpr (!decltype(utility::detail::is_none(handle_base::get())){})
     {
       std::swap(handle_base::get(), other.get());
     }
 
-    if constexpr (!decltype(utility::meta::is_none(parent_base::parent())){})
+    if constexpr (!decltype(utility::detail::is_none(
+                      parent_base::parent())){})
     {
       std::swap(parent_base::parent(), other.parent());
     }
 
-    if constexpr (!decltype(utility::meta::is_none(pool_base::pool())){})
+    if constexpr (!decltype(utility::detail::is_none(pool_base::pool())){})
     {
       std::swap(pool_base::pool(), other.pool());
     }
@@ -239,17 +241,18 @@ public:
   wrapper &
   operator=(wrapper && other) noexcept
   {
-    if constexpr (!decltype(utility::meta::is_none(handle_base::get())){})
+    if constexpr (!decltype(utility::detail::is_none(handle_base::get())){})
     {
       std::swap(handle_base::get(), other.get());
     }
 
-    if constexpr (!decltype(utility::meta::is_none(parent_base::parent())){})
+    if constexpr (!decltype(utility::detail::is_none(
+                      parent_base::parent())){})
     {
       std::swap(parent_base::parent(), other.parent());
     }
 
-    if constexpr (!decltype(utility::meta::is_none(pool_base::pool())){})
+    if constexpr (!decltype(utility::detail::is_none(pool_base::pool())){})
     {
       std::swap(pool_base::pool(), other.pool());
     }

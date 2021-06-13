@@ -1,10 +1,10 @@
-#ifndef MVK_UTILITY_META_COMMON_HPP_INCLUDED
-#define MVK_UTILITY_META_COMMON_HPP_INCLUDED
+#ifndef MVK_UTILITY_DETAIL_COMMON_HPP_INCLUDED
+#define MVK_UTILITY_DETAIL_COMMON_HPP_INCLUDED
 
 #include <cstddef>
 #include <type_traits>
 
-namespace mvk::utility::meta
+namespace mvk::utility::detail
 {
 
 template <size_t Size>
@@ -59,6 +59,18 @@ concept not_none = requires
   requires !std::is_same_v<T, none>;
 };
 
-} // namespace mvk::utility::meta
+template <typename Then, typename Else>
+constexpr auto if_helper(std::true_type, Then, Else)
+{
+  return Then{};
+}
+
+template <typename Then, typename Else>
+constexpr auto if_helper(std::false_type, Then, Else)
+{
+  return Else{};
+}
+
+} // namespace mvk::utility::detail
 
 #endif

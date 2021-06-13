@@ -1,9 +1,9 @@
-#ifndef MVK_UTILITY_META_CONDITION_HPP_INCLUDED
-#define MVK_UTILITY_META_CONDITION_HPP_INCLUDED
+#ifndef MVK_UTILITY_DETAIL_CONDITION_HPP_INCLUDED
+#define MVK_UTILITY_DETAIL_CONDITION_HPP_INCLUDED
 
 #include <type_traits>
 
-namespace mvk::utility::meta
+namespace mvk::utility::detail
 {
 
 template <typename T>
@@ -74,6 +74,6 @@ tagged_with()
   return tagged_with_impl_2<Tag>{};
 }
 
-} // namespace mvk::utility::meta
+} // namespace mvk::utility::detail
 
 #endif

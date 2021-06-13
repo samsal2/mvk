@@ -1,10 +1,10 @@
-#ifndef MVK_UTILITY_META_PACK_HPP_INCLUDED
-#define MVK_UTILITY_META_PACK_HPP_INCLUDED
+#ifndef MVK_UTILITY_DETAIL_PACK_HPP_INCLUDED
+#define MVK_UTILITY_DETAIL_PACK_HPP_INCLUDED
 
-#include "utility/meta/common.hpp"
-#include "utility/meta/condition.hpp"
+#include "utility/detail/common.hpp"
+#include "utility/detail/condition.hpp"
 
-namespace mvk::utility::meta
+namespace mvk::utility::detail
 {
 
 template <typename... Ts>
@@ -48,6 +48,6 @@ constexpr auto first(pack<T, Ts...>) noexcept
   return T{};
 };
 
-}; // namespace mvk::utility::meta
+}; // namespace mvk::utility::detail
 
 #endif

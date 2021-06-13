@@ -2,7 +2,7 @@
 #define MVK_VK_TYPE_DETAIL_DELETER_HPP_INCLUDED
 
 #include "types/common.hpp"
-#include "utility/meta/common.hpp"
+#include "utility/detail/common.hpp"
 #include "utility/misc.hpp"
 #include "utility/slice.hpp"
 
@@ -11,14 +11,14 @@ namespace mvk::types::detail
 
 template <auto Call, typename Handle>
 constexpr void
-delete_dispatch(Handle handle, utility::meta::none, utility::meta::none)
+delete_dispatch(Handle handle, utility::detail::none, utility::detail::none)
 {
   Call(handle, nullptr);
 }
 
 template <auto Call, typename Handle, typename Parent>
 constexpr void
-delete_dispatch(Handle handle, Parent parent, utility::meta::none)
+delete_dispatch(Handle handle, Parent parent, utility::detail::none)
 {
   if (parent != nullptr)
   {

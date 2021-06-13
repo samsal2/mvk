@@ -62,8 +62,8 @@ template <typename Iterator, typename Element,
           typename Value = detail::value_type_from_iterator_t<Iterator>>
 concept valid_slice_iterator = requires
 {
-  {random_access<Iterator>};
-  {convertible_as_array_to<Value, Element>};
+  requires random_access<Iterator>;
+  requires convertible_as_array_to<Value, Element>;
 };
 
 } // namespace detail
