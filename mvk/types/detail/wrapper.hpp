@@ -42,9 +42,11 @@ public:
   constexpr wrapper_handle_base() noexcept = default;
 
   template <typename U>
-  requires(utility::same_as<std::decay_t<U>, handle_type> || 
-           utility::same_as< std::decay_t<U>, std::nullptr_t>) 
-  constexpr explicit wrapper_handle_base(U && handle)
+  requires(
+      utility::same_as<std::decay_t<U>, handle_type> ||
+      utility::same_as<
+          std::decay_t<U>,
+          std::nullptr_t>) constexpr explicit wrapper_handle_base(U && handle)
       : handle_(std::forward<U>(handle))
   {
   }
@@ -218,9 +220,20 @@ public:
   wrapper(wrapper const & other) noexcept = delete;
   wrapper(wrapper && other) noexcept
   {
-    utility::meta::avoid_none_swap(handle_base::get(), other.get());
-    utility::meta::avoid_none_swap(parent_base::parent(), other.parent());
-    utility::meta::avoid_none_swap(pool_base::pool(), other.pool());
+    if constexpr (utility::meta::not_none<decltype(handle_base::get())>)
+    {
+      std::swap(handle_base::get(), other.get());
+    }
+
+    if constexpr (utility::meta::not_none<decltype(parent_base::parent())>)
+    {
+      std::swap(parent_base::parent(), other.parent());
+    }
+
+    if constexpr (utility::meta::not_none<decltype(pool_base::pool())>)
+    {
+      std::swap(pool_base::pool(), other.pool());
+    }
   }
 
   wrapper &
@@ -229,9 +242,21 @@ public:
   wrapper &
   operator=(wrapper && other) noexcept
   {
-    utility::meta::avoid_none_swap(handle_base::get(), other.get());
-    utility::meta::avoid_none_swap(parent_base::parent(), other.parent());
-    utility::meta::avoid_none_swap(pool_base::pool(), other.pool());
+    if constexpr (utility::meta::not_none<decltype(handle_base::get())>)
+    {
+      std::swap(handle_base::get(), other.get());
+    }
+
+    if constexpr (utility::meta::not_none<decltype(parent_base::parent())>)
+    {
+      std::swap(parent_base::parent(), other.parent());
+    }
+
+    if constexpr (utility::meta::not_none<decltype(pool_base::pool())>)
+    {
+      std::swap(pool_base::pool(), other.pool());
+    }
+
     return *this;
   }
 

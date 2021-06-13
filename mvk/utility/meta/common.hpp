@@ -53,17 +53,6 @@ constexpr auto unpack_tag(Tag<V>)
   return V;
 }
 
-template <typename Lhs, typename Rhs>
-constexpr void
-avoid_none_swap(Lhs & lhs, Rhs & rhs) noexcept
-{
-  std::swap(lhs, rhs);
-}
-
-constexpr void avoid_none_swap(none, none) noexcept
-{
-}
-
 template <typename T>
 concept not_none = requires
 {
