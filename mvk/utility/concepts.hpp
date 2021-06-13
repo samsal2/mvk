@@ -43,13 +43,10 @@ concept with_data_and_size = requires
 
 namespace detail
 {
-  // clang-format off
 
-template <typename Container>
-using value_type_from_data_t =
-  std::remove_pointer_t<decltype(std::data(std::declval<Container &>()))>;
-
-  // clang-format on
+  template <typename Container>
+  using value_type_from_data_t =
+      std::remove_pointer_t<decltype(std::data(std::declval<Container &>()))>;
 
 }; // namespace detail
 
@@ -69,15 +66,13 @@ concept compatible_with_element = requires
 
 namespace detail
 {
-  // clang-format off
 
-template <typename Iterator, typename IteratorTag>
-concept match_iterator_tag = requires
-{
-  requires std::is_same_v<get_iterator_category_t<Iterator>, IteratorTag>;
-};
+  template <typename Iterator, typename IteratorTag>
+  concept match_iterator_tag = requires
+  {
+    requires std::is_same_v<get_iterator_category_t<Iterator>, IteratorTag>;
+  };
 
-  // clang-format on
 } // namespace detail
 
 template <typename Iterator>

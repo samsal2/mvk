@@ -41,15 +41,13 @@ public:
 
   constexpr wrapper_handle_base() noexcept = default;
 
-  // clang-format off
   template <typename U>
-  requires(utility::same_as<std::decay_t<U>, handle_type> ||
-			     utility::same_as<std::decay_t<U>, std::nullptr_t>) 
+  requires(utility::same_as<std::decay_t<U>, handle_type> || 
+           utility::same_as< std::decay_t<U>, std::nullptr_t>) 
   constexpr explicit wrapper_handle_base(U && handle)
       : handle_(std::forward<U>(handle))
   {
   }
-  // clang-format on
 
   [[nodiscard]] constexpr Handle const &
   get() const noexcept
