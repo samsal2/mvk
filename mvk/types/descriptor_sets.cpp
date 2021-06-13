@@ -1,14 +1,16 @@
 #include "types/descriptor_sets.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace mvk::types
 {
 
 descriptor_sets::descriptor_sets(VkDevice const device,
                                  VkDescriptorSetAllocateInfo const & info)
-    : wrapper({info.descriptorSetCount, nullptr}, device, info.descriptorPool)
+    : wrapper(std::vector<VkDescriptorSet>(info.descriptorSetCount, nullptr),
+              device, info.descriptorPool)
 {
   [[maybe_unused]] auto const result =
-      vkAllocateDescriptorSets(parent(), &info, std::data(reference()));
+      vkAllocateDescriptorSets(parent(), &info, std::data(get()));
 
   MVK_VERIFY(VK_SUCCESS == result);
 }

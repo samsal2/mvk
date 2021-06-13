@@ -8,7 +8,7 @@ semaphore::semaphore(VkDevice const device,
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateSemaphore(parent(), &info, nullptr, &reference());
+      vkCreateSemaphore(parent(), &info, nullptr, &get());
   MVK_VERIFY(VK_SUCCESS == result);
 }
 } // namespace mvk::types

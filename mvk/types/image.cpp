@@ -21,7 +21,7 @@ image::image(VkDevice const device, VkImageCreateInfo const & info)
     : wrapper(nullptr, device), mipmap_levels_(info.mipLevels)
 {
   [[maybe_unused]] auto const result =
-      vkCreateImage(parent(), &info, nullptr, &reference());
+      vkCreateImage(parent(), &info, nullptr, &get());
   MVK_VERIFY(VK_SUCCESS == result);
   vkGetImageMemoryRequirements(parent(), get(), &memory_requirements_);
 }

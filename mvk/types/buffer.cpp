@@ -13,7 +13,7 @@ buffer::buffer(VkDevice const device, VkBufferCreateInfo const & info)
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateBuffer(parent(), &info, nullptr, &reference());
+      vkCreateBuffer(parent(), &info, nullptr, &get());
   MVK_VERIFY(VK_SUCCESS == result);
   vkGetBufferMemoryRequirements(parent(), get(), &memory_requirements_);
 }

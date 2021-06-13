@@ -7,3 +7,5 @@ target_sources(${PROJECT_NAME} PRIVATE compressed_pair.hpp
                                        trace.hpp
                                        verify.cpp
                                        verify.hpp)
+	
+add_subdirectory(meta)

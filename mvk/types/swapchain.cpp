@@ -14,7 +14,7 @@ swapchain::swapchain(VkDevice const device,
       format_(info.imageFormat)
 {
   [[maybe_unused]] auto const result =
-      vkCreateSwapchainKHR(parent(), &info, nullptr, &reference());
+      vkCreateSwapchainKHR(parent(), &info, nullptr, &get());
 
   MVK_VERIFY(VK_SUCCESS == result);
 

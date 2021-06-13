@@ -12,7 +12,7 @@ device_memory::device_memory(VkDevice const device,
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkAllocateMemory(parent(), &info, nullptr, &reference());
+      vkAllocateMemory(parent(), &info, nullptr, &get());
   MVK_VERIFY(VK_SUCCESS == result);
 }
 

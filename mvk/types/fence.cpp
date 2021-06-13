@@ -7,15 +7,14 @@ fence::fence(VkDevice const device, VkFenceCreateInfo const & info)
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateFence(parent(), &info, nullptr, &reference());
+      vkCreateFence(parent(), &info, nullptr, &get());
   MVK_VERIFY(VK_SUCCESS == result);
 }
 
 fence &
 fence::reset()
 {
-  [[maybe_unused]] auto const result =
-      vkResetFences(parent(), 1, &reference());
+  [[maybe_unused]] auto const result = vkResetFences(parent(), 1, &get());
   MVK_VERIFY(VK_SUCCESS == result);
   return *this;
 }
@@ -23,9 +22,8 @@ fence::reset()
 fence &
 fence::wait()
 {
-  [[maybe_unused]] auto const result =
-      vkWaitForFences(parent(), 1, &reference(), VK_TRUE,
-                      std::numeric_limits<int64_t>::max());
+  [[maybe_unused]] auto const result = vkWaitForFences(
+      parent(), 1, &get(), VK_TRUE, std::numeric_limits<int64_t>::max());
   MVK_VERIFY(VK_SUCCESS == result);
   return *this;
 }

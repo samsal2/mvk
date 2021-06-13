@@ -8,7 +8,7 @@ shader_module::shader_module(VkDevice const device,
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateShaderModule(parent(), &info, nullptr, &reference());
+      vkCreateShaderModule(parent(), &info, nullptr, &get());
 
   MVK_VERIFY(VK_SUCCESS == result);
 }

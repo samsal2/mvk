@@ -7,10 +7,11 @@ namespace mvk::types
 
 command_buffers::command_buffers(VkDevice const device,
                                  VkCommandBufferAllocateInfo const & info)
-    : wrapper({info.commandBufferCount, nullptr}, device, info.commandPool)
+    : wrapper(std::vector<VkCommandBuffer>(info.commandBufferCount, nullptr),
+              device, info.commandPool)
 {
   [[maybe_unused]] auto const result =
-      vkAllocateCommandBuffers(parent(), &info, std::data(reference()));
+      vkAllocateCommandBuffers(parent(), &info, std::data(get()));
 
   MVK_VERIFY(VK_SUCCESS == result);
 }

@@ -2,6 +2,9 @@
 #define MVK_TYPES_WRAPPER_HPP_INCLUDED
 
 #include "types/detail/deleter.hpp"
+#include "utility/meta/exists.hpp"
+#include "utility/meta/find_if.hpp"
+#include "utility/meta/pack.hpp"
 #include "utility/verify.hpp"
 
 #include <vector>
@@ -25,218 +28,223 @@ struct pool
 {
 };
 
-template <typename... Arguments>
-class wrapper;
-
-template <auto DeleterCall, typename Handle>
-class wrapper<deleter<DeleterCall>, handle<Handle>>
+template <auto Call>
+struct deleter
 {
-  using deleter_type = deleter<DeleterCall>;
-
-public:
-  constexpr wrapper() noexcept = default;
-
-  explicit wrapper(Handle handle) noexcept : handle_(handle)
-  {
-  }
-
-  wrapper(wrapper const & other) noexcept = delete;
-  wrapper(wrapper && other) noexcept
-  {
-    std::swap(handle_, other.handle_);
-  }
-
-  wrapper &
-  operator=(wrapper const & other) noexcept = delete;
-  wrapper &
-  operator=(wrapper && other) noexcept
-  {
-    std::swap(handle_, other.handle_);
-    return *this;
-  }
-
-  [[nodiscard]] constexpr Handle
-  get() const noexcept
-  {
-    return handle_;
-  }
-
-  constexpr void
-  release() noexcept
-  {
-    destroy();
-    reference() = nullptr;
-  }
-
-  ~wrapper() noexcept
-  {
-    destroy();
-  }
-
-protected:
-  constexpr void
-  destroy() noexcept
-  {
-    deleter()(get());
-  }
-
-  [[nodiscard]] constexpr Handle &
-  reference() noexcept
-  {
-    return handle_;
-  }
-
-  [[nodiscard]] constexpr deleter_type
-  deleter() noexcept
-  {
-    return {};
-  }
-
-private:
-  Handle handle_ = {};
 };
 
-template <auto DeleterCall, typename Handle, typename Parent>
-class wrapper<deleter<DeleterCall>, handle<Handle>, parent<Parent>>
+template <typename Handle>
+class wrapper_handle_base
 {
-  using deleter_type = deleter<DeleterCall>;
-
 public:
-  constexpr wrapper() noexcept = default;
+  using handle_type = Handle;
 
-  constexpr wrapper(Handle handle, Parent parent) noexcept
-      : handle_(handle), parent_(parent)
+  constexpr wrapper_handle_base() noexcept = default;
+
+  // clang-format off
+  template <typename U>
+  requires(
+      utility::same_as<std::decay_t<U>, handle_type> ||
+      utility::same_as<std::decay_t<U>, std::nullptr_t>) 
+  constexpr explicit wrapper_handle_base(U && handle)
+      : handle_(std::forward<U>(handle))
   {
   }
-
-  wrapper(wrapper const & other) noexcept = delete;
-  wrapper(wrapper && other) noexcept
-  {
-    std::swap(handle_, other.handle_);
-    std::swap(parent_, other.parent_);
-  }
-
-  wrapper &
-  operator=(wrapper const & other) noexcept = delete;
-  wrapper &
-  operator=(wrapper && other) noexcept
-  {
-    std::swap(handle_, other.handle_);
-    std::swap(parent_, other.parent_);
-    return *this;
-  }
-
-  [[nodiscard]] constexpr Handle
-  get() const noexcept
-  {
-    return handle_;
-  }
-
-  [[nodiscard]] constexpr Parent
-  parent() const noexcept
-  {
-    return parent_;
-  }
-
-  constexpr void
-  release() noexcept
-  {
-    destroy();
-    parent_ = nullptr;
-    reference() = nullptr;
-  }
-
-  ~wrapper() noexcept
-  {
-    destroy();
-  }
-
-protected:
-  constexpr void
-  destroy() noexcept
-  {
-    if (parent_ != nullptr)
-    {
-      deleter()(parent_, get());
-    }
-  }
-
-  [[nodiscard]] constexpr Handle &
-  reference() noexcept
-  {
-    return handle_;
-  }
-
-  [[nodiscard]] constexpr deleter_type
-  deleter() noexcept
-  {
-    return {};
-  }
-
-private:
-  Handle handle_ = {};
-  Parent parent_ = {};
-};
-
-template <auto DeleterCall, typename Handle, typename Parent, typename Pool>
-class wrapper<deleter<DeleterCall>, handle<Handle>, parent<Parent>,
-              pool<Pool>>
-{
-  using deleter_type = deleter<DeleterCall>;
-
-public:
-  constexpr wrapper() noexcept = default;
-
-  wrapper(Handle handles, Parent parent, Pool pool)
-      : handles_(std::move(handles)), parent_(parent), pool_(pool)
-  {
-  }
-
-  wrapper(wrapper const & other) noexcept = delete;
-  wrapper(wrapper && other) noexcept
-  {
-    std::swap(handles_, other.handles_);
-    std::swap(parent_, other.parent_);
-    std::swap(pool_, other.pool_);
-  }
-
-  wrapper &
-  operator=(wrapper const & other) noexcept = delete;
-
-  wrapper &
-  operator=(wrapper && other) noexcept
-  {
-    std::swap(handles_, other.handles_);
-    std::swap(parent_, other.parent_);
-    std::swap(pool_, other.pool_);
-    return *this;
-  }
+  // clang-format on
 
   [[nodiscard]] constexpr Handle const &
   get() const noexcept
   {
-    return handles_;
+    return handle_;
   }
 
-  [[nodiscard]] constexpr Parent
+  [[nodiscard]] constexpr Handle &
+  get() noexcept
+  {
+    return handle_;
+  }
+
+private:
+  Handle handle_ = {};
+};
+
+template <>
+class wrapper_handle_base<utility::meta::none>
+{
+public:
+  [[nodiscard]] constexpr utility::meta::none
+  get() const noexcept
+  {
+    return {};
+  }
+};
+
+template <typename Parent>
+class wrapper_parent_base
+{
+public:
+  using parent_type = Parent;
+
+  constexpr wrapper_parent_base() noexcept = default;
+
+  template <typename U>
+  requires utility::same_as<std::decay_t<U>, parent_type>
+  constexpr explicit wrapper_parent_base(U && parent)
+      : parent_(std::forward<U>(parent))
+  {
+  }
+
+  [[nodiscard]] constexpr Parent const &
   parent() const noexcept
   {
     return parent_;
   }
 
-  [[nodiscard]] constexpr Pool
+  [[nodiscard]] constexpr Parent &
+  parent() noexcept
+  {
+    return parent_;
+  }
+
+private:
+  Parent parent_ = {};
+};
+
+template <>
+class wrapper_parent_base<utility::meta::none>
+{
+public:
+  [[nodiscard]] constexpr utility::meta::none
+  parent() const noexcept
+  {
+    return {};
+  }
+};
+
+template <typename Pool>
+class wrapper_pool_base
+{
+public:
+  using pool_type = Pool;
+
+  constexpr wrapper_pool_base() noexcept = default;
+
+  template <typename U>
+  requires utility::same_as<std::decay_t<U>, pool_type>
+  constexpr explicit wrapper_pool_base(U && pool)
+      : pool_(std::forward<U>(pool))
+  {
+  }
+
+  [[nodiscard]] constexpr Pool const &
   pool() const noexcept
   {
     return pool_;
   }
 
+  [[nodiscard]] constexpr Pool &
+  pool() noexcept
+  {
+    return pool_;
+  }
+
+private:
+  Pool pool_ = {};
+};
+
+template <>
+class wrapper_pool_base<utility::meta::none>
+{
+public:
+  [[nodiscard]] constexpr utility::meta::none
+  pool() const noexcept
+  {
+    return {};
+  }
+};
+
+template <typename T>
+using uncvref_t = std::remove_cvref_t<T>;
+
+template <typename... Arguments>
+class wrapper
+    : public wrapper_handle_base<decltype(utility::meta::unpack_tag(
+          utility::meta::find_if(utility::meta::pack<Arguments...>{},
+                                 utility::meta::tagged_with<handle>())))>,
+      public wrapper_parent_base<decltype(utility::meta::unpack_tag(
+          utility::meta::find_if(utility::meta::pack<Arguments...>{},
+                                 utility::meta::tagged_with<parent>())))>,
+      public wrapper_pool_base<decltype(utility::meta::unpack_tag(
+          utility::meta::find_if(utility::meta::pack<Arguments...>{},
+                                 utility::meta::tagged_with<pool>())))>
+{
+
+  using handle_type = decltype(utility::meta::unpack_tag(
+      utility::meta::find_if(utility::meta::pack<Arguments...>{},
+                             utility::meta::tagged_with<handle>())));
+
+  using handle_base = wrapper_handle_base<handle_type>;
+  using parent_base = wrapper_parent_base<decltype(utility::meta::unpack_tag(
+      utility::meta::find_if(utility::meta::pack<Arguments...>{},
+                             utility::meta::tagged_with<parent>())))>;
+
+  using pool_base = wrapper_pool_base<decltype(utility::meta::unpack_tag(
+      utility::meta::find_if(utility::meta::pack<Arguments...>{},
+                             utility::meta::tagged_with<pool>())))>;
+
+  static constexpr auto call = utility::meta::unpack_tag(
+      utility::meta::find_if(utility::meta::pack<Arguments...>{},
+                             utility::meta::tagged_with<deleter>()));
+
+public:
+  constexpr wrapper() noexcept = default;
+
+  template <typename Handle, typename Parent, typename Pool>
+  constexpr wrapper(Handle && handle, Parent && parent, Pool && pool) noexcept
+      : handle_base(std::forward<Handle>(handle)),
+        parent_base(std::forward<Parent>(parent)),
+        pool_base(std::forward<Pool>(pool))
+  {
+  }
+
+  template <typename Handle, typename Parent>
+  constexpr wrapper(Handle && handle, Parent && parent) noexcept
+      : handle_base(std::forward<Handle>(handle)),
+        parent_base(std::forward<Parent>(parent))
+  {
+  }
+
+  template <typename Handle>
+  requires utility::same_as<std::decay_t<Handle>, handle_type>
+  constexpr explicit wrapper(Handle && handle) noexcept
+      : handle_base(std::forward<Handle>(handle))
+  {
+  }
+
+  wrapper(wrapper const & other) noexcept = delete;
+  wrapper(wrapper && other) noexcept
+  {
+    utility::meta::avoid_none_swap(handle_base::get(), other.get());
+    utility::meta::avoid_none_swap(parent_base::parent(), other.parent());
+    utility::meta::avoid_none_swap(pool_base::pool(), other.pool());
+  }
+
+  wrapper &
+  operator=(wrapper const & other) noexcept = delete;
+
+  wrapper &
+  operator=(wrapper && other) noexcept
+  {
+    utility::meta::avoid_none_swap(handle_base::get(), other.get());
+    utility::meta::avoid_none_swap(parent_base::parent(), other.parent());
+    utility::meta::avoid_none_swap(pool_base::pool(), other.pool());
+    return *this;
+  }
+
   constexpr void
   release() noexcept
   {
-    destroy();
-    parent_ = nullptr;
-    pool_ = nullptr;
-    reference().clear();
+    *this = wrapper();
   }
 
   ~wrapper() noexcept
@@ -244,32 +252,13 @@ public:
     destroy();
   }
 
-protected:
-  constexpr void
-  destroy()
-  {
-    if (parent_ != nullptr && pool_ != nullptr)
-    {
-      deleter()(parent_, pool_, get());
-    }
-  }
-
-  [[nodiscard]] constexpr Handle &
-  reference() noexcept
-  {
-    return handles_;
-  }
-
-  [[nodiscard]] constexpr deleter_type
-  deleter() noexcept
-  {
-    return {};
-  }
-
 private:
-  Handle handles_ = {};
-  Parent parent_ = {};
-  Pool pool_ = {};
+  constexpr void
+  destroy() const noexcept
+  {
+    delete_dispatch<call>(handle_base::get(), parent_base::parent(),
+                          pool_base::pool());
+  }
 };
 
 } // namespace mvk::types::detail

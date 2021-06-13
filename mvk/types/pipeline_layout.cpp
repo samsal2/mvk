@@ -8,7 +8,7 @@ pipeline_layout::pipeline_layout(VkDevice const device,
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreatePipelineLayout(parent(), &info, nullptr, &reference());
+      vkCreatePipelineLayout(parent(), &info, nullptr, &get());
   MVK_VERIFY(VK_SUCCESS == result);
 }
 

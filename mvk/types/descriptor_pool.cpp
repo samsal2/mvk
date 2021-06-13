@@ -8,7 +8,7 @@ descriptor_pool::descriptor_pool(VkDevice const device,
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateDescriptorPool(parent(), &info, nullptr, &reference());
+      vkCreateDescriptorPool(parent(), &info, nullptr, &get());
 
   MVK_VERIFY(VK_SUCCESS == result);
 }

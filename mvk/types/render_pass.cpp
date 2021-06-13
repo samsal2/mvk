@@ -8,7 +8,7 @@ render_pass::render_pass(VkDevice const device,
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateRenderPass(parent(), &info, nullptr, &reference());
+      vkCreateRenderPass(parent(), &info, nullptr, &get());
 
   MVK_VERIFY(VK_SUCCESS == result);
 }

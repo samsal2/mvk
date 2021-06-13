@@ -7,7 +7,7 @@ surface::surface(VkInstance const instance, GLFWwindow * const window)
     : wrapper(nullptr, instance)
 {
   [[maybe_unused]] auto const result =
-      glfwCreateWindowSurface(parent(), window, nullptr, &reference());
+      glfwCreateWindowSurface(parent(), window, nullptr, &get());
 
   MVK_VERIFY(VK_SUCCESS == result);
 }

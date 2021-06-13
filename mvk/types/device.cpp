@@ -12,7 +12,7 @@ device::device(VkPhysicalDevice physical_device,
     : wrapper(), physical_device_(physical_device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateDevice(physical_device_, &info, nullptr, &reference());
+      vkCreateDevice(physical_device_, &info, nullptr, &get());
 
   MVK_VERIFY(VK_SUCCESS == result);
 

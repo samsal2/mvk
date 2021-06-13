@@ -8,7 +8,7 @@ image_view::image_view(VkDevice const device,
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateImageView(parent(), &info, nullptr, &reference());
+      vkCreateImageView(parent(), &info, nullptr, &get());
 
   MVK_VERIFY(VK_SUCCESS == result);
 }

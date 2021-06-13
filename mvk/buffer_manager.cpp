@@ -1,5 +1,6 @@
 #include "buffer_manager.hpp"
 
+#include "utility/trace.hpp"
 #include "utility/verify.hpp"
 
 namespace mvk

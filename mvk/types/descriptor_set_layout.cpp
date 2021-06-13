@@ -8,7 +8,7 @@ descriptor_set_layout::descriptor_set_layout(
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
-      vkCreateDescriptorSetLayout(parent(), &info, nullptr, &reference());
+      vkCreateDescriptorSetLayout(parent(), &info, nullptr, &get());
   MVK_VERIFY(VK_SUCCESS == result);
 }
 
