@@ -19,7 +19,7 @@ struct same_as_impl
   }
 
   static constexpr auto
-   check(T) noexcept
+  check(T) noexcept
   {
     return std::true_type{};
   }
@@ -61,13 +61,14 @@ struct tagged_with_impl_2
     return std::false_type{};
   }
 
-	template <auto V>
+  template <auto V>
   static constexpr auto 
   check(Tag<V>) noexcept
   {
     return std::true_type{};
   }
 };
+
 template <template <typename> typename Tag>
 constexpr auto
 tagged_with()

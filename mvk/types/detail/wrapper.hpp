@@ -162,9 +162,6 @@ public:
   }
 };
 
-template <typename T>
-using uncvref_t = std::remove_cvref_t<T>;
-
 template <typename... Arguments>
 class wrapper
     : public wrapper_handle_base<decltype(utility::meta::unpack_tag(
@@ -255,8 +252,10 @@ private:
   constexpr void
   destroy() const noexcept
   {
-    delete_dispatch<call>(handle_base::get(), parent_base::parent(),
-                          pool_base::pool());
+    auto const & handle = handle_base::get();
+    auto const & parent = parent_base::parent();
+    auto const & pool = pool_base::pool();
+    delete_dispatch<call>(handle, parent, pool);
   }
 };
 
