@@ -72,8 +72,8 @@ template <>
 class wrapper_handle_base<utility::meta::none>
 {
 public:
-  [[nodiscard]] constexpr utility::meta::none
-  get() const noexcept
+  [[nodiscard]] static constexpr utility::meta::none
+  get() noexcept
   {
     return {};
   }
@@ -114,8 +114,8 @@ template <>
 class wrapper_parent_base<utility::meta::none>
 {
 public:
-  [[nodiscard]] constexpr utility::meta::none
-  parent() const noexcept
+  [[nodiscard]] static constexpr utility::meta::none
+  parent() noexcept
   {
     return {};
   }
@@ -156,8 +156,8 @@ template <>
 class wrapper_pool_base<utility::meta::none>
 {
 public:
-  [[nodiscard]] constexpr utility::meta::none
-  pool() const noexcept
+  [[nodiscard]] static constexpr utility::meta::none
+  pool() noexcept
   {
     return {};
   }
