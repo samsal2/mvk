@@ -217,17 +217,17 @@ public:
   wrapper(wrapper const & other) noexcept = delete;
   wrapper(wrapper && other) noexcept
   {
-    if constexpr (utility::meta::not_none<decltype(handle_base::get())>)
+    if constexpr (!decltype(utility::meta::is_none(handle_base::get())){})
     {
       std::swap(handle_base::get(), other.get());
     }
 
-    if constexpr (utility::meta::not_none<decltype(parent_base::parent())>)
+    if constexpr (!decltype(utility::meta::is_none(parent_base::parent())){})
     {
       std::swap(parent_base::parent(), other.parent());
     }
 
-    if constexpr (utility::meta::not_none<decltype(pool_base::pool())>)
+    if constexpr (!decltype(utility::meta::is_none(pool_base::pool())){})
     {
       std::swap(pool_base::pool(), other.pool());
     }
@@ -239,17 +239,17 @@ public:
   wrapper &
   operator=(wrapper && other) noexcept
   {
-    if constexpr (utility::meta::not_none<decltype(handle_base::get())>)
+    if constexpr (!decltype(utility::meta::is_none(handle_base::get())){})
     {
       std::swap(handle_base::get(), other.get());
     }
 
-    if constexpr (utility::meta::not_none<decltype(parent_base::parent())>)
+    if constexpr (!decltype(utility::meta::is_none(parent_base::parent())){})
     {
       std::swap(parent_base::parent(), other.parent());
     }
 
-    if constexpr (utility::meta::not_none<decltype(pool_base::pool())>)
+    if constexpr (!decltype(utility::meta::is_none(pool_base::pool())){})
     {
       std::swap(pool_base::pool(), other.pool());
     }
