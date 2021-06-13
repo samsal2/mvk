@@ -15,10 +15,6 @@ exists(pack<Ts...> p, Condition condition) noexcept
   return inverse(is_none(find_if(p, condition)));
 }
 
-static_assert(exists(pack<int, float>{}, same_as<int>()));
-static_assert(exists(pack<int, float>{}, same_as<float>()));
-static_assert(!exists(pack<int, float>{}, same_as<double>()));
-
 } // namespace mvk::utility::meta
 
 #endif

@@ -22,7 +22,7 @@ struct find_if_impl
   // If the condition is true, return current
   template <typename Current, typename... Ts>
   static constexpr auto 
-	helper(pack<Ts...>, Current, std::true_type)
+  helper(pack<Ts...>, Current, std::true_type)
   {
     return Current{};
   }
@@ -30,7 +30,7 @@ struct find_if_impl
   // If the condition is false, go next
   template <typename Current, typename Next, typename... Ts>
   static constexpr auto 
-	helper(pack<Next, Ts...>, Current, std::false_type)
+  helper(pack<Next, Ts...>, Current, std::false_type)
   {
     auto const next = Next{};
     return helper(pack<Ts...>{}, next, check(next));
@@ -39,14 +39,14 @@ struct find_if_impl
   // If nothing was found, return none
   template <typename Current>
   static constexpr auto 
-	helper(pack<>, Current, std::false_type)
+  helper(pack<>, Current, std::false_type)
   {
     return none{};
   }
 
   template <typename T, typename... Ts>
   static constexpr auto 
-	apply(pack<T, Ts...>)
+  apply(pack<T, Ts...>)
   {
     return helper(pack<Ts...>{}, T{}, check(T{}));
   }

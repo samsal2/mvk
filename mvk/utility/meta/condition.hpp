@@ -12,12 +12,14 @@ template <typename T>
 struct same_as_impl
 {
   template <typename U>
-  static constexpr auto check(U) noexcept
+  static constexpr auto 
+  check(U) noexcept
   {
     return std::false_type{};
   }
 
-  static constexpr auto check(T) noexcept
+  static constexpr auto
+   check(T) noexcept
   {
     return std::true_type{};
   }
@@ -34,13 +36,15 @@ template <template <typename> typename Tag>
 struct tagged_with_impl_1
 {
   template <typename U>
-  static constexpr auto check(U) noexcept
+  static constexpr auto 
+  check(U) noexcept
   {
     return std::false_type{};
   }
 
 	template <typename U>
-  static constexpr auto check(Tag<U>) noexcept
+  static constexpr auto 
+  check(Tag<U>) noexcept
   {
     return std::true_type{};
   }
@@ -51,13 +55,15 @@ template <template <auto> typename Tag>
 struct tagged_with_impl_2
 {
   template <typename U>
-  static constexpr auto check(U) noexcept
+  static constexpr auto 
+  check(U) noexcept
   {
     return std::false_type{};
   }
 
 	template <auto V>
-  static constexpr auto check(Tag<V>) noexcept
+  static constexpr auto 
+  check(Tag<V>) noexcept
   {
     return std::true_type{};
   }
