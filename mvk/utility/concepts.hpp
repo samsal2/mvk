@@ -18,8 +18,8 @@ concept same_as = requires
 template <typename Other, typename This>
 concept not_this = requires
 {
-  requires !std::is_same_v<Other, std::decay_t<This>>;
-  requires !std::is_base_of_v<Other, std::decay_t<This>>;
+  requires !std::is_same_v<std::decay_t<Other>, This>;
+  requires !std::is_base_of_v<This, std::decay_t<Other>>;
 };
 
 template <typename Container>

@@ -42,11 +42,8 @@ public:
   constexpr wrapper_handle_base() noexcept = default;
 
   template <typename U>
-  requires(
-      utility::same_as<std::decay_t<U>, handle_type> ||
-      utility::same_as<
-          std::decay_t<U>,
-          std::nullptr_t>) constexpr explicit wrapper_handle_base(U && handle)
+  requires utility::not_this<U, wrapper_handle_base>
+  constexpr explicit wrapper_handle_base(U && handle)
       : handle_(std::forward<U>(handle))
   {
   }
@@ -87,7 +84,7 @@ public:
   constexpr wrapper_parent_base() noexcept = default;
 
   template <typename U>
-  requires utility::same_as<std::decay_t<U>, parent_type>
+  requires utility::not_this<U, wrapper_parent_base>
   constexpr explicit wrapper_parent_base(U && parent)
       : parent_(std::forward<U>(parent))
   {
@@ -129,7 +126,7 @@ public:
   constexpr wrapper_pool_base() noexcept = default;
 
   template <typename U>
-  requires utility::same_as<std::decay_t<U>, pool_type>
+  requires utility::not_this<U, wrapper_pool_base>
   constexpr explicit wrapper_pool_base(U && pool)
       : pool_(std::forward<U>(pool))
   {
@@ -211,7 +208,7 @@ public:
   }
 
   template <typename Handle>
-  requires utility::same_as<std::decay_t<Handle>, handle_type>
+  requires utility::not_this<Handle, wrapper>
   constexpr explicit wrapper(Handle && handle) noexcept
       : handle_base(std::forward<Handle>(handle))
   {

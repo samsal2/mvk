@@ -11,7 +11,7 @@ namespace mvk::utility
 template <typename Other, typename This>
 using is_not_this =
     std::bool_constant<!std::is_same_v<std::decay_t<Other>, This> &&
-                       !std::is_base_of_v<std::decay_t<Other>, This>>;
+                       !std::is_base_of_v<This, std::decay_t<Other>>>;
 
 template <typename T, typename = void, typename = void>
 struct has_data_and_size : std::false_type

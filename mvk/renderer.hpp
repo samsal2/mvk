@@ -102,11 +102,12 @@ private:
   types::pipeline pipeline_;
 
   // init_sync
-  std::array<types::semaphore, max_frames_in_flight>
-      image_available_semaphores_;
-  std::array<types::semaphore, max_frames_in_flight>
-      render_finished_semaphores_;
-  std::array<types::fence, max_frames_in_flight> frame_in_flight_fences_;
+  template <typename T>
+  using frame_array = std::array<T, max_frames_in_flight>;
+
+  frame_array<types::semaphore> image_available_semaphores_;
+  frame_array<types::semaphore> render_finished_semaphores_;
+  frame_array<types::fence> frame_in_flight_fences_;
 
   // vector of ptrs as optional references
   std::vector<types::fence *> image_in_flight_fences_;
