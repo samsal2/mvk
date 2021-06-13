@@ -42,7 +42,7 @@ struct tagged_with_impl_1
     return std::false_type{};
   }
 
-	template <typename U>
+  template <typename U>
   static constexpr auto 
   check(Tag<U>) noexcept
   {
