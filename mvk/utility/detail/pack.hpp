@@ -13,7 +13,8 @@ struct pack
 };
 
 template <typename... Ts>
-constexpr auto size(pack<Ts...>) noexcept
+constexpr auto
+size([[maybe_unused]] pack<Ts...> elements) noexcept
 {
   return size_constant<sizeof...(Ts)>{};
 }
@@ -26,24 +27,28 @@ concat() noexcept
 }
 
 template <typename... Ts>
-constexpr auto is_empty(pack<Ts...>) noexcept
+constexpr auto
+is_empty([[maybe_unused]] pack<Ts...> elements) noexcept
 {
   return std::false_type{};
 }
 
-constexpr auto is_empty(pack<>) noexcept
+constexpr auto
+is_empty([[maybe_unused]] pack<> elements) noexcept
 {
   return std::true_type{};
 }
 
 template <typename T, typename... Ts>
-constexpr auto pop_front(pack<T, Ts...>) noexcept
+constexpr auto
+pop_front([[maybe_unused]] pack<T, Ts...> elements) noexcept
 {
   return pack<Ts...>{};
 };
 
 template <typename T, typename... Ts>
-constexpr auto first(pack<T, Ts...>) noexcept
+constexpr auto
+first([[maybe_unused]] pack<T, Ts...> elements) noexcept
 {
   return T{};
 };

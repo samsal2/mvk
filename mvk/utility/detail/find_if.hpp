@@ -11,31 +11,34 @@ struct find_if_impl
 {
 
   template <typename Current>
-  static constexpr auto helper(pack<>, Current)
+  static constexpr auto
+  helper([[maybe_unused]] pack<> elements, Current type)
   {
-    auto check = Condition::check(Current{});
-    return if_helper(check, Current{}, none{});
+    auto check = Condition::check(type);
+    return if_helper(check, type, none{});
   }
 
   template <typename Current, typename T, typename... Ts>
-  static constexpr auto helper(pack<T, Ts...>, Current)
+  static constexpr auto
+  helper([[maybe_unused]] pack<T, Ts...> elements, Current type)
   {
-    auto check = Condition::check(Current{});
-    return if_helper(check, Current{}, helper(pack<Ts...>{}, T{}));
+    auto check = Condition::check(type);
+    return if_helper(check, type, helper(pack<Ts...>{}, T{}));
   }
 
   template <typename T, typename... Ts>
-  static constexpr auto apply(pack<T, Ts...>)
+  static constexpr auto
+  apply(pack<T, Ts...> elements)
   {
-    return helper(pack<Ts...>{}, T{});
+    return helper(elements, T{});
   }
 };
 
 template <typename Condition, typename... Ts>
 constexpr auto
-find_if(pack<Ts...> p, Condition)
+find_if(pack<Ts...> elements, [[maybe_unused]] Condition condition)
 {
-  return find_if_impl<Condition>::apply(p);
+  return find_if_impl<Condition>::apply(elements);
 }
 
 } // namespace mvk::utility::detail

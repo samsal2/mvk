@@ -14,41 +14,48 @@ struct none
 {
 };
 
-template <typename U>
-constexpr auto is_none(U) noexcept
+template <typename T>
+constexpr auto
+is_none([[maybe_unused]] T type) noexcept
 {
   return std::false_type{};
 }
 
-constexpr auto is_none(none) noexcept
+constexpr auto
+is_none([[maybe_unused]] none type) noexcept
 {
   return std::true_type{};
 }
 
-constexpr auto inverse(std::false_type) noexcept
+constexpr auto
+inverse([[maybe_unused]] std::false_type type) noexcept
 {
   return std::true_type{};
 }
 
-constexpr auto inverse(std::true_type) noexcept
+constexpr auto
+inverse([[maybe_unused]] std::true_type type) noexcept
 {
   return std::false_type{};
 }
 
 template <template <typename> typename Tag, typename T>
-constexpr auto unpack_tag(Tag<T>)
+constexpr auto
+unpack_tag([[maybe_unused]] Tag<T> tag) noexcept
 {
   return T{};
 }
 
 template <typename T>
-constexpr auto unpack_tag(T)
+constexpr auto
+unpack_tag([[maybe_unused]] T type) noexcept
 {
   return none{};
 }
 
 template <template <auto> typename Tag, auto V>
-constexpr auto unpack_tag(Tag<V>)
+constexpr auto
+unpack_tag([[maybe_unused]] Tag<V> tag) noexcept
 {
   return V;
 }
@@ -60,15 +67,26 @@ concept not_none = requires
 };
 
 template <typename Then, typename Else>
-constexpr auto if_helper(std::true_type, Then, Else)
+constexpr auto
+if_helper([[maybe_unused]] std::true_type condition, Then is_true,
+          [[maybe_unused]] Else is_false) noexcept
 {
-  return Then{};
+  return is_true;
 }
 
 template <typename Then, typename Else>
-constexpr auto if_helper(std::false_type, Then, Else)
+constexpr auto
+if_helper([[maybe_unused]] std::false_type consdition,
+          [[maybe_unused]] Then is_true, Else is_false) noexcept
 {
-  return Else{};
+  return is_false;
+}
+
+template <typename Tag>
+constexpr auto
+is_tag(Tag tag) noexcept
+{
+  return inverse(is_none(unpack_tag(tag)));
 }
 
 } // namespace mvk::utility::detail
