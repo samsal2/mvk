@@ -1,11 +1,12 @@
 #ifndef MVK_TYPES_WRAPPER_HPP_INCLUDED
 #define MVK_TYPES_WRAPPER_HPP_INCLUDED
 
-#include "types/detail/deleter.hpp"
 #include "utility/detail/exists.hpp"
 #include "utility/detail/find_if.hpp"
 #include "utility/detail/pack.hpp"
+#include "utility/misc.hpp"
 #include "utility/verify.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <vector>
 
@@ -159,6 +160,13 @@ concept has_parent = requires(Wrapper wrapper)
   {wrapper.parent()};
 };
 
+// Doing requires (!concept) messes up clang-format
+template <bool B>
+concept inverse = requires
+{
+  requires !B;
+};
+
 template <typename... Arguments>
 class wrapper
     : public wrapper_handle_base<decltype(utility::detail::unpack_tag(
@@ -205,7 +213,7 @@ public:
 
   template <typename Handle, typename Parent, typename Wrapper = wrapper>
   requires has_get<Wrapper> && has_parent<Wrapper> &&
-      (!has_pool<Wrapper>)
+      inverse<has_pool<Wrapper>>
   constexpr wrapper(Handle && handle, Parent && parent) noexcept
       : handle_base(std::forward<Handle>(handle)),
         parent_base(std::forward<Parent>(parent))
@@ -214,8 +222,8 @@ public:
 
   template <typename Handle, typename Wrapper = wrapper>
   requires utility::not_this<Handle, wrapper> && has_get<Wrapper> &&
-           (!has_parent<Wrapper>) && (!has_pool<Wrapper>)
-  constexpr explicit wrapper( Handle && handle) noexcept
+      inverse<has_parent<Wrapper>> && inverse<has_pool<Wrapper>>
+  constexpr explicit wrapper(Handle && handle) noexcept
       : handle_base(std::forward<Handle>(handle))
   {
   }
@@ -282,21 +290,29 @@ private:
     {
       return;
     }
-    else if constexpr (has_get<wrapper> && !has_parent<wrapper> &&
-                       !has_pool<wrapper>)
+    else if constexpr (has_get<wrapper> && inverse<has_parent<wrapper>> &&
+                       inverse<has_pool<wrapper>>)
     {
-      delete_dispatch<call>(handle_base::get());
+      call(handle_base::get(), nullptr);
     }
     else if constexpr (has_get<wrapper> && has_parent<wrapper> &&
-                       !has_pool<wrapper>)
+                       inverse<has_pool<wrapper>>)
     {
-      delete_dispatch<call>(handle_base::get(), parent_base::parent());
+      if (auto parent = parent_base::parent(); parent != nullptr)
+      {
+        call(parent_base::parent(), handle_base::get(), nullptr);
+      }
     }
     else if constexpr (has_get<wrapper> && has_parent<wrapper> &&
                        has_pool<wrapper>)
     {
-      delete_dispatch<call>(handle_base::get(), parent_base::parent(),
-                            pool_base::pool());
+      auto parent = parent_base::parent();
+      auto pool = pool_base::pool();
+      if (parent != nullptr && pool != nullptr)
+      {
+        auto [data, size] = utility::bind_data_and_size(handle_base::get());
+        call(parent, pool, static_cast<uint32_t>(size), data);
+      }
     }
   }
 };
