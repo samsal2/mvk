@@ -205,8 +205,8 @@ public:
 
   template <typename Handle, typename Parent, typename Wrapper = wrapper>
   requires has_get<Wrapper> && has_parent<Wrapper> &&
-      (!has_pool<Wrapper>)constexpr wrapper(Handle && handle,
-                                            Parent && parent) noexcept
+      (!has_pool<Wrapper>)
+  constexpr wrapper(Handle && handle, Parent && parent) noexcept
       : handle_base(std::forward<Handle>(handle)),
         parent_base(std::forward<Parent>(parent))
   {
@@ -214,8 +214,8 @@ public:
 
   template <typename Handle, typename Wrapper = wrapper>
   requires utility::not_this<Handle, wrapper> && has_get<Wrapper> &&
-      (!has_parent<Wrapper>)&&(!has_pool<Wrapper>)constexpr explicit wrapper(
-          Handle && handle) noexcept
+           (!has_parent<Wrapper>) && (!has_pool<Wrapper>)
+  constexpr explicit wrapper( Handle && handle) noexcept
       : handle_base(std::forward<Handle>(handle))
   {
   }
