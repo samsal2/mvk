@@ -76,7 +76,7 @@ if_helper([[maybe_unused]] std::true_type condition, Then is_true,
 
 template <typename Then, typename Else>
 constexpr auto
-if_helper([[maybe_unused]] std::false_type consdition,
+if_helper([[maybe_unused]] std::false_type condition,
           [[maybe_unused]] Then is_true, Else is_false) noexcept
 {
   return is_false;
