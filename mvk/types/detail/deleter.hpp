@@ -11,14 +11,14 @@ namespace mvk::types::detail
 
 template <auto Call, typename Handle>
 constexpr void
-delete_dispatch(Handle handle, utility::detail::none, utility::detail::none)
+delete_dispatch(Handle handle)
 {
   Call(handle, nullptr);
 }
 
 template <auto Call, typename Handle, typename Parent>
 constexpr void
-delete_dispatch(Handle handle, Parent parent, utility::detail::none)
+delete_dispatch(Handle handle, Parent parent)
 {
   if (parent != nullptr)
   {

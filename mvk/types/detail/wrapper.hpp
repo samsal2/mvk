@@ -48,7 +48,7 @@ public:
   {
   }
 
-  [[nodiscard]] constexpr Handle const &
+  [[nodiscard]] constexpr utility::trivially_t<Handle>
   get() const noexcept
   {
     return handle_;
@@ -67,12 +67,6 @@ private:
 template <>
 class wrapper_handle_base<utility::detail::none>
 {
-public:
-  [[nodiscard]] static constexpr utility::detail::none
-  get() noexcept
-  {
-    return {};
-  }
 };
 
 template <typename Parent>
@@ -90,7 +84,7 @@ public:
   {
   }
 
-  [[nodiscard]] constexpr Parent const &
+  [[nodiscard]] constexpr utility::trivially_t<Parent>
   parent() const noexcept
   {
     return parent_;
@@ -109,12 +103,6 @@ private:
 template <>
 class wrapper_parent_base<utility::detail::none>
 {
-public:
-  [[nodiscard]] static constexpr utility::detail::none
-  parent() noexcept
-  {
-    return {};
-  }
 };
 
 template <typename Pool>
@@ -132,7 +120,7 @@ public:
   {
   }
 
-  [[nodiscard]] constexpr Pool const &
+  [[nodiscard]] constexpr utility::trivially_t<Pool>
   pool() const noexcept
   {
     return pool_;
@@ -151,12 +139,24 @@ private:
 template <>
 class wrapper_pool_base<utility::detail::none>
 {
-public:
-  [[nodiscard]] static constexpr utility::detail::none
-  pool() noexcept
-  {
-    return {};
-  }
+};
+
+template <typename Wrapper>
+concept has_get = requires(Wrapper wrapper)
+{
+  {wrapper.get()};
+};
+
+template <typename Wrapper>
+concept has_pool = requires(Wrapper wrapper)
+{
+  {wrapper.pool()};
+};
+
+template <typename Wrapper>
+concept has_parent = requires(Wrapper wrapper)
+{
+  {wrapper.parent()};
 };
 
 template <typename... Arguments>
@@ -193,7 +193,9 @@ class wrapper
 public:
   constexpr wrapper() noexcept = default;
 
-  template <typename Handle, typename Parent, typename Pool>
+  template <typename Handle, typename Parent, typename Pool,
+            typename Wrapper = wrapper>
+  requires has_get<Wrapper> && has_parent<Wrapper> && has_pool<Wrapper>
   constexpr wrapper(Handle && handle, Parent && parent, Pool && pool) noexcept
       : handle_base(std::forward<Handle>(handle)),
         parent_base(std::forward<Parent>(parent)),
@@ -201,16 +203,19 @@ public:
   {
   }
 
-  template <typename Handle, typename Parent>
-  constexpr wrapper(Handle && handle, Parent && parent) noexcept
+  template <typename Handle, typename Parent, typename Wrapper = wrapper>
+  requires has_get<Wrapper> && has_parent<Wrapper> &&
+      (!has_pool<Wrapper>)constexpr wrapper(Handle && handle,
+                                            Parent && parent) noexcept
       : handle_base(std::forward<Handle>(handle)),
         parent_base(std::forward<Parent>(parent))
   {
   }
 
-  template <typename Handle>
-  requires utility::not_this<Handle, wrapper>
-  constexpr explicit wrapper(Handle && handle) noexcept
+  template <typename Handle, typename Wrapper = wrapper>
+  requires utility::not_this<Handle, wrapper> && has_get<Wrapper> &&
+      (!has_parent<Wrapper>)&&(!has_pool<Wrapper>)constexpr explicit wrapper(
+          Handle && handle) noexcept
       : handle_base(std::forward<Handle>(handle))
   {
   }
@@ -218,18 +223,17 @@ public:
   wrapper(wrapper const & other) noexcept = delete;
   wrapper(wrapper && other) noexcept
   {
-    if constexpr (!decltype(utility::detail::is_none(handle_base::get())){})
+    if constexpr (has_get<wrapper>)
     {
       std::swap(handle_base::get(), other.get());
     }
 
-    if constexpr (!decltype(utility::detail::is_none(
-                      parent_base::parent())){})
+    if constexpr (has_parent<wrapper>)
     {
       std::swap(parent_base::parent(), other.parent());
     }
 
-    if constexpr (!decltype(utility::detail::is_none(pool_base::pool())){})
+    if constexpr (has_pool<wrapper>)
     {
       std::swap(pool_base::pool(), other.pool());
     }
@@ -241,18 +245,17 @@ public:
   wrapper &
   operator=(wrapper && other) noexcept
   {
-    if constexpr (!decltype(utility::detail::is_none(handle_base::get())){})
+    if constexpr (has_get<wrapper>)
     {
       std::swap(handle_base::get(), other.get());
     }
 
-    if constexpr (!decltype(utility::detail::is_none(
-                      parent_base::parent())){})
+    if constexpr (has_parent<wrapper>)
     {
       std::swap(parent_base::parent(), other.parent());
     }
 
-    if constexpr (!decltype(utility::detail::is_none(pool_base::pool())){})
+    if constexpr (has_pool<wrapper>)
     {
       std::swap(pool_base::pool(), other.pool());
     }
@@ -275,10 +278,26 @@ private:
   constexpr void
   destroy() const noexcept
   {
-    auto const & handle = handle_base::get();
-    auto const & parent = parent_base::parent();
-    auto const & pool = pool_base::pool();
-    delete_dispatch<call>(handle, parent, pool);
+    if constexpr (utility::detail::is_none(call))
+    {
+      return;
+    }
+    else if constexpr (has_get<wrapper> && !has_parent<wrapper> &&
+                       !has_pool<wrapper>)
+    {
+      delete_dispatch<call>(handle_base::get());
+    }
+    else if constexpr (has_get<wrapper> && has_parent<wrapper> &&
+                       !has_pool<wrapper>)
+    {
+      delete_dispatch<call>(handle_base::get(), parent_base::parent());
+    }
+    else if constexpr (has_get<wrapper> && has_parent<wrapper> &&
+                       has_pool<wrapper>)
+    {
+      delete_dispatch<call>(handle_base::get(), parent_base::parent(),
+                            pool_base::pool());
+    }
   }
 };
 
