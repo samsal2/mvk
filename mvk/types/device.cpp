@@ -35,6 +35,7 @@ device::device(VkPhysicalDevice physical_device,
     }
 
     MVK_VERIFY_NOT_REACHED();
+    return std::make_pair(0U, 0U);
   }();
 
   queues_.graphics_queue_ = queue(get(), graphics_index);

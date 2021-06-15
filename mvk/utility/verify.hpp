@@ -8,44 +8,20 @@
 namespace mvk::utility
 {
 
-class verify_error : public std::exception
-{
-public:
-  verify_error(std::string_view file, size_t line);
-
-  [[nodiscard]] char const *
-  what() const noexcept override;
-
-private:
-  std::string message_;
-  std::string file_;
-  std::string line_;
-};
-
-#define MVK_VERIFY_NOT_REACHED()                                             \
-  throw ::mvk::utility::verify_error(__FILE__, __LINE__)
-
-namespace detail
-{
-
-static constexpr void
-verify_impl(bool const statement, std::string_view const file,
-            size_t const line)
-{
-  if (!statement) [[unlikely]]
-  {
-    throw verify_error(file, line);
-  }
-}
-
-} // namespace detail
+[[noreturn]] void
+verify_failed(std::string_view file, int line, std::string_view function);
 
 #ifndef NDEBUG
 #define MVK_VERIFY(expression)                                               \
-  ::mvk::utility::detail::verify_impl(expression, __FILE__, __LINE__)
+  (static_cast<bool>(expression)                                             \
+       ? void(0)                                                             \
+       : ::mvk::utility::verify_failed(__FILE__, __LINE__,                   \
+                                       __PRETTY_FUNCTION__))
 #else
-#define MVK_VERIFY(expression)
+#define MVK_VERIFY(expression) void(0)
 #endif
+
+#define MVK_VERIFY_NOT_REACHED() MVK_VERIFY(false)
 
 } // namespace mvk::utility
 

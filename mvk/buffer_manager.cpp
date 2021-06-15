@@ -154,6 +154,7 @@ get_usage(buffer_type const type)
 
   case buffer_type::none:
     MVK_VERIFY_NOT_REACHED();
+    return {};
   }
 }
 

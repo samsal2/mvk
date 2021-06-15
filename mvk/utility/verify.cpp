@@ -1,23 +1,16 @@
 #include "utility/verify.hpp"
 
-#include <string>
+#include <iostream>
 
 namespace mvk::utility
 {
 
-verify_error::verify_error(std::string_view file, size_t const line)
-    : file_(std::begin(file), std::end(file)), line_(std::to_string(line))
+[[noreturn]] void
+verify_failed(std::string_view file, int line, std::string_view function)
 {
-  // TODO(samuel): temporary solution
-  message_ =
-      detail::trace_message("MVK_VERIFY error", line,
-                            std::string(std::begin(file), std::end(file)));
-}
-
-[[nodiscard]] char const *
-verify_error::what() const noexcept
-{
-  return message_.c_str();
+  std::cerr << "MVK_VERIFY failure in " << file << ':' << line << '\n';
+  std::cerr << "inside " << function << '\n';
+  abort();
 }
 
 } // namespace mvk::utility
