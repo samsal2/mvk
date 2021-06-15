@@ -42,4 +42,4 @@ struct pvm
 
 } // namespace mvk
 
-#endif // MVK_TYPES_COMMON_HPP_INCLUDED
+#endif

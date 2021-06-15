@@ -18,4 +18,4 @@ public:
 
 } // namespace mvk::types
 
-#endif // MVK_TYPES_INSTANCE_HPP_INCLUDED
+#endif

@@ -153,4 +153,4 @@ required_instance_extensions()
 
 } // namespace mvk::types::validation
 
-#endif // MVK_TYPES_VALIDATION_HPP_INCLUDE
+#endif

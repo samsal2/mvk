@@ -51,4 +51,4 @@ choose_extent(VkSurfaceCapabilitiesKHR const & capabilities,
 
 } // namespace mvk::detail
 
-#endif // MVK_DETAIL_MISC_HPP_INCLUDED
+#endif

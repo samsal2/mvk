@@ -20,4 +20,4 @@ public:
 
 } // namespace mvk::types
 
-#endif // MVK_TYPES_PIPELINE_LAYOUT_HPP_INCLUDED
+#endif

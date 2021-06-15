@@ -70,4 +70,4 @@ swapchain::format() const noexcept
 
 } // namespace mvk::types
 
-#endif // MVK_TYPES_SWAPCHAIN_HPP_INCLUDED
+#endif

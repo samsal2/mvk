@@ -23,4 +23,4 @@ public:
 
 } // namespace mvk::types
 
-#endif // MVK_TYPES_DEBUG_MESSENGER_HPP_INCLUDED
+#endif

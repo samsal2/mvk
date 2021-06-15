@@ -60,4 +60,4 @@ queue::present(VkPresentInfoKHR const & info, Checker && check)
 
 } // namespace mvk::types
 
-#endif // MVK_TYPES_QUEUE_HPP_INCLUDED
+#endif
