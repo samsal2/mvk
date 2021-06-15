@@ -8,7 +8,7 @@ namespace mvk::types
 {
 
 device::device(VkPhysicalDevice physical_device,
-               VkDeviceCreateInfo const & info)
+               VkDeviceCreateInfo const & info) noexcept
     : wrapper(), physical_device_(physical_device)
 {
   [[maybe_unused]] auto const result =
@@ -38,8 +38,8 @@ device::device(VkPhysicalDevice physical_device,
     return std::make_pair(0U, 0U);
   }();
 
-  queues_.graphics_queue_ = queue(get(), graphics_index);
-  queues_.present_queue_ = queue(get(), present_index);
+  graphics_queue_ = queue(get(), graphics_index);
+  present_queue_ = queue(get(), present_index);
 }
 
 void

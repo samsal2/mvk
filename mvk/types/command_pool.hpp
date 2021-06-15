@@ -14,7 +14,9 @@ class command_pool
 {
 public:
   constexpr command_pool() noexcept = default;
-  command_pool(VkDevice device, VkCommandPoolCreateInfo const & info);
+
+  command_pool(VkDevice device,
+               VkCommandPoolCreateInfo const & info) noexcept;
 
   void
   reset(VkCommandPoolResetFlags reset_flags) const;

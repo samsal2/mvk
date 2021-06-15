@@ -15,7 +15,7 @@ class framebuffer
 public:
   constexpr framebuffer() noexcept = default;
 
-  framebuffer(VkDevice device, VkFramebufferCreateInfo const & info);
+  framebuffer(VkDevice device, VkFramebufferCreateInfo const & info) noexcept;
 };
 
 } // namespace mvk::types

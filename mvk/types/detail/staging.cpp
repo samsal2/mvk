@@ -10,7 +10,7 @@ namespace mvk::types::detail
 
 [[nodiscard]] std::pair<buffer, device_memory>
 create_staging_buffer_and_memory(device const & device,
-                                 utility::slice<std::byte> const src)
+                                 utility::slice<std::byte> const src) noexcept
 {
   auto const size = std::size(src);
 
@@ -52,7 +52,7 @@ create_staging_buffer_and_memory(device const & device,
 
 [[nodiscard]] command_buffers
 create_staging_command_buffer(device const & device,
-                              command_pool const & command_pool)
+                              command_pool const & command_pool) noexcept
 {
   auto info = VkCommandBufferAllocateInfo();
   info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -65,7 +65,7 @@ create_staging_command_buffer(device const & device,
 
 void
 submit_staging_command_buffer(device const & device,
-                              command_buffers const & command_buffer)
+                              command_buffers const & command_buffer) noexcept
 {
 
   auto const command_buffer_count =
@@ -76,7 +76,7 @@ submit_staging_command_buffer(device const & device,
   submit_info.commandBufferCount = command_buffer_count;
   submit_info.pCommandBuffers = std::data(command_buffer.get());
 
-  auto [graphics_queue, present_queue] = device.get_queues();
+  auto [graphics_queue, present_queue] = device.queues();
   graphics_queue.submit(submit_info).wait_idle();
 }
 

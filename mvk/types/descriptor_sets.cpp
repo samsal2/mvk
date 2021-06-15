@@ -4,8 +4,8 @@
 namespace mvk::types
 {
 
-descriptor_sets::descriptor_sets(VkDevice const device,
-                                 VkDescriptorSetAllocateInfo const & info)
+descriptor_sets::descriptor_sets(
+    VkDevice const device, VkDescriptorSetAllocateInfo const & info) noexcept
     : wrapper(std::vector<VkDescriptorSet>(info.descriptorSetCount, nullptr),
               device, info.descriptorPool)
 {

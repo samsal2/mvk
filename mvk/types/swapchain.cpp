@@ -9,7 +9,7 @@ namespace mvk::types
 {
 
 swapchain::swapchain(VkDevice const device,
-                     VkSwapchainCreateInfoKHR const & info)
+                     VkSwapchainCreateInfoKHR const & info) noexcept
     : wrapper(nullptr, device), extent_(info.imageExtent),
       format_(info.imageFormat)
 {

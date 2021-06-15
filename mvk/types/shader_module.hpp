@@ -16,14 +16,16 @@ class shader_module
 public:
   constexpr shader_module() noexcept = default;
 
-  shader_module(VkDevice device, VkShaderModuleCreateInfo const & info);
+  shader_module(VkDevice device,
+                VkShaderModuleCreateInfo const & info) noexcept;
 };
 
 class shader_stage_builder
 {
 public:
   shader_stage_builder &
-  add_stage(shader_module shader_module, VkShaderStageFlagBits stage);
+  add_stage(shader_module shader_module,
+            VkShaderStageFlagBits stage) noexcept;
 
   [[nodiscard]] constexpr utility::slice<VkPipelineShaderStageCreateInfo>
   stages() const noexcept;

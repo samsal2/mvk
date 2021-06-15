@@ -9,10 +9,11 @@ namespace mvk::detail
 template <typename Buffer>
 [[nodiscard]] types::device_memory
 create_device_memory(types::device const & device, Buffer const & buffer,
-                     VkMemoryPropertyFlags properties);
+                     VkMemoryPropertyFlags properties) noexcept;
 
 [[nodiscard]] types::shader_module
-create_shader_module(types::device const & device, utility::slice<char> code);
+create_shader_module(types::device const & device,
+                     utility::slice<char> code) noexcept;
 
 } // namespace mvk::detail
 
@@ -22,7 +23,7 @@ namespace mvk::detail
 template <typename Buffer>
 [[nodiscard]] types::device_memory
 create_device_memory(types::device const & device, Buffer const & buffer,
-                     VkMemoryPropertyFlags const properties)
+                     VkMemoryPropertyFlags const properties) noexcept
 {
   auto const requirements = buffer.memory_requirements();
   auto const memory_type_index = types::detail::find_memory_type(

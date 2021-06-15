@@ -6,7 +6,7 @@
 namespace mvk::types
 {
 
-window::window(extent const extent)
+window::window(extent const extent) noexcept
 {
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

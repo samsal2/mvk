@@ -10,7 +10,7 @@ namespace detail
 {
 
 static constexpr VkBufferUsageFlags
-get_usage(buffer_type type);
+get_usage(buffer_type type) noexcept;
 
 } // namespace detail
 
@@ -47,7 +47,8 @@ buffer_manager::map(utility::slice<std::byte> const src)
 }
 
 void
-buffer_manager::create_new_buffers_and_memories(types::device_size const size)
+buffer_manager::create_new_buffers_and_memories(
+    types::device_size const size) noexcept
 {
   auto const vertex_buffer_create_info = [this, size]
   {
@@ -136,7 +137,7 @@ namespace detail
 {
 
 static constexpr VkBufferUsageFlags
-get_usage(buffer_type const type)
+get_usage(buffer_type const type) noexcept
 {
   switch (type)
   {

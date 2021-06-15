@@ -4,7 +4,7 @@ namespace mvk::types
 {
 
 pipeline::pipeline(VkDevice const device,
-                   VkGraphicsPipelineCreateInfo const & info)
+                   VkGraphicsPipelineCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =

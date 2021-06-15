@@ -3,7 +3,8 @@
 namespace mvk::types
 {
 
-sampler::sampler(VkDevice const device, VkSamplerCreateInfo const & info)
+sampler::sampler(VkDevice const device,
+                 VkSamplerCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =

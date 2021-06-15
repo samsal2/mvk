@@ -19,7 +19,7 @@ class image : public detail::wrapper<detail::deleter<vkDestroyImage>,
 public:
   constexpr image() noexcept = default;
 
-  image(VkDevice device, VkImageCreateInfo const & info);
+  image(VkDevice device, VkImageCreateInfo const & info) noexcept;
 
   class texture
   {
@@ -27,7 +27,8 @@ public:
     using value_type = unsigned char;
 
     constexpr texture() noexcept = default;
-    explicit texture(std::filesystem::path const & path);
+
+    explicit texture(std::filesystem::path const & path) noexcept;
 
     [[nodiscard]] constexpr value_type const *
     data() const noexcept;
@@ -60,11 +61,12 @@ public:
 
   image &
   transition_layout(device const & device, command_pool const & command_pool,
-                    VkImageLayout old_layout, VkImageLayout new_layout);
+                    VkImageLayout old_layout,
+                    VkImageLayout new_layout) noexcept;
 
   image &
   stage(device const & device, command_pool const & command_pool,
-        image::texture const & texture);
+        image::texture const & texture) noexcept;
 
   // TODO(samuel): current layout needs to be VK_IMAGE_LAYOUT_DST_OPTIMAL
   // and generate mipmaps transitions it to
@@ -73,7 +75,7 @@ public:
   // make it starting layout agnostic
   image &
   generate_mipmaps(device const & device, command_pool const & command_pool,
-                   uint32_t width, uint32_t height);
+                   uint32_t width, uint32_t height) noexcept;
 
   [[nodiscard]] constexpr VkMemoryRequirements
   memory_requirements() const noexcept;

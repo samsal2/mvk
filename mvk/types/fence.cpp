@@ -3,7 +3,7 @@
 namespace mvk::types
 {
 
-fence::fence(VkDevice const device, VkFenceCreateInfo const & info)
+fence::fence(VkDevice const device, VkFenceCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
@@ -12,7 +12,7 @@ fence::fence(VkDevice const device, VkFenceCreateInfo const & info)
 }
 
 fence &
-fence::reset()
+fence::reset() noexcept
 {
   [[maybe_unused]] auto const result = vkResetFences(parent(), 1, &get());
   MVK_VERIFY(VK_SUCCESS == result);
@@ -20,7 +20,7 @@ fence::reset()
 }
 
 fence &
-fence::wait()
+fence::wait() noexcept
 {
   [[maybe_unused]] auto const result = vkWaitForFences(
       parent(), 1, &get(), VK_TRUE, std::numeric_limits<int64_t>::max());

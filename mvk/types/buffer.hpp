@@ -18,7 +18,8 @@ class buffer : public detail::wrapper<detail::deleter<vkDestroyBuffer>,
 {
 public:
   constexpr buffer() noexcept = default;
-  buffer(VkDevice device, VkBufferCreateInfo const & info);
+
+  buffer(VkDevice device, VkBufferCreateInfo const & info) noexcept;
 
   [[nodiscard]] constexpr device_size
   size() const noexcept;
@@ -32,7 +33,7 @@ public:
   // When calling buffer must've had been bound before hand
   buffer &
   stage(device const & device, command_pool const & command_pool,
-        utility::slice<std::byte> src, device_size offset = 0);
+        utility::slice<std::byte> src, device_size offset = 0) noexcept;
 
 private:
   VkMemoryRequirements memory_requirements_ = {};

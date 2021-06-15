@@ -3,7 +3,7 @@
 namespace mvk::types
 {
 
-instance::instance(VkInstanceCreateInfo const & info) : wrapper()
+instance::instance(VkInstanceCreateInfo const & info) noexcept : wrapper()
 {
   [[maybe_unused]] auto const result =
       vkCreateInstance(&info, nullptr, &get());

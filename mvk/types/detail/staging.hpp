@@ -15,15 +15,15 @@ namespace mvk::types::detail
 
 [[nodiscard]] std::pair<buffer, device_memory>
 create_staging_buffer_and_memory(device const & device,
-                                 utility::slice<std::byte> src);
+                                 utility::slice<std::byte> src) noexcept;
 
 [[nodiscard]] command_buffers
 create_staging_command_buffer(device const & device,
-                              command_pool const & command_pool);
+                              command_pool const & command_pool) noexcept;
 
 void
-submit_staging_command_buffer(device const & device,
-                              command_buffers const & command_buffer);
+submit_staging_command_buffer(
+    device const & device, command_buffers const & command_buffer) noexcept;
 
 } // namespace mvk::types::detail
 

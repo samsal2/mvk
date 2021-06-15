@@ -18,7 +18,7 @@ class debug_messenger
 {
 public:
   constexpr debug_messenger() noexcept = default;
-  explicit debug_messenger(VkInstance instance);
+  explicit debug_messenger(VkInstance instance) noexcept;
 };
 
 } // namespace mvk::types

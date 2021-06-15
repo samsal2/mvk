@@ -17,7 +17,7 @@ public:
 
   constexpr window() noexcept = default;
 
-  window(extent extent);
+  window(extent extent) noexcept;
 
   [[nodiscard]] constexpr GLFWwindow *
   get() const noexcept;

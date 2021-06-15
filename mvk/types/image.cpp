@@ -17,7 +17,7 @@
 namespace mvk::types
 {
 
-image::image(VkDevice const device, VkImageCreateInfo const & info)
+image::image(VkDevice const device, VkImageCreateInfo const & info) noexcept
     : wrapper(nullptr, device), mipmap_levels_(info.mipLevels)
 {
   [[maybe_unused]] auto const result =
@@ -30,7 +30,7 @@ image &
 image::transition_layout(device const & device,
                          command_pool const & command_pool,
                          VkImageLayout const old_layout,
-                         VkImageLayout const new_layout)
+                         VkImageLayout const new_layout) noexcept
 {
   auto const [image_memory_barrier, source_stage, destination_stage] =
       [old_layout, new_layout, this]
@@ -89,7 +89,7 @@ image::transition_layout(device const & device,
     }
     else
     {
-      MVK_VERIFY(false);
+      MVK_VERIFY_NOT_REACHED();
     }
 
     return std::make_tuple(barrier, source_stage, destination_stage);
@@ -118,7 +118,7 @@ image::transition_layout(device const & device,
 
 image &
 image::stage(device const & device, command_pool const & command_pool,
-             image::texture const & texture)
+             image::texture const & texture) noexcept
 {
   auto const [staging_buffer, staging_buffer_memory] =
       detail::create_staging_buffer_and_memory(device,
@@ -168,7 +168,7 @@ image::stage(device const & device, command_pool const & command_pool,
 image &
 image::generate_mipmaps(device const & device,
                         command_pool const & command_pool, uint32_t width,
-                        uint32_t height)
+                        uint32_t height) noexcept
 {
   if (mipmap_levels() == 1 || mipmap_levels() == 0)
   {
@@ -281,7 +281,7 @@ image::generate_mipmaps(device const & device,
   return *this;
 }
 
-image::texture::texture(std::filesystem::path const & path)
+image::texture::texture(std::filesystem::path const & path) noexcept
 {
   MVK_VERIFY(std::filesystem::exists(path));
 

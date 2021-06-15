@@ -143,7 +143,7 @@ renderer::init_vulkan()
 
   auto const command_pool_create_info = [this]
   {
-    auto const [graphics_queue, present_queue] = device_.get_queues();
+    auto const [graphics_queue, present_queue] = device_.queues();
 
     auto info = VkCommandPoolCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -159,7 +159,7 @@ renderer::init_vulkan()
 void
 renderer::init_swapchain()
 {
-  auto const [graphics_queue, present_queue] = device_.get_queues();
+  auto const [graphics_queue, present_queue] = device_.queues();
   auto const family_indices =
       std::array{graphics_queue.index(), present_queue.index()};
 
@@ -1099,7 +1099,7 @@ renderer::run()
 
     frame_in_flight_fence.reset();
 
-    auto [graphics_queue, present_queue] = device_.get_queues();
+    auto [graphics_queue, present_queue] = device_.queues();
     graphics_queue.submit(submit_info, frame_in_flight_fence.get());
 
     auto const present_info =

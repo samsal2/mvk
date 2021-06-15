@@ -3,8 +3,8 @@
 namespace mvk::types
 {
 
-descriptor_pool::descriptor_pool(VkDevice const device,
-                                 VkDescriptorPoolCreateInfo const & info)
+descriptor_pool::descriptor_pool(
+    VkDevice const device, VkDescriptorPoolCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =

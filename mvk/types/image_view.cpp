@@ -4,7 +4,7 @@ namespace mvk::types
 {
 
 image_view::image_view(VkDevice const device,
-                       VkImageViewCreateInfo const & info)
+                       VkImageViewCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =

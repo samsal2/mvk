@@ -4,7 +4,7 @@ namespace mvk::types
 {
 
 shader_module::shader_module(VkDevice const device,
-                             VkShaderModuleCreateInfo const & info)
+                             VkShaderModuleCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
@@ -15,7 +15,7 @@ shader_module::shader_module(VkDevice const device,
 
 shader_stage_builder &
 shader_stage_builder::add_stage(shader_module shader_module,
-                                VkShaderStageFlagBits const stage)
+                                VkShaderStageFlagBits const stage) noexcept
 {
   auto info = VkPipelineShaderStageCreateInfo();
   info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

@@ -20,7 +20,7 @@ class swapchain
 public:
   swapchain() noexcept = default;
 
-  swapchain(VkDevice device, VkSwapchainCreateInfoKHR const & info);
+  swapchain(VkDevice device, VkSwapchainCreateInfoKHR const & info) noexcept;
 
   [[nodiscard]] constexpr VkExtent2D
   extent() const noexcept;

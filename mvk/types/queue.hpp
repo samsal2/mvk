@@ -14,7 +14,7 @@ class queue
 public:
   constexpr queue() noexcept = default;
 
-  queue(VkDevice device, uint32_t index);
+  queue(VkDevice device, uint32_t index) noexcept;
 
   [[nodiscard]] constexpr VkQueue
   get() const noexcept;
@@ -23,15 +23,15 @@ public:
   index() const noexcept;
 
   queue &
-  wait_idle();
+  wait_idle() noexcept;
 
   queue &
-  submit(VkSubmitInfo const & info, VkFence fence = nullptr);
+  submit(VkSubmitInfo const & info, VkFence fence = nullptr) noexcept;
 
   template <typename Checker = decltype(detail::default_result_checker)>
   requires detail::result_checker<Checker> queue &
   present(VkPresentInfoKHR const & info,
-          Checker && check = detail::default_result_checker);
+          Checker && check = detail::default_result_checker) noexcept;
 
 private:
   VkQueue instance_ = nullptr;
@@ -52,7 +52,7 @@ queue::index() const noexcept
 
 template <typename Checker>
 requires detail::result_checker<Checker> queue &
-queue::present(VkPresentInfoKHR const & info, Checker && check)
+queue::present(VkPresentInfoKHR const & info, Checker && check) noexcept
 {
   std::forward<Checker>(check)(vkQueuePresentKHR(get(), &info));
   return *this;

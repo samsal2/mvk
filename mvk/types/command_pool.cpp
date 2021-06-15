@@ -4,7 +4,7 @@ namespace mvk::types
 {
 
 command_pool::command_pool(VkDevice const device,
-                           VkCommandPoolCreateInfo const & info)
+                           VkCommandPoolCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =

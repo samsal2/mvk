@@ -10,7 +10,7 @@ namespace mvk::detail
 {
 
 [[nodiscard]] std::pair<std::vector<vertex>, std::vector<uint32_t>>
-read_object(std::filesystem::path const & path)
+read_object(std::filesystem::path const & path) noexcept
 {
   auto attrib = tinyobj::attrib_t();
   auto shapes = std::vector<tinyobj::shape_t>();
@@ -63,7 +63,7 @@ read_object(std::filesystem::path const & path)
 }
 
 [[nodiscard]] std::vector<char>
-read_file(std::filesystem::path const & path)
+read_file(std::filesystem::path const & path) noexcept
 {
   MVK_VERIFY(std::filesystem::exists(path));
   auto file = std::ifstream(path, std::ios::ate | std::ios::binary);

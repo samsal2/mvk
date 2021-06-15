@@ -7,7 +7,7 @@ namespace mvk::types
 {
 
 single_command_buffer::single_command_buffer(
-    VkCommandBuffer const command_buffer)
+    VkCommandBuffer const command_buffer) noexcept
     : command_buffer_(command_buffer)
 {
 }

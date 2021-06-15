@@ -4,7 +4,7 @@ namespace mvk::types
 {
 
 render_pass::render_pass(VkDevice const device,
-                         VkRenderPassCreateInfo const & info)
+                         VkRenderPassCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =

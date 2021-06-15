@@ -47,7 +47,7 @@ public:
 
 protected:
   void
-  create_new_buffers_and_memories(types::device_size size);
+  create_new_buffers_and_memories(types::device_size size) noexcept;
 
   void
   add_current_buffers_and_memories_to_garbage();

@@ -12,18 +12,13 @@ class device : public detail::wrapper<detail::deleter<vkDestroyDevice>,
                                       detail::handle<VkDevice>>
 {
 public:
-  struct queues
-  {
-    queue graphics_queue_;
-    queue present_queue_;
-  };
-
   constexpr device() noexcept = default;
 
-  device(VkPhysicalDevice physical_device, VkDeviceCreateInfo const & info);
+  device(VkPhysicalDevice physical_device,
+         VkDeviceCreateInfo const & info) noexcept;
 
-  [[nodiscard]] constexpr queues
-  get_queues() const noexcept;
+  [[nodiscard]] constexpr std::pair<queue, queue>
+  queues() const noexcept;
 
   [[nodiscard]] constexpr VkPhysicalDevice
   physical_device() const noexcept;
@@ -33,13 +28,14 @@ public:
 
 private:
   VkPhysicalDevice physical_device_ = nullptr;
-  queues queues_;
+  queue graphics_queue_;
+  queue present_queue_;
 };
 
-[[nodiscard]] constexpr device::queues
-device::get_queues() const noexcept
+[[nodiscard]] constexpr std::pair<queue, queue>
+device::queues() const noexcept
 {
-  return queues_;
+  return {graphics_queue_, present_queue_};
 }
 
 [[nodiscard]] constexpr VkPhysicalDevice

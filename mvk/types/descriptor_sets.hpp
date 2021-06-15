@@ -17,7 +17,8 @@ class descriptor_sets
 public:
   constexpr descriptor_sets() noexcept = default;
 
-  descriptor_sets(VkDevice device, VkDescriptorSetAllocateInfo const & info);
+  descriptor_sets(VkDevice device,
+                  VkDescriptorSetAllocateInfo const & info) noexcept;
 };
 
 void

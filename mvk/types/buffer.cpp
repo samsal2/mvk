@@ -9,7 +9,8 @@
 namespace mvk::types
 {
 
-buffer::buffer(VkDevice const device, VkBufferCreateInfo const & info)
+buffer::buffer(VkDevice const device,
+               VkBufferCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
@@ -20,7 +21,8 @@ buffer::buffer(VkDevice const device, VkBufferCreateInfo const & info)
 
 buffer &
 buffer::stage(device const & device, command_pool const & command_pool,
-              utility::slice<std::byte> const src, device_size const offset)
+              utility::slice<std::byte> const src,
+              device_size const offset) noexcept
 {
   auto const [staging_buffer, staging_buffer_memory] =
       detail::create_staging_buffer_and_memory(device, src);

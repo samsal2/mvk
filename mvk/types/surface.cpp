@@ -1,9 +1,11 @@
 #include "types/surface.hpp"
+#include "utility/verify.hpp"
 
 namespace mvk::types
 {
 
-surface::surface(VkInstance const instance, GLFWwindow * const window)
+surface::surface(VkInstance const instance,
+                 GLFWwindow * const window) noexcept
     : wrapper(nullptr, instance)
 {
   [[maybe_unused]] auto const result =
@@ -16,8 +18,10 @@ surface::surface(VkInstance const instance, GLFWwindow * const window)
 surface::query_capabilities(VkPhysicalDevice physical_device) const noexcept
 {
   auto capabilities = VkSurfaceCapabilitiesKHR();
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, get(),
-                                            &capabilities);
+  [[maybe_unused]] auto const result =
+      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, get(),
+                                                &capabilities);
+  MVK_VERIFY(result == VK_SUCCESS);
   return capabilities;
 }
 

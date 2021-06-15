@@ -15,7 +15,8 @@ class surface : public detail::wrapper<detail::deleter<vkDestroySurfaceKHR>,
 {
 public:
   constexpr surface() noexcept = default;
-  surface(VkInstance instance, GLFWwindow * window);
+
+  surface(VkInstance instance, GLFWwindow * window) noexcept;
 
   template <typename Checker = decltype(detail::default_format_checker)>
   requires detail::requirement_checker<Checker>

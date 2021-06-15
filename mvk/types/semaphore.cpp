@@ -4,7 +4,7 @@ namespace mvk::types
 {
 
 semaphore::semaphore(VkDevice const device,
-                     VkSemaphoreCreateInfo const & info)
+                     VkSemaphoreCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =

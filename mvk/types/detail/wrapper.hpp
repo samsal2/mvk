@@ -6,7 +6,6 @@
 #include "utility/detail/pack.hpp"
 #include "utility/misc.hpp"
 #include "utility/verify.hpp"
-#include "vulkan/vulkan_core.h"
 
 #include <vector>
 
@@ -44,7 +43,7 @@ public:
 
   template <typename U>
   requires utility::not_this<U, wrapper_handle_base>
-  constexpr explicit wrapper_handle_base(U && handle)
+  constexpr explicit wrapper_handle_base(U && handle) noexcept
       : handle_(std::forward<U>(handle))
   {
   }
@@ -80,7 +79,7 @@ public:
 
   template <typename U>
   requires utility::not_this<U, wrapper_parent_base>
-  constexpr explicit wrapper_parent_base(U && parent)
+  constexpr explicit wrapper_parent_base(U && parent) noexcept
       : parent_(std::forward<U>(parent))
   {
   }
@@ -116,7 +115,7 @@ public:
 
   template <typename U>
   requires utility::not_this<U, wrapper_pool_base>
-  constexpr explicit wrapper_pool_base(U && pool)
+  constexpr explicit wrapper_pool_base(U && pool) noexcept
       : pool_(std::forward<U>(pool))
   {
   }

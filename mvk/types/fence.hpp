@@ -14,12 +14,12 @@ class fence : public detail::wrapper<detail::deleter<vkDestroyFence>,
 public:
   constexpr fence() noexcept = default;
 
-  fence(VkDevice device, VkFenceCreateInfo const & info);
+  fence(VkDevice device, VkFenceCreateInfo const & info) noexcept;
 
   fence &
-  reset();
+  reset() noexcept;
   fence &
-  wait();
+  wait() noexcept;
 };
 
 } // namespace mvk::types

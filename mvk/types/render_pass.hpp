@@ -15,7 +15,7 @@ class render_pass
 public:
   constexpr render_pass() noexcept = default;
 
-  render_pass(VkDevice device, VkRenderPassCreateInfo const & info);
+  render_pass(VkDevice device, VkRenderPassCreateInfo const & info) noexcept;
 };
 
 } // namespace mvk::types

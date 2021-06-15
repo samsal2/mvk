@@ -88,7 +88,7 @@ public:
   template <typename Iterator>
   requires detail::valid_slice_iterator<Iterator, const_value_type>
   constexpr explicit(extent != dynamic_extent)
-      slice(Iterator begin, size_type count)
+      slice(Iterator begin, size_type count) noexcept
       : storage_(detail::unwrap_iterator(begin), count)
   {
     MVK_VERIFY(Extent == dynamic_extent || Extent == size());
@@ -97,7 +97,7 @@ public:
   template <typename Iterator>
   requires detail::valid_slice_iterator<Iterator, const_value_type>
   constexpr explicit(extent != dynamic_extent)
-      slice(Iterator begin, Iterator end)
+      slice(Iterator begin, Iterator end) noexcept
       : storage_(detail::unwrap_iterator(begin), std::distance(begin, end))
   {
     MVK_VERIFY(extent == dynamic_extent || extent == size());
@@ -114,7 +114,7 @@ public:
 
   template <typename U, size_t N>
   requires convertible_as_array_to<U, const_value_type>
-  constexpr slice(std::array<U, N> & array)
+  constexpr slice(std::array<U, N> & array) noexcept
       : storage_(std::data(array), std::size(array))
   {
     MVK_VERIFY(extent == dynamic_extent || extent == size());
@@ -122,7 +122,7 @@ public:
 
   template <typename U, size_t N>
   requires convertible_as_array_to<U, const_value_type>
-  constexpr slice(std::array<U, N> const & array)
+  constexpr slice(std::array<U, N> const & array) noexcept
       : storage_(std::data(array), std::size(array))
   {
     MVK_VERIFY(extent == dynamic_extent || extent == size());
@@ -131,7 +131,7 @@ public:
   template <typename Container>
   requires with_data_and_size<Container> &&
       compatible_with_element<Container, const_value_type>
-  constexpr slice(Container & container)
+  constexpr slice(Container & container) noexcept
       : storage_(std::data(container), std::size(container))
   {
     MVK_VERIFY(extent == dynamic_extent || extent == size());
@@ -140,7 +140,7 @@ public:
   template <typename U, size_t N>
   requires convertible_as_array_to<U, const_value_type>
   constexpr explicit(extent != dynamic_extent && N == dynamic_extent)
-      slice(slice<U, N> other)
+      slice(slice<U, N> other) noexcept
       : storage_(std::data(other), std::size(other))
   {
     MVK_VERIFY(extent == dynamic_extent || extent == size());
@@ -177,27 +177,27 @@ public:
   }
 
   [[nodiscard]] constexpr const_reference
-  operator[](size_t const index) const
+  operator[](size_t const index) const noexcept
   {
     MVK_VERIFY(index < size());
     return data()[index];
   }
 
   [[nodiscard]] constexpr slice
-  last(size_type const count) const
+  last(size_type const count) const noexcept
   {
     return {&operator[](size() - count), count};
   }
 
   [[nodiscard]] constexpr slice
-  first(size_type const count) const
+  first(size_type const count) const noexcept
   {
     return {&operator[](0), count};
   }
 
   [[nodiscard]] constexpr slice<value_type>
   subslice(size_type const offset,
-           size_type const count = dynamic_extent) const
+           size_type const count = dynamic_extent) const noexcept
   {
     auto const new_data = &operator[](offset);
 

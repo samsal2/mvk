@@ -14,8 +14,10 @@ class descriptor_set_layout
 {
 public:
   constexpr descriptor_set_layout() noexcept = default;
-  descriptor_set_layout(VkDevice device,
-                        VkDescriptorSetLayoutCreateInfo const & create_info);
+
+  descriptor_set_layout(
+      VkDevice device,
+      VkDescriptorSetLayoutCreateInfo const & create_info) noexcept;
 };
 
 } // namespace mvk::types

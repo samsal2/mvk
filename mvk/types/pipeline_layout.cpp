@@ -3,8 +3,8 @@
 namespace mvk::types
 {
 
-pipeline_layout::pipeline_layout(VkDevice const device,
-                                 VkPipelineLayoutCreateInfo const & info)
+pipeline_layout::pipeline_layout(
+    VkDevice const device, VkPipelineLayoutCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =

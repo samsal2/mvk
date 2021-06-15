@@ -8,7 +8,7 @@ namespace mvk::types
 {
 
 device_memory::device_memory(VkDevice const device,
-                             VkMemoryAllocateInfo const & info)
+                             VkMemoryAllocateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =
@@ -39,7 +39,7 @@ device_memory::~device_memory() noexcept
 }
 
 device_memory &
-device_memory::bind(buffer const & buffer, device_size const offset)
+device_memory::bind(buffer const & buffer, device_size const offset) noexcept
 {
   [[maybe_unused]] auto const result =
       vkBindBufferMemory(parent(), buffer.get(), get(), offset);
@@ -48,7 +48,7 @@ device_memory::bind(buffer const & buffer, device_size const offset)
 }
 
 device_memory &
-device_memory::bind(image const & image, device_size const offset)
+device_memory::bind(image const & image, device_size const offset) noexcept
 {
   [[maybe_unused]] auto const result =
       vkBindImageMemory(parent(), image.get(), get(), offset);
@@ -57,7 +57,7 @@ device_memory::bind(image const & image, device_size const offset)
 }
 
 device_memory &
-device_memory::map(device_size const size, device_size const offset)
+device_memory::map(device_size const size, device_size const offset) noexcept
 {
   [[maybe_unused]] auto const result =
       vkMapMemory(parent(), get(), offset, size, 0, &data_);
@@ -75,7 +75,7 @@ device_memory::unmap() noexcept
 
 device_memory &
 device_memory::copy_data(utility::slice<std::byte> const src,
-                         device_size const offset)
+                         device_size const offset) noexcept
 {
   MVK_VERIFY(data_);
   auto const [data, size] = utility::bind_data_and_size(src);

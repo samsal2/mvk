@@ -14,7 +14,7 @@ class sampler : public detail::wrapper<detail::deleter<vkDestroySampler>,
 public:
   constexpr sampler() noexcept = default;
 
-  sampler(VkDevice device, VkSamplerCreateInfo const & info);
+  sampler(VkDevice device, VkSamplerCreateInfo const & info) noexcept;
 };
 
 } // namespace mvk::types

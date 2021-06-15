@@ -4,7 +4,7 @@ namespace mvk::types
 {
 
 framebuffer::framebuffer(VkDevice const device,
-                         VkFramebufferCreateInfo const & info)
+                         VkFramebufferCreateInfo const & info) noexcept
     : wrapper(nullptr, device)
 {
   [[maybe_unused]] auto const result =

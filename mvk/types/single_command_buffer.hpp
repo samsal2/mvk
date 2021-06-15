@@ -20,7 +20,7 @@ class single_command_buffer
 public:
   constexpr single_command_buffer() noexcept = default;
 
-  explicit single_command_buffer(VkCommandBuffer command_buffer);
+  explicit single_command_buffer(VkCommandBuffer command_buffer) noexcept;
 
   struct copy_buffer_to_image_information
   {

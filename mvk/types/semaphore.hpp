@@ -14,7 +14,7 @@ class semaphore : public detail::wrapper<detail::deleter<vkDestroySemaphore>,
 public:
   constexpr semaphore() noexcept = default;
 
-  semaphore(VkDevice device, VkSemaphoreCreateInfo const & info);
+  semaphore(VkDevice device, VkSemaphoreCreateInfo const & info) noexcept;
 };
 
 } // namespace mvk::types
