@@ -1016,6 +1016,12 @@ renderer::run()
   {
     glfwPollEvents();
 
+    init_commands();
+    load_mesh();
+
+    vertex_buffer_manager_.next_frame();
+    index_buffer_manager_.next_frame();
+
     auto const & image_available_semaphore =
         image_available_semaphores_[current_frame];
 

@@ -97,6 +97,8 @@ buffer_manager::create_new_buffers_and_memories(
   allocate_info.allocationSize = std::size(buffers_) * aligned_size_;
   allocate_info.memoryTypeIndex = memory_type_index.value();
 
+  MVK_TRACE("Allocating: " + std::to_string(allocate_info.allocationSize));
+
   buffers_memory_ = types::device_memory(device_->get(), allocate_info);
 
   for (size_t i = 0; i < std::size(buffers_); ++i)
@@ -131,6 +133,7 @@ void
 buffer_manager::next_frame()
 {
   current_buffer_index_ = (current_buffer_index_ + 1) % std::size(buffers_);
+  offsets_[current_buffer_index_] = 0;
 }
 
 namespace detail
