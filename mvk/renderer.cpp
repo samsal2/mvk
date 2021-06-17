@@ -8,8 +8,6 @@
 #include "utility/trace.hpp"
 #include "utility/verify.hpp"
 
-#include <vector>
-
 namespace mvk
 {
 
@@ -75,8 +73,10 @@ renderer::init_vulkan()
 
   constexpr auto device_extensions =
       std::array{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
   auto const physical_device = detail::choose_physical_device(
       surface_.parent(), surface_.get(), device_extensions);
+
   auto const queue_indices_result =
       detail::query_family_indices(physical_device, surface_.get());
 
@@ -115,6 +115,7 @@ renderer::init_vulkan()
 
   auto const queue_create_info =
       std::array{graphics_queue_create_info, present_queue_create_info};
+
   auto const queue_create_info_count = static_cast<uint32_t>(
       queue_indices.first != queue_indices.second ? 2 : 1);
 
@@ -160,6 +161,7 @@ void
 renderer::init_swapchain()
 {
   auto const [graphics_queue, present_queue] = device_.queues();
+
   auto const family_indices =
       std::array{graphics_queue.index(), present_queue.index()};
 
@@ -171,8 +173,10 @@ renderer::init_swapchain()
     auto const physical_device = device_.physical_device();
     auto const format = surface_.query_format(physical_device);
     auto const capabilities = surface_.query_capabilities(physical_device);
+
     auto const present_mode =
         detail::choose_present_mode(physical_device, surface_.get());
+
     auto const extent = detail::choose_extent(capabilities, {width, height});
     auto const image_count = detail::choose_image_count(capabilities);
 
@@ -230,6 +234,7 @@ renderer::init_swapchain()
   }();
 
   depth_image_ = types::image(device_.get(), depth_image_create_info);
+
   depth_image_memory_ = detail::create_device_memory(
       device_, depth_image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
@@ -254,6 +259,7 @@ renderer::init_swapchain()
 
   depth_image_view_ =
       types::image_view(device_.get(), depth_image_view_create_info);
+
   depth_image_.transition_layout(
       device_, command_pool_, VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
@@ -297,11 +303,15 @@ renderer::preload_stuff()
   }();
 
   image_ = types::image(device_.get(), image_create_info);
+
   image_memory_ = detail::create_device_memory(
       device_, image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
   image_.transition_layout(device_, command_pool_, VK_IMAGE_LAYOUT_UNDEFINED,
                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
   image_.stage(device_, command_pool_, texture_);
+
   image_.generate_mipmaps(device_, command_pool_, texture_.width(),
                           texture_.height());
 
@@ -509,34 +519,34 @@ renderer::init_commands()
 void
 renderer::init_descriptors()
 {
-  auto const descriptor_set_layout_bindings =
-      std::array{[]
-                 {
-                   auto ubo = VkDescriptorSetLayoutBinding();
-                   ubo.binding = 0;
-                   ubo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                   ubo.descriptorCount = 1;
-                   ubo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-                   ubo.pImmutableSamplers = nullptr;
-                   return ubo;
-                 }(),
-                 []
-                 {
-                   auto sampler = VkDescriptorSetLayoutBinding();
-                   sampler.binding = 1;
-                   sampler.descriptorType =
-                       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                   sampler.descriptorCount = 1;
-                   sampler.pImmutableSamplers = nullptr;
-                   sampler.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-                   return sampler;
-                 }()};
+  auto const ubo_layout = []
+  {
+    auto layout = VkDescriptorSetLayoutBinding();
+    layout.binding = 0;
+    layout.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    layout.descriptorCount = 1;
+    layout.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    layout.pImmutableSamplers = nullptr;
+    return layout;
+  }();
 
-  auto const descriptor_set_layout_create_info =
-      [&descriptor_set_layout_bindings]
+  auto const sampler_layout = []
+  {
+    auto layout = VkDescriptorSetLayoutBinding();
+    layout.binding = 1;
+    layout.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    layout.descriptorCount = 1;
+    layout.pImmutableSamplers = nullptr;
+    layout.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    return layout;
+  }();
+
+  auto const descriptor_set_bindings = std::array{ubo_layout, sampler_layout};
+
+  auto const descriptor_set_layout_create_info = [&descriptor_set_bindings]
   {
     auto const [descriptor_set_binding_data, descriptor_set_binding_size] =
-        utility::bind_data_and_size(descriptor_set_layout_bindings);
+        utility::bind_data_and_size(descriptor_set_bindings);
 
     auto info = VkDescriptorSetLayoutCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -551,22 +561,24 @@ renderer::init_descriptors()
   auto const images_count =
       static_cast<uint32_t>(std::size(swapchain_.images()));
 
+  auto const uniform_pool_size = [images_count]
+  {
+    auto pool_size = VkDescriptorPoolSize();
+    pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    pool_size.descriptorCount = images_count;
+    return pool_size;
+  }();
+
+  auto const sampler_pool_size = [images_count]
+  {
+    auto pool_size = VkDescriptorPoolSize();
+    pool_size.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    pool_size.descriptorCount = images_count;
+    return pool_size;
+  }();
+
   auto const descriptor_pool_sizes =
-      std::array{[images_count]
-                 {
-                   auto uniform_pool_size = VkDescriptorPoolSize();
-                   uniform_pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                   uniform_pool_size.descriptorCount = images_count;
-                   return uniform_pool_size;
-                 }(),
-                 [images_count]
-                 {
-                   auto sampler_pool_size = VkDescriptorPoolSize();
-                   sampler_pool_size.type =
-                       VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                   sampler_pool_size.descriptorCount = images_count;
-                   return sampler_pool_size;
-                 }()};
+      std::array{uniform_pool_size, sampler_pool_size};
 
   auto const descriptor_pool_create_info =
       [&descriptor_pool_sizes, images_count]
@@ -709,34 +721,38 @@ renderer::init_pipeline()
     return description;
   }();
 
-  auto const vertex_attributes =
-      std::array{[]
-                 {
-                   auto tmp = VkVertexInputAttributeDescription();
-                   tmp.binding = 0;
-                   tmp.location = 0;
-                   tmp.format = VK_FORMAT_R32G32B32_SFLOAT;
-                   tmp.offset = offsetof(vertex, pos);
-                   return tmp;
-                 }(),
-                 []
-                 {
-                   auto tmp = VkVertexInputAttributeDescription();
-                   tmp.binding = 0;
-                   tmp.location = 1;
-                   tmp.format = VK_FORMAT_R32G32B32_SFLOAT;
-                   tmp.offset = offsetof(vertex, color);
-                   return tmp;
-                 }(),
-                 []
-                 {
-                   auto tmp = VkVertexInputAttributeDescription();
-                   tmp.binding = 0;
-                   tmp.location = 2;
-                   tmp.format = VK_FORMAT_R32G32_SFLOAT;
-                   tmp.offset = offsetof(vertex, texture_coord);
-                   return tmp;
-                 }()};
+  auto const position_attribute = []
+  {
+    auto attribute = VkVertexInputAttributeDescription();
+    attribute.binding = 0;
+    attribute.location = 0;
+    attribute.format = VK_FORMAT_R32G32B32_SFLOAT;
+    attribute.offset = offsetof(vertex, pos);
+    return attribute;
+  }();
+
+  auto const color_attribute = []
+  {
+    auto attribute = VkVertexInputAttributeDescription();
+    attribute.binding = 0;
+    attribute.location = 1;
+    attribute.format = VK_FORMAT_R32G32B32_SFLOAT;
+    attribute.offset = offsetof(vertex, color);
+    return attribute;
+  }();
+
+  auto const texture_coordinate_attribute = []
+  {
+    auto attribute = VkVertexInputAttributeDescription();
+    attribute.binding = 0;
+    attribute.location = 2;
+    attribute.format = VK_FORMAT_R32G32_SFLOAT;
+    attribute.offset = offsetof(vertex, texture_coord);
+    return attribute;
+  }();
+
+  auto const vertex_attributes = std::array{
+      position_attribute, color_attribute, texture_coordinate_attribute};
 
   auto const vertex_input_create_info =
       [&vertex_input_binding_description, &vertex_attributes]
@@ -953,21 +969,28 @@ renderer::load_mesh()
     auto const clear_values_size =
         static_cast<uint32_t>(std::size(clear_values));
 
-    auto render_pass_begin_info = VkRenderPassBeginInfo();
-    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_begin_info.renderPass = render_pass_.get();
-    render_pass_begin_info.framebuffer = framebuffers_[i].get();
-    render_pass_begin_info.renderArea.offset.x = 0;
-    render_pass_begin_info.renderArea.offset.y = 0;
-    render_pass_begin_info.renderArea.extent = swapchain_.extent();
-    render_pass_begin_info.clearValueCount = clear_values_size;
-    render_pass_begin_info.pClearValues = std::data(clear_values);
+    auto const render_pass_begin_info = [this, &clear_values, i]
+    {
+      auto info = VkRenderPassBeginInfo();
+      info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+      info.renderPass = render_pass_.get();
+      info.framebuffer = framebuffers_[i].get();
+      info.renderArea.offset.x = 0;
+      info.renderArea.offset.y = 0;
+      info.renderArea.extent = swapchain_.extent();
+      info.clearValueCount = clear_values_size;
+      info.pClearValues = std::data(clear_values);
+      return info;
+    }();
 
-    auto command_buffer_begin_info = VkCommandBufferBeginInfo();
-    command_buffer_begin_info.sType =
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffer_begin_info.flags = 0;
-    command_buffer_begin_info.pInheritanceInfo = nullptr;
+    auto const command_buffer_begin_info = []
+    {
+      auto info = VkCommandBufferBeginInfo();
+      info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      info.flags = 0;
+      info.pInheritanceInfo = nullptr;
+      return info;
+    }();
 
     auto const vertex_buffers = std::array{vertex_buffer.get()};
 
