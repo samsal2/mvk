@@ -50,6 +50,9 @@ private:
   load_mesh();
 
   void
+  record_commands();
+
+  void
   recreate_after_framebuffer_change();
 
   static constexpr auto max_frames_in_flight = 2;

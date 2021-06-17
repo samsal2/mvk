@@ -19,13 +19,14 @@ renderer::init()
   init_vulkan();
   init_swapchain();
   preload_stuff();
+  load_mesh();
   init_main_renderpass();
   init_framebuffers();
   init_commands();
   init_descriptors();
   init_pipeline();
   init_sync();
-  load_mesh();
+  record_commands();
 }
 
 void
@@ -365,9 +366,6 @@ renderer::preload_stuff()
       buffer_manager(&device_, &command_pool_, buffer_type::vertex);
   index_buffer_manager_ =
       buffer_manager(&device_, &command_pool_, buffer_type::index);
-
-  std::tie(vertices_, indices_) =
-      detail::read_object("../../assets/viking_room.obj");
 }
 
 void
@@ -950,6 +948,13 @@ renderer::init_sync()
 void
 renderer::load_mesh()
 {
+  std::tie(vertices_, indices_) =
+      detail::read_object("../../assets/viking_room.obj");
+}
+
+void
+renderer::record_commands()
+{
   auto const [vertex_buffer, vertex_offset] =
       vertex_buffer_manager_.map(utility::as_bytes(vertices_));
   auto const [index_buffer, index_offset] =
@@ -1040,7 +1045,7 @@ renderer::run()
     glfwPollEvents();
 
     init_commands();
-    load_mesh();
+    record_commands();
 
     vertex_buffer_manager_.next_frame();
     index_buffer_manager_.next_frame();
