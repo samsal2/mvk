@@ -225,4 +225,48 @@ choose_physical_device(
   return nullptr;
 }
 
+void
+submit_draw_commands(types::device const & device,
+                     types::single_command_buffer command_buffer,
+                     types::semaphore const & image_available,
+                     types::semaphore const & render_finished,
+                     types::fence & frame_in_flight_fence) noexcept
+{
+  auto const wait_semaphores = std::array{image_available.get()};
+  auto const signal_semaphores = std::array{render_finished.get()};
+  auto const wait_stages = std::array<VkPipelineStageFlags, 1>{
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+  auto const command_buffers = std::array{command_buffer.get()};
+
+  auto const submit_info =
+      [&wait_semaphores, &signal_semaphores, &wait_stages, &command_buffers]
+  {
+    auto const [wait_semaphores_data, wait_semaphores_size] =
+        utility::bind_data_and_size(wait_semaphores);
+
+    auto const [signal_semaphores_data, signal_semaphores_size] =
+        utility::bind_data_and_size(signal_semaphores);
+
+    auto const [command_buffers_data, command_buffers_size] =
+        utility::bind_data_and_size(command_buffers);
+
+    auto info = VkSubmitInfo();
+    info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    info.waitSemaphoreCount = static_cast<uint32_t>(wait_semaphores_size);
+    info.pWaitSemaphores = wait_semaphores_data;
+    info.pWaitDstStageMask = std::data(wait_stages);
+    info.commandBufferCount = 1;
+    info.pCommandBuffers = command_buffers_data;
+    info.signalSemaphoreCount = static_cast<uint32_t>(signal_semaphores_size);
+    info.pSignalSemaphores = signal_semaphores_data;
+    return info;
+  }();
+
+  frame_in_flight_fence.reset();
+
+  auto [graphics_queue, present_queue] = device.queues();
+  graphics_queue.submit(submit_info, frame_in_flight_fence.get());
+}
+
 } // namespace mvk::detail

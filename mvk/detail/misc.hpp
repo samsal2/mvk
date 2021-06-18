@@ -4,6 +4,7 @@
 #include "types/types.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace mvk::detail
 {
@@ -48,6 +49,64 @@ choose_present_mode(VkPhysicalDevice physical_device,
 [[nodiscard]] VkExtent2D
 choose_extent(VkSurfaceCapabilitiesKHR const & capabilities,
               VkExtent2D const & extent) noexcept;
+
+void
+submit_draw_commands(types::device const & device,
+                     types::single_command_buffer command_buffer,
+                     types::semaphore const & image_available,
+                     types::semaphore const & render_finished,
+                     types::fence & frame_in_flight_fence) noexcept;
+
+template <typename Checker>
+requires types::detail::result_checker<Checker>
+void
+present_swapchain(types::device const & device,
+                  types::swapchain const & swapchain,
+                  types::semaphore const & render_finished,
+                  uint32_t image_index, Checker && check) noexcept;
+
+} // namespace mvk::detail
+
+namespace mvk::detail
+{
+template <typename Checker>
+requires types::detail::result_checker<Checker>
+void
+present_swapchain(types::device const & device,
+                  types::swapchain const & swapchain,
+                  types::semaphore const & render_finished,
+                  uint32_t const image_index, Checker && check) noexcept
+{
+  auto const signal_semaphores = std::array{render_finished.get()};
+  auto const swapchains = std::array{swapchain.get()};
+  auto const image_indices = std::array{image_index};
+
+  auto const present_info = [&signal_semaphores, &swapchains, &image_indices]
+  {
+    auto const [signal_semaphores_data, signal_semaphores_size] =
+        utility::bind_data_and_size(signal_semaphores);
+
+    auto const [swapchains_data, swapchains_size] =
+        utility::bind_data_and_size(swapchains);
+
+    auto const [image_indices_data, image_indices_size] =
+        utility::bind_data_and_size(image_indices);
+
+    auto info = VkPresentInfoKHR();
+    info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    info.waitSemaphoreCount = static_cast<uint32_t>(signal_semaphores_size);
+    info.pWaitSemaphores = signal_semaphores_data;
+    info.swapchainCount = static_cast<uint32_t>(swapchains_size);
+    info.pSwapchains = swapchains_data;
+    info.pImageIndices = image_indices_data;
+    info.pResults = nullptr;
+    return info;
+  }();
+
+  auto [graphics_queue, present_queue] = device.queues();
+  present_queue.present(present_info, std::forward<Checker>(check))
+      .wait_idle();
+}
 
 } // namespace mvk::detail
 
