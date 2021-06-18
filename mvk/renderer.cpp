@@ -1066,9 +1066,6 @@ renderer::run()
 void
 renderer::begin_draw()
 {
-  // Recreate command buffers
-  init_commands();
-
   auto const & image_available_semaphore =
       image_available_semaphores_[current_frame_index_];
 
@@ -1117,6 +1114,9 @@ renderer::begin_draw()
     info.pInheritanceInfo = nullptr;
     return info;
   }();
+
+  // Recreate command buffer
+  init_commands();
 
   current_command_buffer_ =
       command_buffers_.begin(current_image_index_, command_buffer_begin_info);
