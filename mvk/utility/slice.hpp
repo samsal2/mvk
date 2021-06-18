@@ -246,6 +246,15 @@ as_bytes(Container const & src) noexcept
   return as_bytes(slice(src));
 }
 
+template <typename T>
+requires trivial<T>
+[[nodiscard]] constexpr slice<std::byte>
+as_bytes(T const & src) noexcept
+{
+  auto const size = sizeof(T);
+  return {force_cast_to_byte(&src), size};
+}
+
 } // namespace mvk::utility
 
 #endif
