@@ -112,9 +112,18 @@ public:
   bind_vertex_buffer(utility::slice<VkBuffer> buffers,
                      utility::slice<device_size> offsets) noexcept;
 
+  [[nodiscard]] constexpr VkCommandBuffer
+  get() const noexcept;
+
 private:
   VkCommandBuffer command_buffer_ = nullptr;
 };
+
+[[nodiscard]] constexpr VkCommandBuffer
+single_command_buffer::get() const noexcept
+{
+  return command_buffer_;
+}
 
 } // namespace mvk::types
 
