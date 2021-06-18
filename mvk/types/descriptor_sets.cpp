@@ -1,5 +1,4 @@
 #include "types/descriptor_sets.hpp"
-#include "vulkan/vulkan_core.h"
 
 namespace mvk::types
 {

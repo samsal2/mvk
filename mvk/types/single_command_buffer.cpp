@@ -98,14 +98,23 @@ single_command_buffer::bind_index_buffer(VkBuffer const buffer,
 
 single_command_buffer &
 single_command_buffer::bind_descriptor_sets(
-    VkPipelineBindPoint const bind_point,
-    VkPipelineLayout const pipeline_layout,
-    uint32_t const descriptor_set_first, uint32_t const descriptor_set_count,
-    VkDescriptorSet const descriptor_set) noexcept
+    bind_descriptor_sets_information bind_descriptor_sets_information,
+    utility::slice<VkDescriptorSet> descriptor_sets,
+    utility::slice<uint32_t> dynamic_offsets) noexcept
 {
-  vkCmdBindDescriptorSets(command_buffer_, bind_point, pipeline_layout,
-                          descriptor_set_first, descriptor_set_count,
-                          &descriptor_set, 0, nullptr);
+  auto const [bind_point, pipeline_layout, descriptor_set_first,
+              descriptor_set_count] = bind_descriptor_sets_information;
+
+  auto const [descriptor_sets_data, descriptor_sets_size] =
+      utility::bind_data_and_size(descriptor_sets);
+
+  auto const [dynamic_offsets_data, dynamic_offsets_size] =
+      utility::bind_data_and_size(dynamic_offsets);
+
+  vkCmdBindDescriptorSets(
+      command_buffer_, bind_point, pipeline_layout, descriptor_set_first,
+      static_cast<uint32_t>(descriptor_sets_size), descriptor_sets_data,
+      static_cast<uint32_t>(dynamic_offsets_size), dynamic_offsets_data);
   return *this;
 }
 

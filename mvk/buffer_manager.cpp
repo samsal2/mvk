@@ -124,7 +124,8 @@ buffer_manager::add_current_buffers_and_memories_to_garbage()
 void
 buffer_manager::clear_garbage()
 {
-  current_garbage_index_ = (current_garbage_index_ + 1) % std::size(buffers_);
+  current_garbage_index_ =
+      (current_garbage_index_ + 1) % std::size(garbage_buffers_);
   current_garbage_buffers().clear();
   current_garbage_memories().clear();
 }
@@ -151,10 +152,6 @@ get_usage(buffer_type const type) noexcept
   case buffer_type::vertex:
     return VK_BUFFER_USAGE_TRANSFER_DST_BIT |
            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-
-  case buffer_type::ubo:
-    return VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 
   case buffer_type::none:
     MVK_VERIFY_NOT_REACHED();

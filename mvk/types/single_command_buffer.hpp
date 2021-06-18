@@ -58,12 +58,19 @@ public:
       utility::slice<VkBufferMemoryBarrier> buffer_memory_barriers,
       utility::slice<VkImageMemoryBarrier> image_memory_barriers) noexcept;
 
+  struct bind_descriptor_sets_information
+  {
+    VkPipelineBindPoint bind_point_;
+    VkPipelineLayout pipeline_layout_;
+    uint32_t descriptor_set_first_;
+    uint32_t descriptor_set_count_;
+  };
+
   single_command_buffer &
-  bind_descriptor_sets(VkPipelineBindPoint bind_point,
-                       VkPipelineLayout pipeline_layout,
-                       uint32_t descriptor_set_first,
-                       uint32_t descriptor_set_count,
-                       VkDescriptorSet descriptor_set) noexcept;
+  bind_descriptor_sets(
+      bind_descriptor_sets_information bind_descriptor_sets_information,
+      utility::slice<VkDescriptorSet> descriptor_sets,
+      utility::slice<uint32_t> dynamic_offsets) noexcept;
 
   single_command_buffer &
   draw_indexed(uint32_t index_count, uint32_t instance_count,

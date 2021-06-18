@@ -647,45 +647,53 @@ renderer::init_descriptors()
 
   for (auto i = size_t(0); i < images_size; ++i)
   {
-    auto descriptor_buffer_info = VkDescriptorBufferInfo();
-    descriptor_buffer_info.buffer = uniform_buffers_[i].get();
-    descriptor_buffer_info.offset = 0;
-    descriptor_buffer_info.range = sizeof(pvm);
+    auto const descriptor_buffer_info = [this, i]
+    {
+      auto info = VkDescriptorBufferInfo();
+      info.buffer = uniform_buffers_[i].get();
+      info.offset = 0;
+      info.range = sizeof(pvm);
+      return info;
+    }();
 
-    auto descriptor_image_info = VkDescriptorImageInfo();
-    descriptor_image_info.imageLayout =
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    descriptor_image_info.imageView = image_view_.get();
-    descriptor_image_info.sampler = sampler_.get();
+    auto const descriptor_image_info = [this]
+    {
+      auto info = VkDescriptorImageInfo();
+      info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      info.imageView = image_view_.get();
+      info.sampler = sampler_.get();
+      return info;
+    }();
 
-    auto const descriptor_writes =
-        std::array{[this, &descriptor_buffer_info, i]
-                   {
-                     auto ubo = VkWriteDescriptorSet();
-                     ubo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                     ubo.dstSet = descriptor_sets_.get()[i];
-                     ubo.dstBinding = 0;
-                     ubo.dstArrayElement = 0;
-                     ubo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                     ubo.descriptorCount = 1;
-                     ubo.pBufferInfo = &descriptor_buffer_info;
-                     ubo.pImageInfo = nullptr;
-                     ubo.pTexelBufferView = nullptr;
-                     return ubo;
-                   }(),
-                   [this, &descriptor_image_info, i]
-                   {
-                     auto image = VkWriteDescriptorSet();
-                     image.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                     image.dstSet = descriptor_sets_.get()[i];
-                     image.dstBinding = 1;
-                     image.dstArrayElement = 0;
-                     image.descriptorType =
-                         VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                     image.descriptorCount = 1;
-                     image.pImageInfo = &descriptor_image_info;
-                     return image;
-                   }()};
+    auto const ubo_write = [this, &descriptor_buffer_info, i]
+    {
+      auto write = VkWriteDescriptorSet();
+      write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write.dstSet = descriptor_sets_.get()[i];
+      write.dstBinding = 0;
+      write.dstArrayElement = 0;
+      write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      write.descriptorCount = 1;
+      write.pBufferInfo = &descriptor_buffer_info;
+      write.pImageInfo = nullptr;
+      write.pTexelBufferView = nullptr;
+      return write;
+    }();
+
+    auto const image_write = [this, &descriptor_image_info, i]
+    {
+      auto image = VkWriteDescriptorSet();
+      image.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      image.dstSet = descriptor_sets_.get()[i];
+      image.dstBinding = 1;
+      image.dstArrayElement = 0;
+      image.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      image.descriptorCount = 1;
+      image.pImageInfo = &descriptor_image_info;
+      return image;
+    }();
+
+    auto const descriptor_writes = std::array{ubo_write, image_write};
 
     types::update_descriptor_sets(device_.get(), descriptor_writes, {});
   }
@@ -1004,9 +1012,9 @@ renderer::record_commands()
         .bind_pipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.get())
         .bind_vertex_buffer(vertex_buffers, {&vertex_offset, 1})
         .bind_index_buffer(index_buffer.get(), index_offset)
-        .bind_descriptor_sets(VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              pipeline_layout_.get(), 0, 1,
-                              descriptor_sets_.get()[i])
+        .bind_descriptor_sets(
+            {VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_.get(), 0, 1},
+            {&descriptor_sets_.get()[i], 1}, {})
         .draw_indexed(static_cast<uint32_t>(std::size(indices_)), 1, 0, 0, 0)
         .end_render_pass()
         .end();

@@ -2,7 +2,6 @@
 #define MVK_TYPES_COMMON_HPP_INCLUDED
 
 #include "utility/verify.hpp"
-#include "vulkan/vulkan_core.h"
 
 #include <string>
 

@@ -17,7 +17,6 @@ enum class buffer_type
   none,
   index,
   vertex,
-  ubo,
 };
 
 class buffer_manager
