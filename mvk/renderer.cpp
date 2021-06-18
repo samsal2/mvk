@@ -942,11 +942,11 @@ renderer::init_sync()
 
   for (auto i = size_t(0); i < max_frames_in_flight; ++i)
   {
-    image_available_semaphores_.at(i) =
+    image_available_semaphores_[i] =
         types::semaphore(device_.get(), semaphore_create_info);
-    render_finished_semaphores_.at(i) =
+    render_finished_semaphores_[i] =
         types::semaphore(device_.get(), semaphore_create_info);
-    frame_in_flight_fences_.at(i) =
+    frame_in_flight_fences_[i] =
         types::fence(device_.get(), fence_create_info);
   }
 
@@ -1046,149 +1046,197 @@ renderer::recreate_after_framebuffer_change()
 void
 renderer::run()
 {
-  auto current_frame = size_t(0);
-
   while (!window_.should_close())
   {
     glfwPollEvents();
 
-    init_commands();
-    record_commands();
+    begin_draw();
 
-    vertex_buffer_manager_.next_frame();
-    index_buffer_manager_.next_frame();
+    auto const pvm = create_test_pvm();
 
-    auto const & image_available_semaphore =
-        image_available_semaphores_[current_frame];
+    basic_draw(utility::as_bytes(vertices_), utility::as_bytes(indices_),
+               utility::as_bytes(pvm));
 
-    auto const & image_index =
-        swapchain_.next_image(image_available_semaphore.get());
-
-    if (!image_index.has_value())
-    {
-      recreate_after_framebuffer_change();
-      continue;
-    }
-
-    auto const current_index = image_index.value();
-    auto & frame_in_flight_fence = frame_in_flight_fences_[current_frame];
-    auto & image_in_flight_fence = image_in_flight_fences_[current_index];
-
-    if (image_in_flight_fence != nullptr)
-    {
-      image_in_flight_fence->wait();
-    }
-
-    image_in_flight_fence = &frame_in_flight_fence;
-
-    auto const render_finished_semaphore =
-        render_finished_semaphores_[current_frame].get();
-
-    auto const wait_semaphores = std::array{image_available_semaphore.get()};
-    auto const signal_semaphores = std::array{render_finished_semaphore};
-    auto const wait_stages = std::array<VkPipelineStageFlags, 1>{
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-    auto const swapchains = std::array{swapchain_.get()};
-    auto const current_time = std::chrono::high_resolution_clock::now();
-    auto const delta_time = current_time - start_time;
-    auto const time =
-        std::chrono::duration<float, std::chrono::seconds::period>(delta_time)
-            .count();
-
-    constexpr auto turn_rate = glm::radians(90.0F);
-
-    auto ubo = pvm();
-
-    ubo.model = glm::rotate(glm::mat4(1.0F), time * turn_rate,
-                            glm::vec3(0.0F, 0.0F, 1.0F));
-    ubo.view =
-        glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F),
-                    glm::vec3(0.0F, 0.0F, 1.0F));
-
-    auto const ratio = static_cast<float>(swapchain_.extent().width) /
-                       static_cast<float>(swapchain_.extent().height);
-
-    ubo.proj = glm::perspective(glm::radians(45.0F), ratio, 0.1F, 10.0F);
-    ubo.proj[1][1] *= -1;
-
-    auto & current_ubo_memory = uniform_buffers_memory_[current_index];
-    current_ubo_memory.copy_data(
-        {utility::force_cast_to_byte(&ubo), sizeof(ubo)});
-
-    auto const submit_info = [this, &wait_semaphores, &signal_semaphores,
-                              &wait_stages, current_index]
-    {
-      auto const wait_semaphore_count =
-          static_cast<uint32_t>(std::size(wait_semaphores));
-
-      auto const signal_semaphore_count =
-          static_cast<uint32_t>(std::size(signal_semaphores));
-
-      auto const command_buffers_ptr = &command_buffers_.get()[current_index];
-
-      auto info = VkSubmitInfo();
-      info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-      info.waitSemaphoreCount = wait_semaphore_count;
-      info.pWaitSemaphores = std::data(wait_semaphores);
-      info.pWaitDstStageMask = std::data(wait_stages);
-      info.commandBufferCount = 1;
-      info.pCommandBuffers = command_buffers_ptr;
-      info.signalSemaphoreCount = signal_semaphore_count;
-      info.pSignalSemaphores = std::data(signal_semaphores);
-      return info;
-    }();
-
-    frame_in_flight_fence.reset();
-
-    auto [graphics_queue, present_queue] = device_.queues();
-    graphics_queue.submit(submit_info, frame_in_flight_fence.get());
-
-    auto const present_info =
-        [&signal_semaphores, &swapchains, &current_index]
-    {
-      auto const wait_semaphore_count =
-          static_cast<uint32_t>(std::size(signal_semaphores));
-      auto const swapchain_count =
-          static_cast<uint32_t>(std::size(swapchains));
-
-      auto info = VkPresentInfoKHR();
-      info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-      info.waitSemaphoreCount = wait_semaphore_count;
-      info.pWaitSemaphores = std::data(signal_semaphores);
-      info.swapchainCount = swapchain_count;
-      info.pSwapchains = std::data(swapchains);
-      info.pImageIndices = &current_index;
-      info.pResults = nullptr;
-      return info;
-    }();
-
-    auto present_result = VK_ERROR_UNKNOWN;
-    auto const check_present_result = [&present_result](auto const result)
-    {
-      present_result = result;
-    };
-
-    present_queue.present(present_info, check_present_result).wait_idle();
-
-    auto const resized = window_.framebuffer_resized();
-    auto const change_swapchain =
-        (present_result == VK_ERROR_OUT_OF_DATE_KHR) ||
-        (present_result == VK_SUBOPTIMAL_KHR);
-
-    if (change_swapchain || resized)
-    {
-      window_.set_framebuffer_resized(false);
-      recreate_after_framebuffer_change();
-      continue;
-    }
-
-    MVK_VERIFY(VK_SUCCESS == present_result);
-
-    current_frame = (current_frame + 1) % max_frames_in_flight;
+    end_draw();
   }
 
   device_.wait_idle();
+}
+
+void
+renderer::begin_draw()
+{
+  // Recreate command buffers
+  init_commands();
+
+  auto const & image_available_semaphore =
+      image_available_semaphores_[current_frame_index_];
+
+  auto const current_image_index =
+      swapchain_.next_image(image_available_semaphore.get());
+
+  if (!current_image_index.has_value())
+  {
+    recreate_after_framebuffer_change();
+    begin_draw();
+    return;
+  }
+
+  current_image_index_ = current_image_index.value();
+
+  auto clear_color_value = VkClearValue();
+  clear_color_value.color = {{0.0F, 0.0F, 0.0F, 1.0F}};
+
+  auto clear_depth_value = VkClearValue();
+  clear_depth_value.depthStencil = {1.0F, 0};
+
+  auto const clear_values = std::array{clear_color_value, clear_depth_value};
+
+  auto const render_pass_begin_info = [this, &clear_values]
+  {
+    auto const [clear_values_data, clear_values_size] =
+        utility::bind_data_and_size(clear_values);
+
+    auto info = VkRenderPassBeginInfo();
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    info.renderPass = render_pass_.get();
+    info.framebuffer = framebuffers_[current_image_index_].get();
+    info.renderArea.offset.x = 0;
+    info.renderArea.offset.y = 0;
+    info.renderArea.extent = swapchain_.extent();
+    info.clearValueCount = static_cast<uint32_t>(clear_values_size);
+    info.pClearValues = clear_values_data;
+    return info;
+  }();
+
+  auto const command_buffer_begin_info = []
+  {
+    auto info = VkCommandBufferBeginInfo();
+    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    info.flags = 0;
+    info.pInheritanceInfo = nullptr;
+    return info;
+  }();
+
+  current_command_buffer_ =
+      command_buffers_.begin(current_image_index_, command_buffer_begin_info);
+
+  current_command_buffer_.begin_render_pass(render_pass_begin_info,
+                                            VK_SUBPASS_CONTENTS_INLINE);
+}
+void
+renderer::basic_draw(utility::slice<std::byte> const vertices,
+                     utility::slice<std::byte> const indices,
+                     utility::slice<std::byte> const pvm)
+{
+  auto const [vertex_buffer, vertex_offset] =
+      vertex_buffer_manager_.map(vertices);
+  auto const [index_buffer, index_offset] =
+      index_buffer_manager_.map(indices);
+
+  auto const vertex_buffers = std::array{vertex_buffer.get()};
+  auto const descriptor_sets =
+      std::array{descriptor_sets_.get()[current_image_index_]};
+
+  uniform_buffers_memory_[current_image_index_].copy_data(pvm);
+
+  current_command_buffer_
+      .bind_pipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.get())
+      .bind_vertex_buffer(vertex_buffers, {&vertex_offset, 1})
+      .bind_index_buffer(index_buffer.get(), index_offset)
+      .bind_descriptor_sets(
+          {VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout_.get(), 0, 1},
+          descriptor_sets, {})
+      .draw_indexed(static_cast<uint32_t>(std::size(indices_)), 1, 0, 0, 0);
+}
+
+void
+renderer::end_draw()
+{
+  current_command_buffer_.end_render_pass().end();
+
+  // Wait for the image in flight to end if it is
+  auto & image_in_flight_fence =
+      image_in_flight_fences_[current_image_index_];
+
+  if (image_in_flight_fence != nullptr)
+  {
+    image_in_flight_fence->wait();
+  }
+
+  image_in_flight_fence = &frame_in_flight_fences_[current_frame_index_];
+
+  // get current semaphores
+  auto const & image_available_semaphore =
+      image_available_semaphores_[current_frame_index_];
+
+  auto const & render_finished_semaphore =
+      render_finished_semaphores_[current_frame_index_];
+
+  detail::submit_draw_commands(
+      device_, current_command_buffer_, image_available_semaphore,
+      render_finished_semaphore, *image_in_flight_fence);
+
+  auto present_result = VK_ERROR_UNKNOWN;
+  auto const check_present_result = [&present_result](auto const result)
+  {
+    present_result = result;
+  };
+
+  detail::present_swapchain(device_, swapchain_, render_finished_semaphore,
+                            current_image_index_, check_present_result);
+
+  auto const resized = window_.framebuffer_resized();
+  auto const change_swapchain =
+      (present_result == VK_ERROR_OUT_OF_DATE_KHR) ||
+      (present_result == VK_SUBOPTIMAL_KHR);
+
+  if (change_swapchain || resized)
+  {
+    window_.set_framebuffer_resized(false);
+    recreate_after_framebuffer_change();
+    return;
+  }
+
+  MVK_VERIFY(VK_SUCCESS == present_result);
+
+  current_frame_index_ = (current_frame_index_ + 1) % max_frames_in_flight;
+  vertex_buffer_manager_.next_frame();
+  index_buffer_manager_.next_frame();
+}
+
+[[nodiscard]] float
+renderer::time() const noexcept
+{
+  auto const current_time = std::chrono::high_resolution_clock::now();
+  auto const delta_time = current_time - start_time;
+  return std::chrono::duration<float, std::chrono::seconds::period>(
+             delta_time)
+      .count();
+}
+
+[[nodiscard]] pvm
+renderer::create_test_pvm()
+{
+  auto const current_time = time();
+
+  constexpr auto turn_rate = glm::radians(90.0F);
+
+  auto ubo = pvm();
+
+  ubo.model = glm::rotate(glm::mat4(1.0F), current_time * turn_rate,
+                          glm::vec3(0.0F, 0.0F, 1.0F));
+  ubo.view =
+      glm::lookAt(glm::vec3(2.0F, 2.0F, 2.0F), glm::vec3(0.0F, 0.0F, 0.0F),
+                  glm::vec3(0.0F, 0.0F, 1.0F));
+
+  auto const ratio = static_cast<float>(swapchain_.extent().width) /
+                     static_cast<float>(swapchain_.extent().height);
+
+  ubo.proj = glm::perspective(glm::radians(45.0F), ratio, 0.1F, 10.0F);
+  ubo.proj[1][1] *= -1;
+
+  return ubo;
 }
 
 } // namespace mvk

@@ -55,6 +55,23 @@ private:
   void
   recreate_after_framebuffer_change();
 
+  void
+  begin_draw();
+
+  void
+  end_draw();
+
+  void
+  basic_draw(utility::slice<std::byte> vertices,
+             utility::slice<std::byte> indices,
+             utility::slice<std::byte> pvm);
+
+  [[nodiscard]] pvm
+  create_test_pvm();
+
+  [[nodiscard]] float
+  time() const noexcept;
+
   static constexpr auto max_frames_in_flight = 2;
 
   types::window window_;
@@ -114,6 +131,11 @@ private:
 
   // vector of ptrs as optional references
   std::vector<types::fence *> image_in_flight_fences_;
+
+  // rendering fino
+  size_t current_frame_index_ = 0;
+  uint32_t current_image_index_ = 0;
+  types::single_command_buffer current_command_buffer_ = {};
 
   std::chrono::time_point<std::chrono::high_resolution_clock> start_time =
       std::chrono::high_resolution_clock::now();
