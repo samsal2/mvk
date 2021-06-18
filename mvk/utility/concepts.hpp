@@ -15,6 +15,12 @@ concept same_as = requires
   requires std::is_same_v<That, This>;
 };
 
+template <typename T>
+concept trivial = requires
+{
+  requires std::is_trivial_v<T>;
+};
+
 template <typename Other, typename This>
 concept not_this = requires
 {
