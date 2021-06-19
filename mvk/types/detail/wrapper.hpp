@@ -3,10 +3,10 @@
 
 #include "types/common.hpp"
 #include "types/validation/validation.hpp"
-#include "utility/detail/exists.hpp"
-#include "utility/detail/find_if.hpp"
-#include "utility/detail/pack.hpp"
+#include "utility/exists.hpp"
+#include "utility/find_if.hpp"
 #include "utility/misc.hpp"
+#include "utility/pack.hpp"
 #include "utility/verify.hpp"
 
 #include <vector>
@@ -72,7 +72,7 @@ private:
 };
 
 template <>
-class wrapper_handle_base<utility::detail::none>
+class wrapper_handle_base<utility::none>
 {
 };
 
@@ -108,7 +108,7 @@ private:
 };
 
 template <>
-class wrapper_parent_base<utility::detail::none>
+class wrapper_parent_base<utility::none>
 {
 };
 
@@ -144,7 +144,7 @@ private:
 };
 
 template <>
-class wrapper_pool_base<utility::detail::none>
+class wrapper_pool_base<utility::none>
 {
 };
 
@@ -237,8 +237,7 @@ struct creator_handler
 };
 
 template <auto Call, typename Handle>
-struct creator_handler<Call, Handle, utility::detail::none,
-                       utility::detail::none>
+struct creator_handler<Call, Handle, utility::none, utility::none>
 {
   static constexpr Handle
   create(find_info_t<Call> const & info)
@@ -250,7 +249,7 @@ struct creator_handler<Call, Handle, utility::detail::none,
 };
 
 template <auto Call, typename Handle, typename Parent>
-struct creator_handler<Call, Handle, Parent, utility::detail::none>
+struct creator_handler<Call, Handle, Parent, utility::none>
 {
   template <typename ParentReference>
   requires utility::same_as<std::decay_t<ParentReference>, Parent>
@@ -264,8 +263,7 @@ struct creator_handler<Call, Handle, Parent, utility::detail::none>
 };
 
 template <>
-struct creator_handler<vkCreateDevice, VkDevice, utility::detail::none,
-                       utility::detail::none>
+struct creator_handler<vkCreateDevice, VkDevice, utility::none, utility::none>
 {
   static constexpr VkDevice
   create(VkPhysicalDevice const parent,
@@ -278,8 +276,7 @@ struct creator_handler<vkCreateDevice, VkDevice, utility::detail::none,
 };
 
 template <typename Handle>
-struct creator_handler<utility::detail::none{}, Handle, utility::detail::none,
-                       utility::detail::none>
+struct creator_handler<utility::none{}, Handle, utility::none, utility::none>
 {
   template <typename HandleReference>
   static constexpr decltype(auto)
@@ -290,8 +287,8 @@ struct creator_handler<utility::detail::none{}, Handle, utility::detail::none,
 };
 
 template <>
-struct creator_handler<vkGetDeviceQueue, VkQueue, utility::detail::none,
-                       utility::detail::none>
+struct creator_handler<vkGetDeviceQueue, VkQueue, utility::none,
+                       utility::none>
 {
 
   [[nodiscard]] static constexpr VkQueue
@@ -305,7 +302,7 @@ struct creator_handler<vkGetDeviceQueue, VkQueue, utility::detail::none,
 
 template <>
 struct creator_handler<vkCreateGraphicsPipelines, VkPipeline, VkDevice,
-                       utility::detail::none>
+                       utility::none>
 {
 
   [[nodiscard]] static constexpr VkPipeline
@@ -320,8 +317,7 @@ struct creator_handler<vkCreateGraphicsPipelines, VkPipeline, VkDevice,
 
 template <>
 struct creator_handler<validation::setup_debug_messenger,
-                       VkDebugUtilsMessengerEXT, VkInstance,
-                       utility::detail::none>
+                       VkDebugUtilsMessengerEXT, VkInstance, utility::none>
 {
   [[nodiscard]] static constexpr auto
   create(VkInstance const instance)
@@ -332,7 +328,7 @@ struct creator_handler<validation::setup_debug_messenger,
 
 template <>
 struct creator_handler<glfwCreateWindowSurface, VkSurfaceKHR, VkInstance,
-                       utility::detail::none>
+                       utility::none>
 {
 
   [[nodiscard]] static constexpr VkSurfaceKHR
@@ -347,34 +343,27 @@ struct creator_handler<glfwCreateWindowSurface, VkSurfaceKHR, VkInstance,
 template <typename Condition, typename... Ts>
 constexpr auto
 find_if_and_unpack(Condition condition,
-                   utility::detail::pack<Ts...> elements) noexcept
+                   utility::pack<Ts...> elements) noexcept
 {
-  return utility::detail::unpack_tag(
-      utility::detail::find_if(condition, elements));
+  return utility::unpack_tag(utility::find_if(condition, elements));
 }
 
 template <typename... Arguments>
 class wrapper_members_base
     : public wrapper_handle_base<decltype(find_if_and_unpack(
-          utility::detail::tagged_with<handle>(),
-          utility::detail::pack<Arguments...>{}))>,
+          utility::tagged_with<handle>(), utility::pack<Arguments...>{}))>,
       public wrapper_parent_base<decltype(find_if_and_unpack(
-          utility::detail::tagged_with<parent>(),
-          utility::detail::pack<Arguments...>{}))>,
+          utility::tagged_with<parent>(), utility::pack<Arguments...>{}))>,
       public wrapper_pool_base<decltype(find_if_and_unpack(
-          utility::detail::tagged_with<pool>(),
-          utility::detail::pack<Arguments...>{}))>
+          utility::tagged_with<pool>(), utility::pack<Arguments...>{}))>
 {
 protected:
-  using handle_type =
-      decltype(find_if_and_unpack(utility::detail::tagged_with<handle>(),
-                                  utility::detail::pack<Arguments...>{}));
-  using parent_type =
-      decltype(find_if_and_unpack(utility::detail::tagged_with<parent>(),
-                                  utility::detail::pack<Arguments...>{}));
-  using pool_type =
-      decltype(find_if_and_unpack(utility::detail::tagged_with<pool>(),
-                                  utility::detail::pack<Arguments...>{}));
+  using handle_type = decltype(find_if_and_unpack(
+      utility::tagged_with<handle>(), utility::pack<Arguments...>{}));
+  using parent_type = decltype(find_if_and_unpack(
+      utility::tagged_with<parent>(), utility::pack<Arguments...>{}));
+  using pool_type = decltype(find_if_and_unpack(
+      utility::tagged_with<pool>(), utility::pack<Arguments...>{}));
 };
 
 template <auto Deleter, typename... Arguments>
@@ -472,7 +461,7 @@ private:
 };
 
 template <typename... Arguments>
-class wrapper_deleter_base<utility::detail::none{}, Arguments...>
+class wrapper_deleter_base<utility::none{}, Arguments...>
     : public wrapper_members_base<Arguments...>
 {
 };
@@ -480,15 +469,14 @@ class wrapper_deleter_base<utility::detail::none{}, Arguments...>
 template <auto Creator, typename... Arguments>
 class wrapper_creator_base
     : public wrapper_deleter_base<find_if_and_unpack(
-                                      utility::detail::tagged_with<deleter>(),
-                                      utility::detail::pack<Arguments...>{}),
+                                      utility::tagged_with<deleter>(),
+                                      utility::pack<Arguments...>{}),
                                   Arguments...>
 {
 private:
   using base =
-      wrapper_deleter_base<find_if_and_unpack(
-                               utility::detail::tagged_with<deleter>(),
-                               utility::detail::pack<Arguments...>{}),
+      wrapper_deleter_base<find_if_and_unpack(utility::tagged_with<deleter>(),
+                                              utility::pack<Arguments...>{}),
                            Arguments...>;
 
   static constexpr auto creator_call = Creator;
@@ -503,18 +491,18 @@ public:
   {
     if constexpr (has_parent<base>)
     {
-      auto parent = utility::detail::find_if(
-          utility::detail::same_as<typename base::parent_type>(),
-          std::forward<U>(arg), std::forward<Us>(args)...);
-      static_assert(!decltype(utility::detail::is_none(parent)){});
+      auto parent =
+          utility::find_if(utility::matches<typename base::parent_type>(),
+                           std::forward<U>(arg), std::forward<Us>(args)...);
+      static_assert(!decltype(utility::is_none(parent)){});
       base::parent() = parent;
     }
 
     if constexpr (has_pool<base>)
     {
-      auto info = utility::detail::find_if(
-          utility::detail::same_as<find_info_t<creator_call>>(),
-          std::forward<U>(arg), std::forward<Us>(args)...);
+      auto info =
+          utility::find_if(utility::matches<find_info_t<creator_call>>(),
+                           std::forward<U>(arg), std::forward<Us>(args)...);
       base::pool() = pool_from_info(info);
     }
 
@@ -532,15 +520,14 @@ public:
 template <typename... Arguments>
 class wrapper
     : public wrapper_creator_base<find_if_and_unpack(
-                                      utility::detail::tagged_with<creator>(),
-                                      utility::detail::pack<Arguments...>{}),
+                                      utility::tagged_with<creator>(),
+                                      utility::pack<Arguments...>{}),
                                   Arguments...>
 {
 private:
   using base =
-      wrapper_creator_base<find_if_and_unpack(
-                               utility::detail::tagged_with<creator>(),
-                               utility::detail::pack<Arguments...>{}),
+      wrapper_creator_base<find_if_and_unpack(utility::tagged_with<creator>(),
+                                              utility::pack<Arguments...>{}),
                            Arguments...>;
 
 public:

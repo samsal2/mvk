@@ -1,10 +1,10 @@
 #ifndef MVK_UTILITY_DETAIL_PACK_HPP_INCLUDED
 #define MVK_UTILITY_DETAIL_PACK_HPP_INCLUDED
 
-#include "utility/detail/common.hpp"
-#include "utility/detail/condition.hpp"
+#include "utility/common.hpp"
+#include "utility/condition.hpp"
 
-namespace mvk::utility::detail
+namespace mvk::utility
 {
 
 template <typename... Ts>
@@ -53,6 +53,6 @@ first([[maybe_unused]] pack<T, Ts...> elements) noexcept
   return T{};
 };
 
-}; // namespace mvk::utility::detail
+}; // namespace mvk::utility
 
 #endif

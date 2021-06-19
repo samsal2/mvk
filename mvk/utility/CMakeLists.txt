@@ -1,4 +1,9 @@
-target_sources(${PROJECT_NAME} PRIVATE compressed_pair.hpp
+target_sources(${PROJECT_NAME} PRIVATE common.hpp
+                                       condition.hpp
+                                       exists.hpp
+                                       find_if.hpp
+                                       pack.hpp
+                                       compressed_pair.hpp
                                        concepts.hpp
                                        misc.hpp
                                        slice.hpp
@@ -7,5 +12,3 @@ target_sources(${PROJECT_NAME} PRIVATE compressed_pair.hpp
                                        trace.hpp
                                        verify.cpp
                                        verify.hpp)
-	
-add_subdirectory(detail)

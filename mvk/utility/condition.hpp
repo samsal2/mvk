@@ -3,11 +3,11 @@
 
 #include <type_traits>
 
-namespace mvk::utility::detail
+namespace mvk::utility
 {
 
 template <typename This>
-struct same_as_impl
+struct matches_impl
 {
   template <typename Other>
   static constexpr auto
@@ -25,9 +25,9 @@ struct same_as_impl
 
 template <typename This>
 constexpr auto
-same_as()
+matches()
 {
-  return same_as_impl<This>{};
+  return matches_impl<This>{};
 }
 
 template <template <typename> typename Tag>
@@ -80,6 +80,6 @@ tagged_with()
   return tagged_with_impl_2<Tag>{};
 }
 
-} // namespace mvk::utility::detail
+} // namespace mvk::utility
 
 #endif

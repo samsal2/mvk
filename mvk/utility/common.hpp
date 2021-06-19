@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <type_traits>
 
-namespace mvk::utility::detail
+namespace mvk::utility
 {
 
 template <size_t Size>
@@ -89,6 +89,6 @@ is_tag(Tag tag) noexcept
   return inverse(is_none(unpack_tag(tag)));
 }
 
-} // namespace mvk::utility::detail
+} // namespace mvk::utility
 
 #endif
