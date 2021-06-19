@@ -1,5 +1,9 @@
 
-target_sources(${PROJECT_NAME} PRIVATE misc.hpp 
+target_sources(${PROJECT_NAME} PRIVATE 
+                                       query.hpp
+                                       checkers.hpp
+                                       checkers.cpp
+                                       misc.hpp 
                                        misc.cpp
                                        readers.hpp 
                                        readers.cpp

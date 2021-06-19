@@ -46,7 +46,9 @@ target_compile_options(${PROJECT_NAME} PRIVATE -O3
                                                -Wno-documentation-unknown-command
                                                -Wno-unused-template
                                                -Wno-unused-function
-                                               -Wno-unused-macros)
+                                               -Wno-unused-macros
+                                               -Wno-unused-member-function
+                                               )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/external/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/)

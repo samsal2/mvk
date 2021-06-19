@@ -1,54 +1,7 @@
 add_subdirectory(detail)
 add_subdirectory(validation)
 
-target_sources(${PROJECT_NAME} PRIVATE buffer.hpp 
-                                       buffer.cpp
-                                       command_buffers.hpp 
-                                       command_buffers.cpp
-                                       command_pool.hpp 
-                                       command_pool.cpp
-                                       debug_messenger.hpp 
-                                       debug_messenger.cpp
-                                       descriptor_pool.hpp 
-                                       descriptor_pool.cpp
-                                       descriptor_set_layout.hpp 
-                                       descriptor_set_layout.cpp
-                                       descriptor_sets.hpp 
-                                       descriptor_sets.cpp
-                                       device.hpp 
-                                       device.cpp
-                                       device_memory.hpp 
-                                       device_memory.cpp
-                                       fence.hpp
-                                       fence.cpp
-                                       framebuffer.hpp 
-                                       framebuffer.cpp
-                                       image.hpp 
-                                       image.cpp
-                                       image_view.hpp 
-                                       image_view.cpp
-                                       instance.hpp 
-                                       instance.cpp
-                                       pipeline.hpp 
-                                       pipeline.cpp
-                                       pipeline_layout.hpp 
-                                       pipeline_layout.cpp
-                                       queue.hpp 
-                                       queue.cpp
-                                       render_pass.hpp 
-                                       render_pass.cpp
-                                       sampler.hpp 
-                                       sampler.cpp
-                                       semaphore.hpp 
-                                       semaphore.cpp
-                                       shader_module.hpp 
-                                       shader_module.cpp
-                                       single_command_buffer.hpp 
-                                       single_command_buffer.cpp
-                                       surface.hpp 
-                                       surface.cpp
-                                       swapchain.hpp 
-                                       swapchain.cpp
+target_sources(${PROJECT_NAME} PRIVATE
                                        window.hpp 
                                        window.cpp
                                        types.hpp 

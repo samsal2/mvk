@@ -6,78 +6,58 @@
 namespace mvk::utility::detail
 {
 
-template <typename This>
-struct same_as_impl
+template <typename This> struct same_as_impl
 {
-  template <typename Other>
-  static constexpr auto
-  check([[maybe_unused]] Other type) noexcept
-  {
-    return std::false_type{};
-  }
+        template <typename Other> static constexpr auto check([[maybe_unused]] Other type) noexcept
+        {
+                return std::false_type{};
+        }
 
-  static constexpr auto
-  check([[maybe_unused]] This type) noexcept
-  {
-    return std::true_type{};
-  }
+        static constexpr auto check([[maybe_unused]] This type) noexcept
+        {
+                return std::true_type{};
+        }
 };
 
-template <typename This>
-constexpr auto
-same_as()
+template <typename This> constexpr auto same_as()
 {
-  return same_as_impl<This>{};
+        return same_as_impl<This>{};
 }
 
-template <template <typename> typename Tag>
-struct tagged_with_impl_1
+template <template <typename> typename Tag> struct tagged_with_impl_1
 {
-  template <typename NotTagged>
-  static constexpr auto
-  check([[maybe_unused]] NotTagged type) noexcept
-  {
-    return std::false_type{};
-  }
+        template <typename NotTagged> static constexpr auto check([[maybe_unused]] NotTagged type) noexcept
+        {
+                return std::false_type{};
+        }
 
-  template <typename T>
-  static constexpr auto
-  check([[maybe_unused]] Tag<T> type) noexcept
-  {
-    return std::true_type{};
-  }
+        template <typename T> static constexpr auto check([[maybe_unused]] Tag<T> type) noexcept
+        {
+                return std::true_type{};
+        }
 };
 
-template <template <auto> typename Tag>
-struct tagged_with_impl_2
+template <template <auto> typename Tag> struct tagged_with_impl_2
 {
-  template <typename NotTagged>
-  static constexpr auto
-  check([[maybe_unused]] NotTagged type) noexcept
-  {
-    return std::false_type{};
-  }
+        template <typename NotTagged> static constexpr auto check([[maybe_unused]] NotTagged type) noexcept
+        {
+                return std::false_type{};
+        }
 
-  template <auto V>
-  static constexpr auto
-  check([[maybe_unused]] Tag<V> type) noexcept
-  {
-    return std::true_type{};
-  }
+        template <auto V> static constexpr auto check([[maybe_unused]] Tag<V> type) noexcept
+        {
+                return std::true_type{};
+        }
 };
 
-template <template <typename> typename Tag>
-constexpr auto
-tagged_with()
+template <template <typename> typename Tag> constexpr auto tagged_with()
 {
-  return tagged_with_impl_1<Tag>{};
+        return tagged_with_impl_1<Tag>{};
 }
 
-template <template <auto> typename Tag>
-constexpr auto
-tagged_with()
+template <template <auto> typename Tag> constexpr auto tagged_with()
 {
-  return tagged_with_impl_2<Tag>{};
+        return tagged_with_impl_2<Tag>{};
 }
 
 } // namespace mvk::utility::detail
