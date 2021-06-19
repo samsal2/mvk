@@ -7,38 +7,50 @@
 namespace mvk::utility::detail
 {
 
-template <typename... Ts> struct pack
+template <typename... Ts>
+struct pack
 {
 };
 
-template <typename... Ts> constexpr auto size([[maybe_unused]] pack<Ts...> elements) noexcept
+template <typename... Ts>
+constexpr auto
+size([[maybe_unused]] pack<Ts...> elements) noexcept
 {
-        return size_constant<sizeof...(Ts)>{};
+  return size_constant<sizeof...(Ts)>{};
 }
 
-template <typename... Rhs, typename... Lhs> constexpr auto concat() noexcept
+template <typename... Rhs, typename... Lhs>
+constexpr auto
+concat() noexcept
 {
-        return pack<Rhs..., Lhs...>{};
+  return pack<Rhs..., Lhs...>{};
 }
 
-template <typename... Ts> constexpr auto is_empty([[maybe_unused]] pack<Ts...> elements) noexcept
+template <typename... Ts>
+constexpr auto
+is_empty([[maybe_unused]] pack<Ts...> elements) noexcept
 {
-        return std::false_type{};
+  return std::false_type{};
 }
 
-constexpr auto is_empty([[maybe_unused]] pack<> elements) noexcept
+constexpr auto
+is_empty([[maybe_unused]] pack<> elements) noexcept
 {
-        return std::true_type{};
+  return std::true_type{};
 }
 
-template <typename T, typename... Ts> constexpr auto pop_front([[maybe_unused]] pack<T, Ts...> elements) noexcept
+template <typename T, typename... Ts>
+constexpr auto
+pop_front([[maybe_unused]] pack<T, Ts...> elements) noexcept
 {
-        return pack<Ts...>{};
+  return pack<Ts...>{};
 };
 
-template <typename T, typename... Ts> constexpr auto first([[maybe_unused]] pack<T, Ts...> elements) noexcept
+template <typename T, typename... Ts>
+constexpr auto
+first([[maybe_unused]] pack<T, Ts...> elements) noexcept
 {
-        return T{};
+  return T{};
 };
 
 }; // namespace mvk::utility::detail

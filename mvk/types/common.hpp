@@ -27,34 +27,40 @@ using device_size = VkDeviceSize;
 }
 struct vertex
 {
-        glm::vec3 pos;
-        glm::vec3 color;
-        glm::vec2 texture_coord;
+  glm::vec3 pos;
+  glm::vec3 color;
+  glm::vec2 texture_coord;
 };
 
 struct pvm
 {
-        glm::mat4 model;
-        glm::mat4 view;
-        glm::mat4 proj;
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 proj;
 };
 
 namespace types
 {
 
-template <typename Wrapper> constexpr decltype(auto) get(Wrapper const & wrapper) noexcept
+template <typename Wrapper>
+constexpr decltype(auto)
+get(Wrapper const & wrapper) noexcept
 {
-        return wrapper.get();
+  return wrapper.get();
 }
 
-template <typename Wrapper> constexpr decltype(auto) parent(Wrapper const & wrapper) noexcept
+template <typename Wrapper>
+constexpr decltype(auto)
+parent(Wrapper const & wrapper) noexcept
 {
-        return wrapper.parent();
+  return wrapper.parent();
 }
 
-template <typename Wrapper> constexpr decltype(auto) pool(Wrapper const & wrapper) noexcept
+template <typename Wrapper>
+constexpr decltype(auto)
+pool(Wrapper const & wrapper) noexcept
 {
-        return wrapper.pool();
+  return wrapper.pool();
 }
 
 } // namespace types
