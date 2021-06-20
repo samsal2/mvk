@@ -2,6 +2,7 @@
 #define MVK_RENDERER_HPP_INCLUDED
 
 #include "buffer_manager.hpp"
+#include "detail/helpers.hpp"
 #include "types/types.hpp"
 #include <span>
 

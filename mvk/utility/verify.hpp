@@ -13,7 +13,7 @@ verify_failed(std::string_view file, int line, std::string_view function);
 
 #ifndef NDEBUG
 #define MVK_VERIFY(expression)                                               \
-  (static_cast<bool>(expression)                                             \
+  (static_cast<bool>((expression))                                           \
        ? void(0)                                                             \
        : ::mvk::utility::verify_failed(__FILE__, __LINE__,                   \
                                        __PRETTY_FUNCTION__))

@@ -1,6 +1,7 @@
 #include "renderer.hpp"
 
 #include "detail/creators.hpp"
+#include "detail/helpers.hpp"
 #include "detail/misc.hpp"
 #include "detail/readers.hpp"
 #include "utility/misc.hpp"
@@ -75,11 +76,15 @@ renderer::init_vulkan()
   constexpr auto device_extensions =
       std::array{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-  physical_device_ = detail::choose_physical_device(
-      types::parent(surface_), types::get(surface_), device_extensions);
+  auto const physical_device_result =
+      detail::choose_physical_device(instance_, surface_, device_extensions);
 
-  auto const queue_indices_result = detail::query_family_indices(
-      types::get(physical_device_), surface_.get());
+  MVK_VERIFY(physical_device_result.has_value());
+
+  physical_device_ = physical_device_result.value();
+
+  auto const queue_indices_result =
+      detail::query_family_indices(physical_device_, surface_);
 
   MVK_VERIFY(queue_indices_result.has_value());
 
@@ -177,8 +182,8 @@ renderer::init_swapchain()
         detail::query<vkGetPhysicalDeviceSurfaceCapabilitiesKHR>::with(
             types::get(physical_device_), types::get(surface_));
 
-    auto const present_mode = detail::choose_present_mode(
-        types::get(physical_device_), surface_.get());
+    auto const present_mode =
+        detail::choose_present_mode(physical_device_, surface_);
 
     extent_ = detail::choose_extent(capabilities, {width, height});
     auto const image_count = detail::choose_image_count(capabilities);

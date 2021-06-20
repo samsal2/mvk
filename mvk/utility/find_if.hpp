@@ -23,22 +23,6 @@ find_if([[maybe_unused]] Condition condition, pack<Ts...> elements)
   return if_helper(check, current, find_if(condition, pop_front(elements)));
 }
 
-template <typename Condition, typename T, typename... Ts>
-constexpr auto
-find_if([[maybe_unused]] Condition condition, T && current, Ts &&... others)
-{
-  auto check = Condition::check(current);
-  return if_helper(check, std::forward<T>(current),
-                   find_if(condition, std::forward<Ts>(others)...));
-}
-
-template <typename Condition>
-constexpr auto
-find_if([[maybe_unused]] Condition condition)
-{
-  return none{};
-}
-
 } // namespace mvk::utility
 
 #endif
