@@ -11,7 +11,7 @@ create_shader_module(types::device const & device,
   info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   info.codeSize = static_cast<uint32_t>(std::size(code));
   info.pCode = reinterpret_cast<uint32_t const *>(std::data(code));
-  return {device.get(), info};
+  return types::shader_module(device.get(), info);
 }
 
 [[nodiscard]] types::device_memory
@@ -21,6 +21,7 @@ create_device_memory(types::physical_device const physical_device,
 {
   auto const requirements = query<vkGetBufferMemoryRequirements>::with(
       types::parent(buffer), types::get(buffer));
+
   auto const memory_type_index = find_memory_type(
       types::get(physical_device), requirements.memoryTypeBits, properties);
 
