@@ -22,8 +22,6 @@ namespace mvk
 namespace types
 {
 
-using device_size = VkDeviceSize;
-
 }
 struct vertex
 {
