@@ -115,7 +115,7 @@ check_surface_support(types::physical_device const physical_device,
   return supported != 0U;
 }
 
-[[nodiscard]] std::optional<std::pair<uint32_t, uint32_t>>
+[[nodiscard]] std::optional<std::pair<types::queue_index, types::queue_index>>
 query_family_indices(types::physical_device const physical_device,
                      types::surface const & surface)
 {

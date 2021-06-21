@@ -3,11 +3,14 @@
 
 #include "types/common.hpp"
 #include "types/detail/wrapper.hpp"
-#include "types/validation/validation.hpp"
 #include "types/window.hpp"
+#include "validation/validation.hpp"
 
 namespace mvk::types
 {
+
+using device_size = VkDeviceSize;
+using queue_index = uint32_t;
 
 using buffer =
     detail::wrapper<detail::creator<vkCreateBuffer>, detail::handle<VkBuffer>,

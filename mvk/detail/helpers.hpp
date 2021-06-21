@@ -38,7 +38,7 @@ check_surface_support(types::physical_device physical_device,
                       types::surface const & surface,
                       uint32_t index) noexcept;
 
-[[nodiscard]] std::optional<std::pair<uint32_t, uint32_t>>
+[[nodiscard]] std::optional<std::pair<types::queue_index, types::queue_index>>
 query_family_indices(types::physical_device physical_device,
                      types::surface const & surface);
 
