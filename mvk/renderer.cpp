@@ -6,7 +6,6 @@
 #include "detail/readers.hpp"
 #include "utility/misc.hpp"
 #include "utility/slice.hpp"
-#include "utility/trace.hpp"
 #include "utility/verify.hpp"
 
 #include <limits>

@@ -2,18 +2,19 @@
 #define MVK_DETAIL_QUERY_HPP_INCLUDED
 
 #include <cstddef>
+#include <cstdint>
+#include <vector>
 
 namespace mvk::detail
 {
 
 template <auto Call, typename = decltype(Call)>
 struct query;
-template <auto Call, typename Requirement1, typename Requirement2,
-          typename Desired>
-struct query<Call, void (*)(Requirement1, Requirement2, Desired *)>
+template <auto Call, typename Req1, typename Req2, typename Desired>
+struct query<Call, void (*)(Req1, Req2, Desired *)>
 {
   [[nodiscard]] static constexpr auto
-  with(Requirement1 requirement1, Requirement2 requirement2) noexcept
+  with(Req1 requirement1, Req2 requirement2) noexcept
   {
     auto desired = Desired();
     Call(requirement1, requirement2, &desired);
@@ -21,25 +22,22 @@ struct query<Call, void (*)(Requirement1, Requirement2, Desired *)>
   }
 };
 
-template <auto Call, typename Requirement1, typename Requirement2,
-          typename Desired>
-struct query<Call, VkResult (*)(Requirement1, Requirement2, Desired *)>
+template <auto Call, typename Req1, typename Req2, typename Desired>
+struct query<Call, VkResult (*)(Req1, Req2, Desired *)>
 {
   [[nodiscard]] static constexpr auto
-  with(Requirement1 requirement1, Requirement2 requirement2) noexcept
+  with(Req1 requirement1, Req2 requirement2) noexcept
   {
     auto desired = Desired();
     Call(requirement1, requirement2, &desired);
     return desired;
   }
 };
-template <auto Call, typename Requirement1, typename Requirement2,
-          typename Desired>
-struct query<Call,
-             VkResult (*)(Requirement1, Requirement2, uint32_t *, Desired *)>
+template <auto Call, typename Req1, typename Req2, typename Desired>
+struct query<Call, VkResult (*)(Req1, Req2, uint32_t *, Desired *)>
 {
   [[nodiscard]] static constexpr auto
-  with(Requirement1 requirement1, Requirement2 requirement2) noexcept
+  with(Req1 requirement1, Req2 requirement2) noexcept
   {
     auto count = uint32_t(0);
     Call(requirement1, requirement2, &count, nullptr);
@@ -50,11 +48,11 @@ struct query<Call,
   }
 };
 
-template <auto Call, typename Requirement, typename Desired>
-struct query<Call, VkResult (*)(Requirement, uint32_t *, Desired *)>
+template <auto Call, typename Req, typename Desired>
+struct query<Call, VkResult (*)(Req, uint32_t *, Desired *)>
 {
   [[nodiscard]] static constexpr auto
-  with(Requirement requirement) noexcept
+  with(Req requirement) noexcept
   {
     auto count = uint32_t(0);
     Call(requirement, &count, nullptr);
@@ -65,11 +63,11 @@ struct query<Call, VkResult (*)(Requirement, uint32_t *, Desired *)>
   }
 };
 
-template <auto Call, typename Requirement, typename Desired>
-struct query<Call, void (*)(Requirement, uint32_t *, Desired *)>
+template <auto Call, typename Req, typename Desired>
+struct query<Call, void (*)(Req, uint32_t *, Desired *)>
 {
   [[nodiscard]] static constexpr auto
-  with(Requirement requirement) noexcept
+  with(Req requirement) noexcept
   {
     auto count = uint32_t(0);
     Call(requirement, &count, nullptr);
@@ -80,11 +78,11 @@ struct query<Call, void (*)(Requirement, uint32_t *, Desired *)>
   }
 };
 
-template <auto Call, typename Requirement, typename Desired>
-struct query<Call, void (*)(Requirement, Desired *)>
+template <auto Call, typename Req, typename Desired>
+struct query<Call, void (*)(Req, Desired *)>
 {
   [[nodiscard]] static constexpr auto
-  with(Requirement requirement) noexcept
+  with(Req requirement) noexcept
   {
     auto desired = Desired();
     Call(requirement, &desired);

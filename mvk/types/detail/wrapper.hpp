@@ -2,8 +2,8 @@
 #define MVK_TYPES_WRAPPER_HPP_INCLUDED
 
 #include "types/common.hpp"
-#include "types/detail/create_handler.hpp"
-#include "utility/find_if.hpp"
+#include "types/detail/wrapper_ctor.hpp"
+#include "types/detail/wrapper_dtor.hpp"
 #include "utility/misc.hpp"
 #include "utility/pack.hpp"
 #include "utility/verify.hpp"
@@ -40,6 +40,46 @@ struct creator
 {
 };
 
+template <typename... Args>
+constexpr auto
+find_handle([[maybe_unused]] utility::pack<Args...> elements) noexcept
+{
+  return utility::unpack_tag(
+      utility::find_if(utility::tagged_with<handle>(), elements));
+}
+
+template <typename... Args>
+constexpr auto
+find_parent([[maybe_unused]] utility::pack<Args...> elements) noexcept
+{
+  return utility::unpack_tag(
+      utility::find_if(utility::tagged_with<parent>(), elements));
+}
+
+template <typename... Args>
+constexpr auto
+find_pool([[maybe_unused]] utility::pack<Args...> elements) noexcept
+{
+  return utility::unpack_tag(
+      utility::find_if(utility::tagged_with<pool>(), elements));
+}
+
+template <typename... Args>
+constexpr auto
+find_deleter([[maybe_unused]] utility::pack<Args...> elements) noexcept
+{
+  return utility::unpack_tag(
+      utility::find_if(utility::tagged_with<deleter>(), elements));
+}
+
+template <typename... Args>
+constexpr auto
+find_creator([[maybe_unused]] utility::pack<Args...> elements) noexcept
+{
+  return utility::unpack_tag(
+      utility::find_if(utility::tagged_with<creator>(), elements));
+}
+
 template <typename Handle>
 class wrapper_handle_base
 {
@@ -63,7 +103,8 @@ public:
 protected:
   template <typename U>
   requires utility::not_this<U, wrapper_handle_base>
-  wrapper_handle_base(U && handle) : handle_(std::forward<U>(handle))
+  constexpr explicit wrapper_handle_base(U && handle)
+      : handle_(std::forward<U>(handle))
   {
   }
 
@@ -99,7 +140,8 @@ public:
 protected:
   template <typename U>
   requires utility::not_this<U, wrapper_parent_base>
-  wrapper_parent_base(U && parent) : parent_(std::forward<U>(parent))
+  constexpr explicit wrapper_parent_base(U && parent)
+      : parent_(std::forward<U>(parent))
   {
   }
 
@@ -135,7 +177,8 @@ public:
 protected:
   template <typename U>
   requires utility::not_this<U, wrapper_pool_base>
-  wrapper_pool_base(U && pool) : pool_(std::forward<U>(pool))
+  constexpr explicit wrapper_pool_base(U && pool)
+      : pool_(std::forward<U>(pool))
   {
   }
 
@@ -148,46 +191,6 @@ class wrapper_pool_base<utility::none>
 {
 };
 
-template <typename... Args>
-constexpr auto
-find_handle([[maybe_unused]] utility::pack<Args...> elements) noexcept
-{
-  return utility::unpack_tag(utility::find_if(utility::tagged_with<handle>(),
-                                              utility::pack<Args...>{}));
-}
-
-template <typename... Args>
-constexpr auto
-find_parent([[maybe_unused]] utility::pack<Args...> elements) noexcept
-{
-  return utility::unpack_tag(utility::find_if(utility::tagged_with<parent>(),
-                                              utility::pack<Args...>{}));
-}
-
-template <typename... Args>
-constexpr auto
-find_pool([[maybe_unused]] utility::pack<Args...> elements) noexcept
-{
-  return utility::unpack_tag(utility::find_if(utility::tagged_with<pool>(),
-                                              utility::pack<Args...>{}));
-}
-
-template <typename... Args>
-constexpr auto
-find_deleter([[maybe_unused]] utility::pack<Args...> elements) noexcept
-{
-  return utility::unpack_tag(utility::find_if(utility::tagged_with<deleter>(),
-                                              utility::pack<Args...>{}));
-}
-
-template <typename... Args>
-constexpr auto
-find_creator([[maybe_unused]] utility::pack<Args...> elements) noexcept
-{
-  return utility::unpack_tag(utility::find_if(utility::tagged_with<creator>(),
-                                              utility::pack<Args...>{}));
-}
-
 template <auto Creator, typename Handle, typename Parent, typename Pool>
 struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
                            public wrapper_parent_base<Parent>,
@@ -196,7 +199,7 @@ struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
   using handle_base = wrapper_handle_base<Handle>;
   using parent_base = wrapper_parent_base<Parent>;
   using pool_base = wrapper_pool_base<Pool>;
-  using creator_handler = create_handler<Creator>;
+  using ctor = wrapper_ctor<Creator>;
 
   static constexpr bool has_handle = !decltype(utility::is_none(Handle{})){};
   static constexpr bool has_parent = !decltype(utility::is_none(Parent{})){};
@@ -256,12 +259,12 @@ struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
   requires utility::not_this<Arg, wrapper_ctor_base> && has_handle && 
       has_parent && has_pool 
   constexpr explicit wrapper_ctor_base(Arg && arg, Args &&... args)
-      : handle_base(creator_handler::template create<Handle>(
-            std::forward<Arg>(arg), std::forward<Args>(args)...)),
-        parent_base(creator_handler::parent(std::forward<Arg>(arg),
-                                            std::forward<Args>(args)...)),
-        pool_base(creator_handler::pool(std::forward<Arg>(arg),
-                                        std::forward<Args>(args)...))
+      : handle_base(ctor::template create<Handle>(std::forward<Arg>(arg), 
+                                                  std::forward<Args>(args)...)),
+        parent_base(ctor::parent(std::forward<Arg>(arg),
+                                 std::forward<Args>(args)...)),
+        pool_base(ctor::pool(std::forward<Arg>(arg),
+                            std::forward<Args>(args)...))
   {
   }
 
@@ -269,10 +272,10 @@ struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
   requires utility::not_this<Arg, wrapper_ctor_base> && has_handle &&
         has_parent && (!has_pool) 
   constexpr explicit wrapper_ctor_base(Arg && arg, Args &&... args)
-      : handle_base(creator_handler::create(std::forward<Arg>(arg),
-                                            std::forward<Args>(args)...)),
-        parent_base(creator_handler::parent(std::forward<Arg>(arg),
-                                            std::forward<Args>(args)...))
+      : handle_base(ctor::create(std::forward<Arg>(arg),
+                                 std::forward<Args>(args)...)),
+        parent_base(ctor::parent(std::forward<Arg>(arg),
+                                 std::forward<Args>(args)...))
   {
   }
 
@@ -281,68 +284,31 @@ struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
         (!has_parent) && (!has_pool) 
   constexpr explicit(!std::is_trivial_v<Handle>) 
   wrapper_ctor_base(Arg && arg, Args &&... args)
-      : handle_base(creator_handler::create(std::forward<Arg>(arg),
-                                            std::forward<Args>(args)...))
+      : handle_base(ctor::create(std::forward<Arg>(arg), 
+                                 std::forward<Args>(args)...))
   {
   }
 
   // clang-format on
 };
 
-template <auto Deleter, auto Creator, typename Handle, typename Parent,
-          typename Pool>
-struct wrapper_dtor_base
-    : public wrapper_ctor_base<Creator, Handle, Parent, Pool>
+template <auto Deleter, auto Creator, typename... Others>
+struct wrapper_dtor_base : public wrapper_ctor_base<Creator, Others...>
 {
-  using base = wrapper_ctor_base<Creator, Handle, Parent, Pool>;
-  static constexpr auto deleter = Deleter;
+  using base = wrapper_ctor_base<Creator, Others...>;
+  using dtor = wrapper_dtor<Deleter>;
 
   using base::base;
 
   constexpr wrapper_dtor_base() noexcept = default;
 
-  wrapper_dtor_base(wrapper_dtor_base const & other) noexcept = delete;
-  wrapper_dtor_base &
-  operator=(wrapper_dtor_base const & other) noexcept = delete;
-
-  wrapper_dtor_base(wrapper_dtor_base && other) noexcept
-  {
-    if constexpr (base::has_parent)
-    {
-      std::swap(this->get(), other.get());
-    }
-
-    if constexpr (base::has_parent)
-    {
-      std::swap(this->parent(), other.parent());
-    }
-
-    if constexpr (base::has_pool)
-    {
-      std::swap(this->pool(), other.pool());
-    }
-  }
+  wrapper_dtor_base(wrapper_dtor_base const & other) noexcept = default;
+  wrapper_dtor_base(wrapper_dtor_base && other) noexcept = default;
 
   wrapper_dtor_base &
-  operator=(wrapper_dtor_base && other) noexcept
-  {
-    if constexpr (base::has_handle)
-    {
-      std::swap(this->get(), other.get());
-    }
-
-    if constexpr (base::has_parent)
-    {
-      std::swap(this->parent(), other.parent());
-    }
-
-    if constexpr (base::has_pool)
-    {
-      std::swap(this->pool(), other.pool());
-    }
-
-    return *this;
-  }
+  operator=(wrapper_dtor_base const & other) noexcept = default;
+  wrapper_dtor_base &
+  operator=(wrapper_dtor_base && other) noexcept = default;
 
   ~wrapper_dtor_base() noexcept
   {
@@ -352,7 +318,22 @@ struct wrapper_dtor_base
   constexpr void
   release() noexcept
   {
-    *this = wrapper_dtor_base();
+    destroy();
+
+    if constexpr (base::has_handle)
+    {
+      base::get() = typename base::handle_type();
+    }
+
+    if constexpr (base::has_parent)
+    {
+      base::parent() = typename base::parent_type();
+    }
+
+    if constexpr (base::has_pool)
+    {
+      base::pool() = typename base::pool_type();
+    }
   }
 
   constexpr void
@@ -360,40 +341,85 @@ struct wrapper_dtor_base
   {
     if constexpr (base::has_pool)
     {
-      auto const parent = this->parent();
-      auto const pool = this->pool();
-      if (parent != nullptr && pool != nullptr)
-      {
-        auto [data, size] = utility::bind_data_and_size(this->get());
-        deleter(this->parent(), this->pool(), static_cast<uint32_t>(size),
-                data);
-      }
+      dtor::destroy(base::parent(), base::pool(), base::get());
     }
     else if constexpr (base::has_parent)
     {
-      auto const parent = this->parent();
-      if (parent != nullptr)
-      {
-        deleter(this->parent(), this->get(), nullptr);
-      }
+      dtor::destroy(base::parent(), base::get());
     }
     else if constexpr (base::has_handle)
     {
-      deleter(this->get(), nullptr);
+      dtor::destroy(base::get());
     }
   }
 };
 
-template <auto Creator, typename Handle, typename Parent, typename Pool>
-struct wrapper_dtor_base<utility::none{}, Creator, Handle, Parent, Pool>
-    : public wrapper_ctor_base<Creator, Handle, Parent, Pool>
+template <auto Creator, typename... Others>
+struct wrapper_dtor_base<utility::none{}, Creator, Others...>
+    : public wrapper_ctor_base<Creator, Others...>
 {
-  using base = wrapper_ctor_base<Creator, Handle, Parent, Pool>;
+  using base = wrapper_ctor_base<Creator, Others...>;
+  using base::base;
+};
+
+template <auto Deleter, auto Creator, typename... Others>
+struct wrapper_move_base
+    : public wrapper_dtor_base<Deleter, Creator, Others...>
+{
+
+  using base = wrapper_dtor_base<Deleter, Creator, Others...>;
+  using base::base;
+
+  constexpr wrapper_move_base() noexcept = default;
+
+  wrapper_move_base(wrapper_move_base const & other) noexcept = delete;
+  wrapper_move_base(wrapper_move_base && other) noexcept
+  {
+    swap(other);
+  }
+
+  wrapper_move_base &
+  operator=(wrapper_move_base const & other) noexcept = delete;
+  wrapper_move_base &
+  operator=(wrapper_move_base && other) noexcept
+  {
+    swap(other);
+    return *this;
+  }
+
+  ~wrapper_move_base() noexcept = default;
+
+private:
+  constexpr void
+  swap(wrapper_move_base & other)
+  {
+    if constexpr (base::has_handle)
+    {
+      std::swap(base::get(), other.get());
+    }
+
+    if constexpr (base::has_parent)
+    {
+      std::swap(base::parent(), other.parent());
+    }
+
+    if constexpr (base::has_pool)
+    {
+      std::swap(base::pool(), other.pool());
+    }
+  }
+};
+
+template <auto Creator, typename... Others>
+struct wrapper_move_base<utility::none{}, Creator, Others...>
+    : public wrapper_dtor_base<utility::none{}, Creator, Others...>
+{
+  using base = wrapper_dtor_base<utility::none{}, Creator, Others...>;
   using base::base;
 };
 
 template <typename... Args>
-class wrapper : public wrapper_dtor_base<
+class wrapper : public wrapper_move_base<
                     find_deleter(utility::pack<Args...>{}),
                     find_creator(utility::pack<Args...>{}),
                     decltype(find_handle(utility::pack<Args...>{})),
@@ -401,7 +427,7 @@ class wrapper : public wrapper_dtor_base<
                     decltype(find_pool(utility::pack<Args...>{}))>
 {
   using base =
-      wrapper_dtor_base<find_deleter(utility::pack<Args...>{}),
+      wrapper_move_base<find_deleter(utility::pack<Args...>{}),
                         find_creator(utility::pack<Args...>{}),
                         decltype(find_handle(utility::pack<Args...>{})),
                         decltype(find_parent(utility::pack<Args...>{})),

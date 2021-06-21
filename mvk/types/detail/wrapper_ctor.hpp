@@ -1,9 +1,8 @@
-#ifndef MVK_TYPES_DETAIL_CREATOR_HPP_INCLUDED
-#define MVK_TYPES_DETAIL_CREATOR_HPP_INCLUDED
+#ifndef MVK_TYPES_DETAIL_WRAPPER_CTOR_HANDLER_HPP_INCLUDED
+#define MVK_TYPES_DETAIL_WRAPPER_CTOR_HANDLER_HPP_INCLUDED
 
 #include "types/common.hpp"
-#include "utility/common.hpp"
-#include "utility/concepts.hpp"
+#include "utility/pack.hpp"
 #include "utility/types.hpp"
 #include "validation/validation.hpp"
 
@@ -34,10 +33,10 @@ pool_from_info(VkDescriptorSetAllocateInfo const & info)
 }
 
 template <auto Call, typename = decltype(Call)>
-struct create_handler;
+struct wrapper_ctor;
 
 template <auto Call, typename Info, typename Handle>
-struct create_handler<
+struct wrapper_ctor<
     Call, VkResult (*)(Info const *, VkAllocationCallbacks const *, Handle *)>
 {
   [[nodiscard]] static constexpr Handle
@@ -50,9 +49,9 @@ struct create_handler<
 };
 
 template <auto Call, typename Info, typename Handle, typename Parent>
-struct create_handler<Call,
-                      VkResult (*)(Parent, Info const *,
-                                   VkAllocationCallbacks const *, Handle *)>
+struct wrapper_ctor<Call,
+                    VkResult (*)(Parent, Info const *,
+                                 VkAllocationCallbacks const *, Handle *)>
 {
   [[nodiscard]] static constexpr Handle
   create(Parent const parent, Info const & info) noexcept
@@ -70,7 +69,7 @@ struct create_handler<Call,
 };
 
 template <auto Call, typename Info, typename Handle, typename Parent>
-struct create_handler<Call, void (*)(Parent, Info const *, Handle *)>
+struct wrapper_ctor<Call, void (*)(Parent, Info const *, Handle *)>
 {
   template <typename HandleBuffer>
   [[nodiscard]] static constexpr HandleBuffer
@@ -89,7 +88,7 @@ struct create_handler<Call, void (*)(Parent, Info const *, Handle *)>
 };
 
 template <auto Call, typename Info, typename Handle, typename Parent>
-struct create_handler<Call, VkResult (*)(Parent, Info const *, Handle *)>
+struct wrapper_ctor<Call, VkResult (*)(Parent, Info const *, Handle *)>
 {
   template <typename HandleBuffer>
   [[nodiscard]] static constexpr HandleBuffer
@@ -114,7 +113,7 @@ struct create_handler<Call, VkResult (*)(Parent, Info const *, Handle *)>
 };
 
 template <>
-struct create_handler<glfwCreateWindowSurface>
+struct wrapper_ctor<glfwCreateWindowSurface>
 {
   [[nodiscard]] static constexpr VkSurfaceKHR
   create(VkInstance const instance, GLFWwindow * window) noexcept
@@ -133,7 +132,7 @@ struct create_handler<glfwCreateWindowSurface>
 };
 
 template <>
-struct create_handler<validation::setup_debug_messenger>
+struct wrapper_ctor<validation::setup_debug_messenger>
 {
   [[nodiscard]] static constexpr auto
   create(VkInstance const instance)
@@ -149,7 +148,7 @@ struct create_handler<validation::setup_debug_messenger>
 };
 
 template <>
-struct create_handler<vkCreateGraphicsPipelines>
+struct wrapper_ctor<vkCreateGraphicsPipelines>
 {
   [[nodiscard]] static constexpr VkPipeline
   create(VkDevice const device,
@@ -169,7 +168,7 @@ struct create_handler<vkCreateGraphicsPipelines>
 };
 
 template <>
-struct create_handler<vkGetDeviceQueue>
+struct wrapper_ctor<vkGetDeviceQueue>
 {
   [[nodiscard]] static constexpr VkQueue
   create(VkDevice const device, uint32_t const index) noexcept
@@ -188,7 +187,7 @@ struct create_handler<vkGetDeviceQueue>
 };
 
 template <>
-struct create_handler<vkCreateDevice>
+struct wrapper_ctor<vkCreateDevice>
 {
   [[nodiscard]] static constexpr VkDevice
   create(VkPhysicalDevice const parent, VkDeviceCreateInfo const & info)
@@ -200,7 +199,7 @@ struct create_handler<vkCreateDevice>
 };
 
 template <>
-struct create_handler<utility::none{}>
+struct wrapper_ctor<utility::none{}>
 {
   template <typename Handle>
   [[nodiscard]] static constexpr decltype(auto)

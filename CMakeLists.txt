@@ -48,7 +48,6 @@ target_compile_options(${PROJECT_NAME} PRIVATE -O3
                                                -Wno-unused-function
                                                -Wno-unused-macros
                                                -Wno-unused-member-function
-                                               -save-temps=obj
                                                )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/external/include)

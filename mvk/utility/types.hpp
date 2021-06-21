@@ -107,21 +107,6 @@ using value_type_from_iterator_t =
 template <typename T>
 using uncvref_t = std::remove_cvref_t<T>;
 
-template <typename T, bool IsTrivial = std::is_trivial_v<uncvref_t<T>>>
-struct trivially
-{
-  using type = uncvref_t<T>;
-};
-
-template <typename T>
-struct trivially<T, false>
-{
-  using type = uncvref_t<T> const &;
-};
-
-template <typename T>
-using trivially_t = typename trivially<T>::type;
-
 } // namespace mvk::utility
 
 #endif

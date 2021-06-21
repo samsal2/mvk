@@ -1,7 +1,6 @@
 #include "buffer_manager.hpp"
 
 #include "detail/misc.hpp"
-#include "utility/trace.hpp"
 #include "utility/verify.hpp"
 
 namespace mvk
@@ -104,7 +103,7 @@ buffer_manager::create_new_buffers_and_memories(
   allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocate_info.allocationSize = std::size(buffers_) * aligned_size_;
   allocate_info.memoryTypeIndex = memory_type_index.value();
-  buffers_memory_ = types::device_memory(device_->get(), allocate_info);
+  buffers_memory_ = types::device_memory(types::get(*device_), allocate_info);
 
   for (size_t i = 0; i < std::size(buffers_); ++i)
   {
