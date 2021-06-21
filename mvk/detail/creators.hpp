@@ -8,6 +8,19 @@
 namespace mvk::detail
 {
 
+[[nodiscard]] types::instance
+create_instance(types::window const & window,
+                std::string const & name) noexcept;
+
+[[nodiscard]] types::command_pool
+create_command_pool(types::device const & device,
+                    types::queue_index queue_index,
+                    VkCommandPoolCreateFlags flags = 0) noexcept;
+
+[[nodiscard]] types::command_buffers
+create_command_buffers(types::command_pool const & pool, uint32_t count,
+                       VkCommandBufferLevel level) noexcept;
+
 [[nodiscard]] types::device_memory
 create_device_memory(types::physical_device physical_device,
                      types::buffer const & buffer,

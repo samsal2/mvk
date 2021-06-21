@@ -3,6 +3,46 @@
 namespace mvk::detail
 {
 
+[[nodiscard]] types::instance
+create_instance(types::window const & window,
+                std::string const & name) noexcept
+{
+  auto application_info = [&name]
+  {
+    auto info = VkApplicationInfo();
+    info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    info.pApplicationName = name.c_str();
+    info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    info.pEngineName = "No Engine";
+    info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    return info;
+  }();
+
+  auto const validation_layers = validation::validation_layers_data();
+  auto const required_extensions = window.required_extensions();
+
+  auto instance_create_info =
+      [validation_layers, &required_extensions, &application_info]
+  {
+    auto const [validation_data, validation_count] =
+        utility::bind_data_and_size(validation_layers);
+    auto const [required_data, required_count] =
+        utility::bind_data_and_size(required_extensions);
+
+    auto info = VkInstanceCreateInfo();
+    info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    info.pNext = validation::debug_create_info_ref();
+    info.pApplicationInfo = &application_info;
+    info.enabledLayerCount = static_cast<uint32_t>(validation_count);
+    info.ppEnabledLayerNames = validation_data;
+    info.enabledExtensionCount = static_cast<uint32_t>(required_count);
+    info.ppEnabledExtensionNames = required_data;
+    return info;
+  }();
+
+  return types::instance(instance_create_info);
+}
+
 [[nodiscard]] types::shader_module
 create_shader_module(types::device const & device,
                      utility::slice<char> const code) noexcept
@@ -11,7 +51,31 @@ create_shader_module(types::device const & device,
   info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   info.codeSize = static_cast<uint32_t>(std::size(code));
   info.pCode = reinterpret_cast<uint32_t const *>(std::data(code));
-  return types::shader_module(device.get(), info);
+  return types::shader_module(types::get(device), info);
+}
+
+[[nodiscard]] types::command_pool
+create_command_pool(types::device const & device,
+                    types::queue_index const queue_index,
+                    VkCommandPoolCreateFlags const flags) noexcept
+{
+  auto info = VkCommandPoolCreateInfo();
+  info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  info.queueFamilyIndex = queue_index;
+  info.flags = flags;
+  return types::command_pool(types::get(device), info);
+}
+
+[[nodiscard]] types::command_buffers
+create_command_buffers(types::command_pool const & pool, uint32_t count,
+                       VkCommandBufferLevel level) noexcept
+{
+  auto info = VkCommandBufferAllocateInfo();
+  info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  info.commandPool = types::get(pool);
+  info.level = level;
+  info.commandBufferCount = count;
+  return types::command_buffers(types::parent(pool), info);
 }
 
 [[nodiscard]] types::device_memory
@@ -45,6 +109,7 @@ create_device_memory(types::physical_device const physical_device,
 {
   auto const requirements = query<vkGetImageMemoryRequirements>::with(
       types::parent(buffer), types::get(buffer));
+
   auto const memory_type_index = find_memory_type(
       types::get(physical_device), requirements.memoryTypeBits, properties);
 
