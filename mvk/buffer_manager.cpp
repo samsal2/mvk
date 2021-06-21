@@ -11,15 +11,14 @@ namespace detail
 {
 
 static constexpr VkBufferUsageFlags
-get_usage(buffer_type type) noexcept;
+get_usage(buffer_manager::type type) noexcept;
 
 } // namespace detail
 
 buffer_manager::buffer_manager(types::device * const device,
                                types::physical_device const physical_device,
                                types::command_pool * const command_pool,
-                               types::queue graphics_queue,
-                               buffer_type const type,
+                               types::queue graphics_queue, type const type,
                                types::device_size const default_size)
     : device_(device), physical_device_(physical_device),
       command_pool_(command_pool), graphics_queue_(graphics_queue),
@@ -148,19 +147,19 @@ namespace detail
 {
 
 static constexpr VkBufferUsageFlags
-get_usage(buffer_type const type) noexcept
+get_usage(buffer_manager::type const type) noexcept
 {
   switch (type)
   {
-  case buffer_type::index:
+  case buffer_manager::type::index:
     return VK_BUFFER_USAGE_TRANSFER_DST_BIT |
            VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 
-  case buffer_type::vertex:
+  case buffer_manager::type::vertex:
     return VK_BUFFER_USAGE_TRANSFER_DST_BIT |
            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 
-  case buffer_type::none:
+  case buffer_manager::type::none:
     MVK_VERIFY_NOT_REACHED();
     return {};
   }

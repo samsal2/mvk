@@ -12,16 +12,16 @@
 namespace mvk
 {
 
-enum class buffer_type
-{
-  none,
-  index,
-  vertex,
-};
-
 class buffer_manager
 {
 public:
+  enum class type
+  {
+    none,
+    vertex,
+    index
+  };
+
   static constexpr auto default_buffer_size = 1024 * 1024;
   static constexpr auto dynamic_buffer_count = 2;
   static constexpr auto garbage_buffer_count = 3;
@@ -31,7 +31,7 @@ public:
   buffer_manager(types::device * device,
                  types::physical_device physical_device,
                  types::command_pool * command_pool,
-                 types::queue graphics_queue, buffer_type type,
+                 types::queue graphics_queue, type type,
                  types::device_size default_size = default_buffer_size);
 
   struct allocation
@@ -101,7 +101,7 @@ private:
   size_t current_garbage_index_ = 0;
 
   types::device_size aligned_size_ = 0;
-  buffer_type type_ = buffer_type::none;
+  type type_ = type::none;
 };
 
 [[nodiscard]] constexpr types::buffer &
