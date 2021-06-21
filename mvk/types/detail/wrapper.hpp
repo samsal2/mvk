@@ -1,8 +1,8 @@
 #ifndef MVK_TYPES_WRAPPER_HPP_INCLUDED
 #define MVK_TYPES_WRAPPER_HPP_INCLUDED
 
-#include "types/detail/wrapper_ctor.hpp"
-#include "types/detail/wrapper_dtor.hpp"
+#include "types/detail/creator_traits.hpp"
+#include "types/detail/deleter_traits.hpp"
 #include "utility/misc.hpp"
 #include "utility/pack.hpp"
 #include "utility/verify.hpp"
@@ -198,7 +198,7 @@ struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
   using handle_base = wrapper_handle_base<Handle>;
   using parent_base = wrapper_parent_base<Parent>;
   using pool_base = wrapper_pool_base<Pool>;
-  using ctor = wrapper_ctor<Creator>;
+  using ctor = creator_traits<Creator>;
 
   static constexpr bool has_handle = !decltype(utility::is_none(Handle{})){};
   static constexpr bool has_parent = !decltype(utility::is_none(Parent{})){};
@@ -298,7 +298,7 @@ template <auto Deleter, auto Creator, typename... Others>
 struct wrapper_dtor_base : public wrapper_ctor_base<Creator, Others...>
 {
   using base = wrapper_ctor_base<Creator, Others...>;
-  using dtor = wrapper_dtor<Deleter>;
+  using dtor = deleter_traits<Deleter>;
 
   using base::base;
 
