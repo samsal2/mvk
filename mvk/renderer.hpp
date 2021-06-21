@@ -21,6 +21,9 @@ public:
   run();
 
 private:
+  static constexpr auto device_extensions =
+      std::array{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
   void
   init_vulkan();
 

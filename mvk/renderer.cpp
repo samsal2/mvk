@@ -33,48 +33,11 @@ renderer::init()
 void
 renderer::init_vulkan()
 {
-  MVK_VERIFY(types::validation::check_support());
+  MVK_VERIFY(validation::check_support());
 
-  auto application_info = []
-  {
-    auto info = VkApplicationInfo();
-    info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    info.pApplicationName = "stan loona";
-    info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    info.pEngineName = "No Engine";
-    info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    return info;
-  }();
-
-  auto const validation_layers = types::validation::validation_layers_data();
-
-  auto const required_extensions = window_.required_extensions();
-
-  auto instance_create_info =
-      [validation_layers, &required_extensions, &application_info]
-  {
-    auto const [validation_data, validation_count] =
-        utility::bind_data_and_size(validation_layers);
-    auto const [required_data, required_count] =
-        utility::bind_data_and_size(required_extensions);
-
-    auto info = VkInstanceCreateInfo();
-    info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    info.pNext = types::validation::debug_create_info_ref();
-    info.pApplicationInfo = &application_info;
-    info.enabledLayerCount = static_cast<uint32_t>(validation_count);
-    info.ppEnabledLayerNames = validation_data;
-    info.enabledExtensionCount = static_cast<uint32_t>(required_count);
-    info.ppEnabledExtensionNames = required_data;
-    return info;
-  }();
-
-  instance_ = types::instance(instance_create_info);
+  instance_ = detail::create_instance(window_, "stan loona");
   surface_ = types::surface(instance_.get(), window_.get());
   debug_messenger_ = types::debug_messenger(instance_.get());
-
-  constexpr auto device_extensions =
-      std::array{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
   auto const physical_device_result =
       detail::choose_physical_device(instance_, surface_, device_extensions);
@@ -91,8 +54,8 @@ renderer::init_vulkan()
   auto const queue_indices = queue_indices_result.value();
   std::tie(graphics_queue_index_, present_queue_index_) = queue_indices;
 
-  auto features = VkPhysicalDeviceFeatures();
-  vkGetPhysicalDeviceFeatures(types::get(physical_device_), &features);
+  auto const features = detail::query<vkGetPhysicalDeviceFeatures>::with(
+      types::get(physical_device_));
 
   auto queue_priority = 1.0F;
 
@@ -126,8 +89,8 @@ renderer::init_vulkan()
   auto const queue_create_info_count = static_cast<uint32_t>(
       queue_indices.first != queue_indices.second ? 2 : 1);
 
+  auto const validation_layers = validation::validation_layers_data();
   auto const device_create_info = [validation_layers, &queue_create_info,
-                                   &device_extensions,
                                    queue_create_info_count, &features]
   {
     auto const [validation_data, validation_count] =
@@ -150,18 +113,7 @@ renderer::init_vulkan()
   device_ = types::device(types::get(physical_device_), device_create_info);
   graphics_queue_ = types::queue(types::get(device_), graphics_queue_index_);
   present_queue_ = types::queue(types::get(device_), present_queue_index_);
-
-  auto const command_pool_create_info = [this]
-  {
-    auto info = VkCommandPoolCreateInfo();
-    info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    info.queueFamilyIndex = graphics_queue_index_;
-    info.flags = 0;
-    return info;
-  }();
-
-  command_pool_ =
-      types::command_pool(device_.get(), command_pool_create_info);
+  command_pool_ = detail::create_command_pool(device_, graphics_queue_index_);
 }
 
 void
@@ -300,8 +252,8 @@ renderer::init_swapchain()
   depth_image_view_ =
       types::image_view(types::get(device_), depth_image_view_create_info);
 
-  detail::transition_layout(device_, graphics_queue_, command_pool_,
-                            depth_image_, VK_IMAGE_LAYOUT_UNDEFINED,
+  detail::transition_layout(graphics_queue_, command_pool_, depth_image_,
+                            VK_IMAGE_LAYOUT_UNDEFINED,
                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                             depth_image_create_info.mipLevels);
 }
@@ -348,14 +300,13 @@ renderer::preload_stuff()
 
   image_memory_ = detail::create_device_memory(
       physical_device_, image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  detail::transition_layout(device_, graphics_queue_, command_pool_, image_,
-                            VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                            image_create_info.mipLevels);
+  detail::transition_layout(
+      graphics_queue_, command_pool_, image_, VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image_create_info.mipLevels);
   detail::stage(device_, physical_device_, graphics_queue_, command_pool_,
                 image_, utility::as_bytes(texture_), width_, height_);
-  detail::generate_mipmaps(device_, graphics_queue_, command_pool_, image_,
-                           width_, height_, image_create_info.mipLevels);
+  detail::generate_mipmaps(graphics_queue_, command_pool_, image_, width_,
+                           height_, image_create_info.mipLevels);
 
   auto const image_view_create_info = [this, &image_create_info]
   {
@@ -405,10 +356,10 @@ renderer::preload_stuff()
 
   vertex_buffer_manager_ =
       buffer_manager(&device_, physical_device_, &command_pool_,
-                     graphics_queue_, buffer_type::vertex);
+                     graphics_queue_, buffer_manager::type::vertex);
   index_buffer_manager_ =
       buffer_manager(&device_, physical_device_, &command_pool_,
-                     graphics_queue_, buffer_type::index);
+                     graphics_queue_, buffer_manager::type::index);
 }
 
 void
@@ -544,18 +495,10 @@ renderer::init_framebuffers()
 void
 renderer::init_commands()
 {
-  auto const command_buffers_allocate_info = [this]
-  {
-    auto info = VkCommandBufferAllocateInfo();
-    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    info.commandPool = command_pool_.get();
-    info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    info.commandBufferCount = static_cast<uint32_t>(std::size(framebuffers_));
-    return info;
-  }();
+  auto const count = static_cast<uint32_t>(std::size(framebuffers_));
 
-  command_buffers_ =
-      types::command_buffers(device_.get(), command_buffers_allocate_info);
+  command_buffers_ = detail::create_command_buffers(
+      command_pool_, count, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }
 
 void
