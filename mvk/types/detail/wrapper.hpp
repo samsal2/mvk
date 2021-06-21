@@ -2,7 +2,7 @@
 #define MVK_TYPES_WRAPPER_HPP_INCLUDED
 
 #include "types/common.hpp"
-#include "types/detail/creator_handler.hpp"
+#include "types/detail/create_handler.hpp"
 #include "utility/find_if.hpp"
 #include "utility/misc.hpp"
 #include "utility/pack.hpp"
@@ -196,7 +196,7 @@ struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
   using handle_base = wrapper_handle_base<Handle>;
   using parent_base = wrapper_parent_base<Parent>;
   using pool_base = wrapper_pool_base<Pool>;
-  using creator_handler = creator_handler<Creator>;
+  using creator_handler = create_handler<Creator>;
 
   static constexpr bool has_handle = !decltype(utility::is_none(Handle{})){};
   static constexpr bool has_parent = !decltype(utility::is_none(Parent{})){};
