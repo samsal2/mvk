@@ -1,7 +1,12 @@
 #ifndef MVK_TYPES_GLFW_CONTEXT_HPP_INCLUDED
 #define MVK_TYPES_GLFW_CONTEXT_HPP_INCLUDED
 
-#include "types/common.hpp"
+#include <vulkan/vulkan.h>
+
+#define GLFW_INCLUDE_VULKAN
+#include "GLFW/glfw3.h"
+
+#include <memory>
 
 namespace mvk::types
 {
@@ -17,7 +22,7 @@ public:
 
   constexpr window() noexcept = default;
 
-  window(extent extent) noexcept;
+  explicit window(extent extent) noexcept;
 
   [[nodiscard]] constexpr GLFWwindow *
   get() const noexcept;

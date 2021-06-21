@@ -1,11 +1,12 @@
 #ifndef MVK_TYPES_DETAIL_WRAPPER_DTOR_HANDLER
 #define MVK_TYPES_DETAIL_WRAPPER_DTOR_HANDLER
 
-#include "types/common.hpp"
 #include "utility/misc.hpp"
 #include "utility/slice.hpp"
 
-namespace mvk::types::detail
+#include <vulkan/vulkan.h>
+
+namespace mvk::detail
 {
 
 template <auto Call, typename = decltype(Call)>
@@ -68,6 +69,6 @@ struct wrapper_dtor<Call,
   }
 };
 
-}; // namespace mvk::types::detail
+}; // namespace mvk::detail
 
 #endif

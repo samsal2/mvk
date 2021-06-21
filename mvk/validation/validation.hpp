@@ -2,12 +2,12 @@
 #define MVK_TYPES_VALIDATION_HPP_INCLUDE
 
 #include "detail/query.hpp"
-#include "types/common.hpp"
 #include "utility/slice.hpp"
 
 #include <array>
 #include <iostream>
 #include <vector>
+#include <vulkan/vulkan.h>
 
 namespace mvk::validation
 {

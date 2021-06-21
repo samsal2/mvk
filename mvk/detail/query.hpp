@@ -1,6 +1,8 @@
 #ifndef MVK_DETAIL_QUERY_HPP_INCLUDED
 #define MVK_DETAIL_QUERY_HPP_INCLUDED
 
+#include <vulkan/vulkan.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <vector>

@@ -1,11 +1,11 @@
 #ifndef MVK_TYPES_DETAIL_CHECKERS_HPP_INCLUDED
 #define MVK_TYPES_DETAIL_CHECKERS_HPP_INCLUDED
 
-#include "types/common.hpp"
 #include "utility/concepts.hpp"
 
 #include <utility>
 #include <vector>
+#include <vulkan/vulkan.h>
 
 namespace mvk::detail
 {

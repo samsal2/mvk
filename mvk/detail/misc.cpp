@@ -12,6 +12,7 @@
 #include <array>
 #include <optional>
 #include <utility>
+#include <cmath>
 
 namespace mvk::detail
 {

@@ -1,12 +1,13 @@
 #ifndef MVK_TYPES_DETAIL_WRAPPER_CTOR_HANDLER_HPP_INCLUDED
 #define MVK_TYPES_DETAIL_WRAPPER_CTOR_HANDLER_HPP_INCLUDED
 
-#include "types/common.hpp"
 #include "utility/pack.hpp"
 #include "utility/types.hpp"
 #include "validation/validation.hpp"
 
-namespace mvk::types::detail
+#include <vulkan/vulkan.h>
+
+namespace mvk::detail
 {
 
 constexpr uint32_t
@@ -113,25 +114,6 @@ struct wrapper_ctor<Call, VkResult (*)(Parent, Info const *, Handle *)>
 };
 
 template <>
-struct wrapper_ctor<glfwCreateWindowSurface>
-{
-  [[nodiscard]] static constexpr VkSurfaceKHR
-  create(VkInstance const instance, GLFWwindow * window) noexcept
-  {
-    auto handle = VkSurfaceKHR();
-    glfwCreateWindowSurface(instance, window, nullptr, &handle);
-    return handle;
-  }
-
-  [[nodiscard]] static constexpr VkInstance
-  parent(VkInstance const instance,
-         [[maybe_unused]] GLFWwindow * window) noexcept
-  {
-    return instance;
-  }
-};
-
-template <>
 struct wrapper_ctor<validation::setup_debug_messenger>
 {
   [[nodiscard]] static constexpr auto
@@ -201,14 +183,21 @@ struct wrapper_ctor<vkCreateDevice>
 template <>
 struct wrapper_ctor<utility::none{}>
 {
-  template <typename Handle>
+  template <typename Handle, typename... Others>
   [[nodiscard]] static constexpr decltype(auto)
-  create(Handle && handle) noexcept
+  create(Handle && handle, [[maybe_unused]] Others &&... others) noexcept
   {
     return std::forward<Handle>(handle);
   }
+
+  template <typename Handle, typename Parent>
+  [[nodiscard]] static constexpr decltype(auto)
+  parent([[maybe_unused]] Handle && handle, Parent && parent) noexcept
+  {
+    return std::forward<Parent>(parent);
+  }
 };
 
-} // namespace mvk::types::detail
+} // namespace mvk::detail
 
 #endif

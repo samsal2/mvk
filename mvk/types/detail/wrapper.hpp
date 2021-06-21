@@ -1,7 +1,6 @@
 #ifndef MVK_TYPES_WRAPPER_HPP_INCLUDED
 #define MVK_TYPES_WRAPPER_HPP_INCLUDED
 
-#include "types/common.hpp"
 #include "types/detail/wrapper_ctor.hpp"
 #include "types/detail/wrapper_dtor.hpp"
 #include "utility/misc.hpp"
@@ -11,7 +10,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace mvk::types::detail
+namespace mvk::detail
 {
 
 // Define wrapper tags
@@ -212,7 +211,7 @@ struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
     {
       if constexpr (has_pool)
       {
-        return has_handle && has_parent;
+        return has_handle && has_parent && std::is_trivial_v<Pool>;
       }
 
       return true;
@@ -223,7 +222,7 @@ struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
     {
       if constexpr (has_parent)
       {
-        return has_handle;
+        return has_handle && std::is_trivial_v<Parent>;
       }
 
       return true;
@@ -241,13 +240,16 @@ struct wrapper_ctor_base : public wrapper_handle_base<Handle>,
     }
   };
 
-  static_assert(member_requirements::pool(), "Missing handle or parent");
+  static_assert(member_requirements::pool(),
+                "Pool requirements were not met");
   static_assert(std::is_same_v<std::remove_cvref_t<Pool>, Pool>,
                 "Pool must not be are reference, volatile or const type");
-  static_assert(member_requirements::parent(), "Missing handle");
+  static_assert(member_requirements::parent(),
+                "Parent requirements were not met");
   static_assert(std::is_same_v<std::remove_cvref_t<Parent>, Parent>,
                 "Parent must not be are reference, volatile or const type");
-  static_assert(member_requirements::handle(), "Missing handle");
+  static_assert(member_requirements::handle(),
+                "Handle requirements were not met");
   static_assert(std::is_same_v<std::remove_cvref_t<Parent>, Parent>,
                 "Handle must not be are reference, volatile or const type");
 
@@ -437,6 +439,6 @@ public:
   using base::base;
 };
 
-} // namespace mvk::types::detail
+} // namespace mvk::detail
 
 #endif

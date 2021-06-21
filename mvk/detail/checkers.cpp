@@ -1,5 +1,7 @@
 #include "detail/checkers.hpp"
 
+#include "utility/verify.hpp"
+
 namespace mvk::detail
 {
 

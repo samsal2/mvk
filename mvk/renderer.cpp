@@ -35,7 +35,12 @@ renderer::init_vulkan()
   MVK_VERIFY(validation::check_support());
 
   instance_ = detail::create_instance(window_, "stan loona");
-  surface_ = types::surface(instance_.get(), window_.get());
+
+  auto surface = VkSurfaceKHR();
+  glfwCreateWindowSurface(types::get(instance_), types::get(window_), nullptr,
+                          &surface);
+
+  surface_ = types::surface(surface, types::get(instance_));
   debug_messenger_ = types::debug_messenger(instance_.get());
 
   auto const physical_device_result =

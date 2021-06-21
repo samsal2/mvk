@@ -3,7 +3,9 @@
 
 #include "buffer_manager.hpp"
 #include "detail/helpers.hpp"
+#include "fwd.hpp"
 #include "types/types.hpp"
+
 #include <span>
 
 namespace mvk
@@ -11,6 +13,7 @@ namespace mvk
 
 class renderer
 {
+
 public:
   renderer() = default;
 
@@ -85,8 +88,8 @@ private:
   types::physical_device physical_device_;
   types::device device_;
   types::command_pool command_pool_;
-  uint32_t graphics_queue_index_;
-  uint32_t present_queue_index_;
+  uint32_t graphics_queue_index_ = {};
+  uint32_t present_queue_index_ = {};
   types::queue graphics_queue_;
   types::queue present_queue_;
 
@@ -97,13 +100,13 @@ private:
   types::image depth_image_;
   types::device_memory depth_image_memory_;
   types::image_view depth_image_view_;
-  VkExtent2D extent_;
+  VkExtent2D extent_ = {};
 
   // preload_stuff
   shader_stage_builder builder_;
   std::vector<unsigned char> texture_;
-  uint32_t width_;
-  uint32_t height_;
+  uint32_t width_ = {};
+  uint32_t height_ = {};
   types::image image_;
   types::device_memory image_memory_;
   types::image_view image_view_;

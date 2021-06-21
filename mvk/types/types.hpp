@@ -1,16 +1,43 @@
 #ifndef MVK_TYPES_TMP_HPP_INCLUDED
 #define MVK_TYPES_TMP_HPP_INCLUDED
 
-#include "types/common.hpp"
 #include "types/detail/wrapper.hpp"
 #include "types/window.hpp"
 #include "validation/validation.hpp"
+
+#include <vulkan/vulkan.h>
 
 namespace mvk::types
 {
 
 using device_size = VkDeviceSize;
 using queue_index = uint32_t;
+
+template <typename Wrapper>
+constexpr decltype(auto)
+get(Wrapper const & wrapper) noexcept
+{
+  return wrapper.get();
+}
+
+template <typename Wrapper>
+constexpr decltype(auto)
+parent(Wrapper const & wrapper) noexcept
+{
+  return wrapper.parent();
+}
+
+template <typename Wrapper>
+constexpr decltype(auto)
+pool(Wrapper const & wrapper) noexcept
+{
+  return wrapper.pool();
+}
+
+} // namespace mvk::types
+
+namespace mvk::types
+{
 
 using buffer =
     detail::wrapper<detail::creator<vkCreateBuffer>, detail::handle<VkBuffer>,
@@ -55,8 +82,6 @@ using descriptor_sets =
                     detail::handle<std::vector<VkDescriptorSet>>,
                     detail::parent<VkDevice>, detail::pool<VkDescriptorPool>,
                     detail::deleter<vkFreeDescriptorSets>>;
-
-using descriptor_set = detail::wrapper<detail::handle<VkDescriptorSet>>;
 
 using device_memory =
     detail::wrapper<detail::creator<vkAllocateMemory>,
@@ -112,8 +137,7 @@ using semaphore =
                     detail::deleter<vkDestroySemaphore>>;
 
 using surface =
-    detail::wrapper<detail::creator<glfwCreateWindowSurface>,
-                    detail::handle<VkSurfaceKHR>, detail::parent<VkInstance>,
+    detail::wrapper<detail::handle<VkSurfaceKHR>, detail::parent<VkInstance>,
                     detail::deleter<vkDestroySurfaceKHR>>;
 
 using image =
