@@ -33,7 +33,7 @@ map_memory(types::device_memory const & memory,
            types::device_size offset = 0) noexcept;
 
 void
-transition_layout(types::device const & device, types::queue graphics_queue,
+transition_layout(types::queue graphics_queue,
                   types::command_pool const & command_pool,
                   types::image const & image, VkImageLayout old_layout,
                   VkImageLayout new_layout, uint32_t mipmap_levels) noexcept;
@@ -45,7 +45,7 @@ stage(types::device const & device, types::physical_device physical_device,
       uint32_t width, uint32_t height) noexcept;
 
 void
-generate_mipmaps(types::device const & device, types::queue graphics_queue,
+generate_mipmaps(types::queue graphics_queue,
                  types::command_pool const & command_pool,
                  types::image const & image, uint32_t width, uint32_t height,
                  uint32_t mipmap_levels);
@@ -59,9 +59,7 @@ create_staging_buffer_and_memory(types::device const & device,
                                  utility::slice<std::byte> src) noexcept;
 
 [[nodiscard]] types::command_buffers
-create_staging_command_buffer(
-    types::device const & device,
-    types::command_pool const & command_pool) noexcept;
+create_staging_command_buffer(types::command_pool const & pool) noexcept;
 
 void
 submit_staging_command_buffer(

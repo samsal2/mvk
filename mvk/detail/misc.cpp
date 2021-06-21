@@ -1,5 +1,6 @@
 #include "detail/misc.hpp"
 
+#include "detail/creators.hpp"
 #include "utility/misc.hpp"
 
 #pragma clang diagnostic push
@@ -90,7 +91,7 @@ stage(types::device const & device,
   }();
 
   auto const command_buffer =
-      detail::create_staging_command_buffer(device, command_pool);
+      detail::create_staging_command_buffer(command_pool);
 
   vkBeginCommandBuffer(types::get(command_buffer)[0], &begin_info);
   vkCmdCopyBuffer(types::get(command_buffer)[0], types::get(staging_buffer),
@@ -111,7 +112,7 @@ map_memory(types::device_memory const & memory, types::device_size size,
 }
 
 void
-transition_layout(types::device const & device, types::queue graphics_queue,
+transition_layout(types::queue graphics_queue,
                   types::command_pool const & command_pool,
                   types::image const & image, VkImageLayout const old_layout,
                   VkImageLayout const new_layout,
@@ -190,7 +191,7 @@ transition_layout(types::device const & device, types::queue graphics_queue,
   }();
 
   auto const command_buffer =
-      detail::create_staging_command_buffer(device, command_pool);
+      detail::create_staging_command_buffer(command_pool);
 
   vkBeginCommandBuffer(types::get(command_buffer)[0], &begin_info);
   vkCmdPipelineBarrier(types::get(command_buffer)[0], source_stage,
@@ -239,7 +240,7 @@ stage(types::device const & device, types::physical_device physical_device,
   }();
 
   auto const command_buffer =
-      detail::create_staging_command_buffer(device, command_pool);
+      detail::create_staging_command_buffer(command_pool);
 
   vkBeginCommandBuffer(types::get(command_buffer)[0], &begin_info);
   vkCmdCopyBufferToImage(types::get(command_buffer)[0],
@@ -252,7 +253,7 @@ stage(types::device const & device, types::physical_device physical_device,
 }
 
 void
-generate_mipmaps(types::device const & device, types::queue graphics_queue,
+generate_mipmaps(types::queue graphics_queue,
                  types::command_pool const & command_pool,
                  types::image const & image, uint32_t width, uint32_t height,
                  uint32_t mipmap_levels)
@@ -271,8 +272,7 @@ generate_mipmaps(types::device const & device, types::queue graphics_queue,
     return info;
   }();
 
-  auto command_buffer =
-      detail::create_staging_command_buffer(device, command_pool);
+  auto command_buffer = detail::create_staging_command_buffer(command_pool);
   vkBeginCommandBuffer(types::get(command_buffer)[0], &begin_info);
 
   auto barrier = VkImageMemoryBarrier();
@@ -438,17 +438,9 @@ create_staging_buffer_and_memory(types::device const & device,
 }
 
 [[nodiscard]] types::command_buffers
-create_staging_command_buffer(
-    types::device const & device,
-    types::command_pool const & command_pool) noexcept
+create_staging_command_buffer(types::command_pool const & pool) noexcept
 {
-  auto info = VkCommandBufferAllocateInfo();
-  info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  info.commandPool = command_pool.get();
-  info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  info.commandBufferCount = 1;
-
-  return types::command_buffers(device.get(), info);
+  return create_command_buffers(pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 }
 
 void
