@@ -1,7 +1,7 @@
 #include "types/window.hpp"
 
-#include "types/validation/validation.hpp"
 #include "utility/slice.hpp"
+#include "validation/validation.hpp"
 
 namespace mvk::types
 {
@@ -32,7 +32,7 @@ window::window(extent const extent) noexcept
 void
 window::deleter::operator()(GLFWwindow * const window) const noexcept
 {
-  if (window != nullptr) [[likely]]
+  if (window != nullptr)
   {
     glfwDestroyWindow(window);
     glfwTerminate();
