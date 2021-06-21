@@ -92,6 +92,20 @@ struct query<Call, void (*)(Requirement, Desired *)>
   }
 };
 
+template <auto Call, typename Desired>
+struct query<Call, VkResult (*)(uint32_t *, Desired *)>
+{
+  [[nodiscard]] static constexpr auto
+  with() noexcept
+  {
+    auto count = uint32_t(0);
+    Call(&count, nullptr);
+    auto desired = std::vector<Desired>(count);
+    Call(&count, std::data(desired));
+    return desired;
+  }
+};
+
 } // namespace mvk::detail
 
 #endif
