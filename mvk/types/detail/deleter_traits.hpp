@@ -10,10 +10,10 @@ namespace mvk::detail
 {
 
 template <auto Call, typename = decltype(Call)>
-struct wrapper_dtor;
+struct deleter_traits;
 
 template <auto Call, typename Handle>
-struct wrapper_dtor<Call, void (*)(Handle, VkAllocationCallbacks const *)>
+struct deleter_traits<Call, void (*)(Handle, VkAllocationCallbacks const *)>
 {
   static constexpr void
   destroy(Handle const handle) noexcept
@@ -23,8 +23,8 @@ struct wrapper_dtor<Call, void (*)(Handle, VkAllocationCallbacks const *)>
 };
 
 template <auto Call, typename Handle, typename Parent>
-struct wrapper_dtor<Call,
-                    void (*)(Parent, Handle, VkAllocationCallbacks const *)>
+struct deleter_traits<Call,
+                      void (*)(Parent, Handle, VkAllocationCallbacks const *)>
 {
   static constexpr void
   destroy(Parent const parent, Handle const handle) noexcept
@@ -37,7 +37,7 @@ struct wrapper_dtor<Call,
 };
 
 template <auto Call, typename Handle, typename Parent, typename Pool>
-struct wrapper_dtor<Call, void (*)(Parent, Pool, uint32_t, Handle const *)>
+struct deleter_traits<Call, void (*)(Parent, Pool, uint32_t, Handle const *)>
 
 {
   static constexpr void
@@ -53,8 +53,8 @@ struct wrapper_dtor<Call, void (*)(Parent, Pool, uint32_t, Handle const *)>
 };
 
 template <auto Call, typename Handle, typename Parent, typename Pool>
-struct wrapper_dtor<Call,
-                    VkResult (*)(Parent, Pool, uint32_t, Handle const *)>
+struct deleter_traits<Call,
+                      VkResult (*)(Parent, Pool, uint32_t, Handle const *)>
 
 {
   static constexpr void

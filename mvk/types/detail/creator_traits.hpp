@@ -34,10 +34,10 @@ pool_from_info(VkDescriptorSetAllocateInfo const & info)
 }
 
 template <auto Call, typename = decltype(Call)>
-struct wrapper_ctor;
+struct creator_traits;
 
 template <auto Call, typename Info, typename Handle>
-struct wrapper_ctor<
+struct creator_traits<
     Call, VkResult (*)(Info const *, VkAllocationCallbacks const *, Handle *)>
 {
   [[nodiscard]] static constexpr Handle
@@ -50,9 +50,9 @@ struct wrapper_ctor<
 };
 
 template <auto Call, typename Info, typename Handle, typename Parent>
-struct wrapper_ctor<Call,
-                    VkResult (*)(Parent, Info const *,
-                                 VkAllocationCallbacks const *, Handle *)>
+struct creator_traits<Call,
+                      VkResult (*)(Parent, Info const *,
+                                   VkAllocationCallbacks const *, Handle *)>
 {
   [[nodiscard]] static constexpr Handle
   create(Parent const parent, Info const & info) noexcept
@@ -70,7 +70,7 @@ struct wrapper_ctor<Call,
 };
 
 template <auto Call, typename Info, typename Handle, typename Parent>
-struct wrapper_ctor<Call, void (*)(Parent, Info const *, Handle *)>
+struct creator_traits<Call, void (*)(Parent, Info const *, Handle *)>
 {
   template <typename HandleBuffer>
   [[nodiscard]] static constexpr HandleBuffer
@@ -89,7 +89,7 @@ struct wrapper_ctor<Call, void (*)(Parent, Info const *, Handle *)>
 };
 
 template <auto Call, typename Info, typename Handle, typename Parent>
-struct wrapper_ctor<Call, VkResult (*)(Parent, Info const *, Handle *)>
+struct creator_traits<Call, VkResult (*)(Parent, Info const *, Handle *)>
 {
   template <typename HandleBuffer>
   [[nodiscard]] static constexpr HandleBuffer
@@ -114,7 +114,7 @@ struct wrapper_ctor<Call, VkResult (*)(Parent, Info const *, Handle *)>
 };
 
 template <>
-struct wrapper_ctor<validation::setup_debug_messenger>
+struct creator_traits<validation::setup_debug_messenger>
 {
   [[nodiscard]] static constexpr auto
   create(VkInstance const instance)
@@ -130,7 +130,7 @@ struct wrapper_ctor<validation::setup_debug_messenger>
 };
 
 template <>
-struct wrapper_ctor<vkCreateGraphicsPipelines>
+struct creator_traits<vkCreateGraphicsPipelines>
 {
   [[nodiscard]] static constexpr VkPipeline
   create(VkDevice const device,
@@ -150,7 +150,7 @@ struct wrapper_ctor<vkCreateGraphicsPipelines>
 };
 
 template <>
-struct wrapper_ctor<vkGetDeviceQueue>
+struct creator_traits<vkGetDeviceQueue>
 {
   [[nodiscard]] static constexpr VkQueue
   create(VkDevice const device, uint32_t const index) noexcept
@@ -169,7 +169,7 @@ struct wrapper_ctor<vkGetDeviceQueue>
 };
 
 template <>
-struct wrapper_ctor<vkCreateDevice>
+struct creator_traits<vkCreateDevice>
 {
   [[nodiscard]] static constexpr VkDevice
   create(VkPhysicalDevice const parent, VkDeviceCreateInfo const & info)
@@ -181,7 +181,7 @@ struct wrapper_ctor<vkCreateDevice>
 };
 
 template <>
-struct wrapper_ctor<utility::none{}>
+struct creator_traits<utility::none{}>
 {
   template <typename Handle, typename... Others>
   [[nodiscard]] static constexpr decltype(auto)
