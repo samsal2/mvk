@@ -1,5 +1,5 @@
-#ifndef MVK_TYPES_TMP_HPP_INCLUDED
-#define MVK_TYPES_TMP_HPP_INCLUDED
+#ifndef MVK_TYPES_TYPES_HPP_INCLUDED
+#define MVK_TYPES_TYPES_HPP_INCLUDED
 
 #include "types/window.hpp"
 #include "validation/validation.hpp"
@@ -94,6 +94,7 @@ using unique_command_pool = wrapper::any_wrapper<
     wrapper::options::deleter_call<vkDestroyCommandPool>>;
 
 using command_pool = wrapper::decay_wrapper_t<unique_command_pool>;
+
 using unique_debug_messenger = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
     wrapper::options::deleter<wrapper::deleter::object_destroy>,
@@ -113,6 +114,7 @@ using unique_descriptor_pool = wrapper::any_wrapper<
     wrapper::options::deleter_call<vkDestroyDescriptorPool>>;
 
 using descriptor_pool = wrapper::decay_wrapper_t<unique_descriptor_pool>;
+
 using unique_descriptor_set_layout = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
     wrapper::options::deleter<wrapper::deleter::object_destroy>,
@@ -147,6 +149,7 @@ using unique_device_memory = wrapper::any_wrapper<
     wrapper::options::deleter_call<vkFreeMemory>>;
 
 using device_memory = wrapper::decay_wrapper_t<unique_device_memory>;
+
 using queue = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::handle_only>,
     wrapper::options::handle<VkQueue>>;
@@ -174,6 +177,7 @@ using unique_fence = wrapper::any_wrapper<
     wrapper::options::deleter_call<vkDestroyFence>>;
 
 using fence = wrapper::decay_wrapper_t<unique_fence>;
+
 using unique_framebuffer = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
     wrapper::options::deleter<wrapper::deleter::object_destroy>,
@@ -184,6 +188,7 @@ using unique_framebuffer = wrapper::any_wrapper<
     wrapper::options::deleter_call<vkDestroyFramebuffer>>;
 
 using framebuffer = wrapper::decay_wrapper_t<unique_framebuffer>;
+
 using unique_image_view = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
     wrapper::options::deleter<wrapper::deleter::object_destroy>,
@@ -202,6 +207,7 @@ using unique_instance = wrapper::any_wrapper<
     wrapper::options::deleter_call<vkDestroyInstance>>;
 
 using instance = wrapper::decay_wrapper_t<unique_instance>;
+
 using unique_pipeline = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
     wrapper::options::deleter<wrapper::deleter::object_destroy>,
@@ -242,6 +248,7 @@ using unique_semaphore = wrapper::any_wrapper<
     wrapper::options::deleter_call<vkDestroySemaphore>>;
 
 using semaphore = wrapper::decay_wrapper_t<unique_semaphore>;
+
 using unique_surface = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
     wrapper::options::deleter<wrapper::deleter::object_destroy>,
@@ -250,6 +257,7 @@ using unique_surface = wrapper::any_wrapper<
     wrapper::options::deleter_call<vkDestroySurfaceKHR>>;
 
 using surface = wrapper::decay_wrapper_t<unique_surface>;
+
 using unique_image = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
     wrapper::options::deleter<wrapper::deleter::object_destroy>,
