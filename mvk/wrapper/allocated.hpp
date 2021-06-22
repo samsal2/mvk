@@ -7,10 +7,8 @@
 
 namespace mvk::wrapper
 {
-
 namespace creator
 {
-
 struct allocated
 {
 };

@@ -12,7 +12,6 @@
 
 namespace mvk
 {
-
 void
 renderer::init()
 {
@@ -482,7 +481,6 @@ renderer::init_main_renderpass()
 void
 renderer::init_framebuffers()
 {
-
   framebuffers_.reserve(std::size(swapchain_image_views_));
 
   auto const add_framebuffer = [this](auto const & image_view)

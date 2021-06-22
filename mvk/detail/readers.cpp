@@ -10,7 +10,6 @@
 
 namespace mvk::detail
 {
-
 [[nodiscard]] std::pair<std::vector<vertex>, std::vector<uint32_t>>
 read_object(std::filesystem::path const & path) noexcept
 {

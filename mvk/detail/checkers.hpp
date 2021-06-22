@@ -9,7 +9,6 @@
 
 namespace mvk::detail
 {
-
 template <typename Callable>
 concept requirement_checker = requires
 {
@@ -32,7 +31,6 @@ default_format_checker(VkSurfaceFormatKHR const & format) noexcept;
 
 namespace mvk::detail
 {
-
 [[nodiscard]] static constexpr bool
 default_format_checker(VkSurfaceFormatKHR const & format) noexcept
 {

@@ -9,7 +9,6 @@
 
 namespace mvk::wrapper
 {
-
 namespace deleter
 {
 struct object_destroy

@@ -11,7 +11,6 @@
 
 namespace mvk::wrapper
 {
-
 template <typename... Args>
 using any_wrapper_base =
     detail::selected_t<decltype(storage_selector<Args...>(

@@ -8,13 +8,11 @@
 
 namespace mvk::wrapper
 {
-
 template <typename... Args>
 class any_wrapper;
 
 namespace detail
 {
-
 constexpr uint32_t
 size_from_info(VkCommandBufferAllocateInfo const & info)
 {
@@ -62,7 +60,6 @@ using selected_t = typename selected<Selected>::type;
 
 namespace options
 {
-
 template <typename Deleter>
 struct deleter
 {

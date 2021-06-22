@@ -9,7 +9,6 @@
 
 namespace mvk::types
 {
-
 using device_size = VkDeviceSize;
 using queue_index = uint32_t;
 
@@ -52,7 +51,6 @@ decay(Wrapper const & wrapper) noexcept
 
 namespace mvk::types
 {
-
 using unique_buffer = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
     wrapper::options::deleter<wrapper::deleter::object_destroy>,

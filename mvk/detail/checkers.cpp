@@ -4,7 +4,6 @@
 
 namespace mvk::detail
 {
-
 void
 default_result_checker([[maybe_unused]] VkResult const result)
 {

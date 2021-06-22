@@ -5,10 +5,8 @@
 
 namespace mvk::wrapper
 {
-
 namespace deleter
 {
-
 struct owner_destroy
 {
 };

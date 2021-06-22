@@ -6,7 +6,6 @@
 
 namespace mvk::utility
 {
-
 template <size_t Size>
 using size_constant = std::integral_constant<size_t, Size>;
 

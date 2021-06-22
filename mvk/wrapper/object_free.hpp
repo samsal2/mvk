@@ -8,10 +8,8 @@
 
 namespace mvk::wrapper
 {
-
 namespace deleter
 {
-
 struct object_free
 {
 };

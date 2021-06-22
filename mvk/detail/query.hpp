@@ -1,15 +1,13 @@
 #ifndef MVK_DETAIL_QUERY_HPP_INCLUDED
 #define MVK_DETAIL_QUERY_HPP_INCLUDED
 
-#include <vulkan/vulkan.h>
-
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <vulkan/vulkan.h>
 
 namespace mvk::detail
 {
-
 template <auto Call, typename = decltype(Call)>
 struct query;
 template <auto Call, typename Req1, typename Req2, typename Desired>

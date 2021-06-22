@@ -7,7 +7,6 @@
 
 namespace mvk::detail
 {
-
 [[nodiscard]] bool
 is_extension_present(
     std::string const & extension_name,
@@ -109,7 +108,6 @@ check_surface_support(types::physical_device const physical_device,
                       types::unique_surface const & surface,
                       uint32_t index) noexcept
 {
-
   auto supported = VkBool32(false);
   vkGetPhysicalDeviceSurfaceSupportKHR(types::get(physical_device), index,
                                        types::get(surface), &supported);

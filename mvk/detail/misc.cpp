@@ -16,7 +16,6 @@
 
 namespace mvk::detail
 {
-
 void
 submit_draw_commands(types::queue const graphics_queue,
                      types::command_buffer const command_buffer,
@@ -376,7 +375,6 @@ generate_mipmaps(types::queue graphics_queue,
 [[nodiscard]] std::tuple<std::vector<unsigned char>, uint32_t, uint32_t>
 load_texture(std::filesystem::path const & path)
 {
-
   MVK_VERIFY(std::filesystem::exists(path));
 
   auto width = 0;
@@ -458,7 +456,6 @@ submit_staging_command_buffer(
     types::queue const graphics_queue,
     types::command_buffer const command_buffer) noexcept
 {
-
   auto submit_info = VkSubmitInfo();
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submit_info.commandBufferCount = 1;
@@ -497,7 +494,6 @@ find_memory_type(VkPhysicalDevice const physical_device,
 next_swapchain_image(VkDevice const device, VkSwapchainKHR const swapchain,
                      VkSemaphore const semaphore, VkFence const fence)
 {
-
   auto index = uint32_t(0);
 
   auto const result = vkAcquireNextImageKHR(

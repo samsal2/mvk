@@ -14,7 +14,6 @@
 
 namespace mvk::detail
 {
-
 void
 submit_draw_commands(types::queue graphics_queue,
                      types::command_buffer command_buffer,

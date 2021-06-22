@@ -2,7 +2,6 @@
 
 namespace mvk::detail
 {
-
 [[nodiscard]] types::unique_instance
 create_instance(types::window const & window,
                 std::string const & name) noexcept

@@ -7,7 +7,6 @@
 
 namespace mvk::utility
 {
-
 template <typename Other, typename This>
 using is_not_this =
     std::bool_constant<!std::is_same_v<std::decay_t<Other>, This> &&
@@ -32,7 +31,6 @@ static constexpr inline auto has_data_and_size_v =
 
 namespace detail
 {
-
 template <typename T>
 using value_type_from_data_t =
     std::remove_pointer_t<decltype(std::data(std::declval<T &>()))>;
@@ -89,7 +87,6 @@ static constexpr inline bool is_random_access_v =
 
 namespace detail
 {
-
 template <typename Iterator>
 [[nodiscard]] constexpr decltype(&(*std::declval<Iterator>()))
 unwrap_iterator(Iterator const iterator) noexcept

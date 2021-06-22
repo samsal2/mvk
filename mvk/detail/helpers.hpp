@@ -8,7 +8,6 @@
 
 namespace mvk::detail
 {
-
 [[nodiscard]] bool
 is_extension_present(
     std::string const & extension_name,

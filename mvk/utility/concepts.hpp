@@ -7,7 +7,6 @@
 
 namespace mvk::utility
 {
-
 template <typename This, typename That>
 concept same_as = requires
 {
@@ -49,7 +48,6 @@ concept with_data_and_size = requires
 
 namespace detail
 {
-
   template <typename Container>
   using value_type_from_data_t =
       std::remove_pointer_t<decltype(std::data(std::declval<Container &>()))>;
@@ -72,7 +70,6 @@ concept compatible_with_element = requires
 
 namespace detail
 {
-
   template <typename Iterator, typename IteratorTag>
   concept match_iterator_tag = requires
   {

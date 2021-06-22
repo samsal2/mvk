@@ -5,10 +5,8 @@
 
 namespace mvk
 {
-
 namespace detail
 {
-
 static constexpr VkBufferUsageFlags
 get_usage(buffer_manager::type type) noexcept;
 
@@ -147,7 +145,6 @@ buffer_manager::next_frame()
 
 namespace detail
 {
-
 static constexpr VkBufferUsageFlags
 get_usage(buffer_manager::type const type) noexcept
 {

@@ -8,10 +8,8 @@
 
 namespace mvk::wrapper
 {
-
 namespace creator
 {
-
 struct created
 {
 };

@@ -5,7 +5,6 @@
 
 namespace mvk::types
 {
-
 window::window(extent const extent) noexcept
 {
   glfwInit();
@@ -48,7 +47,6 @@ window::set_framebuffer_resized(bool const resized) noexcept
 [[nodiscard]] std::vector<char const *>
 window::required_extensions() const noexcept
 {
-
   auto const glfw_extensions = []
   {
     auto count = uint32_t(0);
@@ -72,7 +70,6 @@ window::required_extensions() const noexcept
 [[nodiscard]] window::extent
 window::query_framebuffer_size() const noexcept
 {
-
   auto width = 0;
   auto height = 0;
 

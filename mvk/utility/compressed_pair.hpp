@@ -8,7 +8,6 @@
 
 namespace mvk::utility
 {
-
 template <size_t Idx, typename T, bool IsEmpty = std::is_empty_v<T>>
 class compressed_pair_leaf : public T
 {

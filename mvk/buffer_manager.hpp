@@ -11,7 +11,6 @@
 
 namespace mvk
 {
-
 class buffer_manager
 {
 public:

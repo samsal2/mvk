@@ -1,16 +1,13 @@
 #ifndef MVK_TYPES_DETAIL_HANDLE_ONLY_HPP_INCLUDED
 #define MVK_TYPES_DETAIL_HANDLE_ONLY_HPP_INCLUDED
 
-#include "wrapper/fwd.hpp"
-
 #include "utility/concepts.hpp"
+#include "wrapper/fwd.hpp"
 
 namespace mvk::wrapper
 {
-
 namespace storage
 {
-
 struct handle_only
 {
 };

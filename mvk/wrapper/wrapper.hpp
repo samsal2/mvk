@@ -11,7 +11,6 @@
 
 namespace mvk::wrapper
 {
-
 template <typename... Args>
 constexpr auto
 decay_wrapper([[maybe_unused]] any_wrapper<Args...> const & wrapper) noexcept

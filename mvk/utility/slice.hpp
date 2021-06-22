@@ -11,12 +11,10 @@
 
 namespace mvk::utility
 {
-
 static constexpr size_t dynamic_extent = std::numeric_limits<size_t>::max();
 
 namespace detail
 {
-
 template <typename T, size_t Extent>
 struct slice_storage
 {

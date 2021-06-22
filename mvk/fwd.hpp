@@ -9,7 +9,6 @@
 
 namespace mvk
 {
-
 struct vertex
 {
   glm::vec3 pos;

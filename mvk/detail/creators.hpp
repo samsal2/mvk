@@ -1,13 +1,11 @@
 #ifndef MVK_DETAIL_CREATORS_HPP_INCLUDED
 #define MVK_DETAIL_CREATORS_HPP_INCLUDED
 
-#include "types/types.hpp"
-
 #include "detail/misc.hpp"
+#include "types/types.hpp"
 
 namespace mvk::detail
 {
-
 [[nodiscard]] types::unique_instance
 create_instance(types::window const & window,
                 std::string const & name) noexcept;

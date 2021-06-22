@@ -11,7 +11,6 @@
 
 namespace mvk::validation
 {
-
 #ifndef NDEBUG
 static constexpr auto g_use_validation = true;
 #else

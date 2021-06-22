@@ -5,10 +5,8 @@
 
 namespace mvk::utility
 {
-
 namespace detail
 {
-
 template <typename Container>
 struct data_and_size
 {

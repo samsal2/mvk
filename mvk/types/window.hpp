@@ -10,7 +10,6 @@
 
 namespace mvk::types
 {
-
 class window
 {
 public:

@@ -10,10 +10,8 @@
 
 namespace mvk
 {
-
 class renderer
 {
-
 public:
   renderer() = default;
 
