@@ -40,8 +40,7 @@ check_extension_support(
 
 [[nodiscard]] std::optional<types::physical_device>
 choose_physical_device(
-    types::unique_instance const & instance,
-    types::unique_surface const & surface,
+    types::instance const instance, types::surface const surface,
     utility::slice<char const *> const device_extensions) noexcept
 {
   auto const physical_devices =
@@ -88,7 +87,7 @@ check_graphic_requirements(
 [[nodiscard]] bool
 check_format_and_present_mode_availability(
     types::physical_device physical_device,
-    types::unique_surface const & surface) noexcept
+    types::surface const surface) noexcept
 {
   auto format_count = uint32_t(0);
   vkGetPhysicalDeviceSurfaceFormatsKHR(types::get(physical_device),
@@ -105,8 +104,7 @@ check_format_and_present_mode_availability(
 
 [[nodiscard]] bool
 check_surface_support(types::physical_device const physical_device,
-                      types::unique_surface const & surface,
-                      uint32_t index) noexcept
+                      types::surface const surface, uint32_t index) noexcept
 {
   auto supported = VkBool32(false);
   vkGetPhysicalDeviceSurfaceSupportKHR(types::get(physical_device), index,
@@ -117,7 +115,7 @@ check_surface_support(types::physical_device const physical_device,
 
 [[nodiscard]] std::optional<std::pair<types::queue_index, types::queue_index>>
 query_family_indices(types::physical_device const physical_device,
-                     types::unique_surface const & surface)
+                     types::surface const surface)
 {
   auto const queue_families =
       query<vkGetPhysicalDeviceQueueFamilyProperties>::with(
@@ -179,8 +177,8 @@ choose_image_count(VkSurfaceCapabilitiesKHR const & capabilities) noexcept
 }
 
 [[nodiscard]] VkPresentModeKHR
-choose_present_mode(types::physical_device physical_device,
-                    types::unique_surface const & surface) noexcept
+choose_present_mode(types::physical_device const physical_device,
+                    types::surface const surface) noexcept
 {
   auto const modes = query<vkGetPhysicalDeviceSurfacePresentModesKHR>::with(
       types::get(physical_device), types::get(surface));

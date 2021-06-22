@@ -103,12 +103,12 @@ stage(types::device const device,
 }
 
 std::span<std::byte>
-map_memory(types::unique_device_memory const & memory,
-           types::device_size size, types::device_size offset) noexcept
+map_memory(types::device const device, types::device_memory const memory,
+           types::device_size const size,
+           types::device_size const offset) noexcept
 {
   void * data = nullptr;
-  vkMapMemory(types::parent(memory), types::get(memory), offset, size, 0,
-              &data);
+  vkMapMemory(types::get(device), types::get(memory), offset, size, 0, &data);
   return {utility::force_cast_to_byte(data), size};
 }
 
@@ -437,7 +437,7 @@ create_staging_buffer_and_memory(types::device const device,
                      types::get(staging_buffer), types::get(buffer_memory),
                      0);
 
-  auto data = detail::map_memory(buffer_memory, size);
+  auto data = detail::map_memory(device, types::decay(buffer_memory), size);
   std::copy(std::begin(src), std::end(src), std::begin(data));
   vkUnmapMemory(types::parent(buffer_memory), types::get(buffer_memory));
 

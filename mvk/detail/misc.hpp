@@ -28,7 +28,7 @@ stage(types::device device, types::physical_device physical_device,
       types::device_size offset);
 
 [[nodiscard]] std::span<std::byte>
-map_memory(types::unique_device_memory const & memory,
+map_memory(types::device device, types::device_memory memory,
            types::device_size size = VK_WHOLE_SIZE,
            types::device_size offset = 0) noexcept;
 

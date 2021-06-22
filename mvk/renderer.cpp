@@ -46,15 +46,15 @@ renderer::init_vulkan()
   debug_messenger_ =
       types::unique_debug_messenger::create(types::get(instance_));
 
-  auto const physical_device_result =
-      detail::choose_physical_device(instance_, surface_, device_extensions);
+  auto const physical_device_result = detail::choose_physical_device(
+      types::decay(instance_), types::decay(surface_), device_extensions);
 
   MVK_VERIFY(physical_device_result.has_value());
 
   physical_device_ = physical_device_result.value();
 
   auto const queue_indices_result =
-      detail::query_family_indices(physical_device_, surface_);
+      detail::query_family_indices(physical_device_, types::decay(surface_));
 
   MVK_VERIFY(queue_indices_result.has_value());
 
@@ -149,7 +149,7 @@ renderer::init_swapchain()
             types::get(physical_device_), types::get(surface_));
 
     auto const present_mode =
-        detail::choose_present_mode(physical_device_, surface_);
+        detail::choose_present_mode(physical_device_, types::decay(surface_));
 
     extent_ = detail::choose_extent(capabilities, {width, height});
     auto const image_count = detail::choose_image_count(capabilities);
@@ -664,7 +664,8 @@ renderer::init_descriptors()
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     mapped_datas_.push_back(
-        detail::map_memory(uniform_buffer_memory, sizeof(pvm)));
+        detail::map_memory(types::decay(device_),
+                           types::decay(uniform_buffer_memory), sizeof(pvm)));
     uniform_buffers_memory_.push_back(std::move(uniform_buffer_memory));
   }
 
