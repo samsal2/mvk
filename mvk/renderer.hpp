@@ -6,8 +6,6 @@
 #include "fwd.hpp"
 #include "types/types.hpp"
 
-#include <span>
-
 namespace mvk
 {
 class renderer
@@ -65,9 +63,9 @@ private:
   end_draw();
 
   void
-  basic_draw(utility::slice<std::byte> vertices,
-             utility::slice<std::byte> indices,
-             utility::slice<std::byte> pvm);
+  basic_draw(utility::slice<std::byte const> vertices,
+             utility::slice<std::byte const> indices,
+             utility::slice<std::byte const> pvm);
 
   [[nodiscard]] pvm
   create_test_pvm();
@@ -129,7 +127,7 @@ private:
   std::vector<types::unique_descriptor_set> descriptor_sets_;
   std::vector<types::unique_buffer> uniform_buffers_;
   std::vector<types::unique_device_memory> uniform_buffers_memory_;
-  std::vector<std::span<std::byte>> mapped_datas_;
+  std::vector<utility::slice<std::byte>> mapped_datas_;
 
   // init_pipeline
   types::unique_pipeline_layout pipeline_layout_;

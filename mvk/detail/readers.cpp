@@ -1,7 +1,5 @@
 #include "detail/readers.hpp"
 
-#include "utility/misc.hpp"
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -71,8 +69,7 @@ read_file(std::filesystem::path const & path) noexcept
   auto buffer = std::vector<char>(static_cast<size_t>(file.tellg()));
 
   file.seekg(0);
-  auto [data, size] = utility::bind_data_and_size(buffer);
-  file.read(data, static_cast<int64_t>(size));
+  file.read(std::data(buffer), static_cast<int64_t>(std::size(buffer)));
   file.close();
 
   return buffer;

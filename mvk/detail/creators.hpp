@@ -32,7 +32,7 @@ create_device_memory(types::device device,
 
 [[nodiscard]] types::unique_shader_module
 create_shader_module(types::device device,
-                     utility::slice<char> code) noexcept;
+                     utility::slice<char const> code) noexcept;
 
 } // namespace mvk::detail
 

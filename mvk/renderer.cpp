@@ -4,7 +4,6 @@
 #include "detail/helpers.hpp"
 #include "detail/misc.hpp"
 #include "detail/readers.hpp"
-#include "utility/misc.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
 
@@ -100,31 +99,28 @@ renderer::init_vulkan()
   auto const device_create_info = [validation_layers, &queue_create_info,
                                    queue_create_info_count, &features]
   {
-    auto const [validation_data, validation_count] =
-        utility::bind_data_and_size(validation_layers);
-    auto const [extensions_data, extensions_count] =
-        utility::bind_data_and_size(device_extensions);
-
     auto info = VkDeviceCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     info.queueCreateInfoCount = queue_create_info_count;
     info.pQueueCreateInfos = std::data(queue_create_info);
     info.pEnabledFeatures = &features;
-    info.enabledExtensionCount = static_cast<uint32_t>(extensions_count);
-    info.ppEnabledExtensionNames = extensions_data;
-    info.enabledLayerCount = static_cast<uint32_t>(validation_count);
-    info.ppEnabledLayerNames = validation_data;
+    info.enabledExtensionCount =
+        static_cast<uint32_t>(std::size(device_extensions));
+    info.ppEnabledExtensionNames = std::data(device_extensions);
+    info.enabledLayerCount =
+        static_cast<uint32_t>(std::size(validation_layers));
+    info.ppEnabledLayerNames = std::data(validation_layers);
     return info;
   }();
 
   device_ = types::unique_device::create(types::get(physical_device_),
                                          device_create_info);
 
-  vkGetDeviceQueue(types::get(device_), graphics_queue_index_, 0,
-                   &types::get(graphics_queue_));
+  graphics_queue_ =
+      types::queue::retrieve(types::get(device_), graphics_queue_index_);
 
-  vkGetDeviceQueue(types::get(device_), present_queue_index_, 0,
-                   &types::get(present_queue_));
+  present_queue_ =
+      types::queue::retrieve(types::get(device_), present_queue_index_);
 
   command_pool_ = detail::create_command_pool(types::decay(device_),
                                               graphics_queue_index_);
@@ -472,13 +468,10 @@ renderer::init_main_renderpass()
   auto const render_pass_create_info =
       [&attachments, &subpass_description, &subpass_dependency]
   {
-    auto const [attachments_data, attachments_size] =
-        utility::bind_data_and_size(attachments);
-
     auto info = VkRenderPassCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    info.attachmentCount = static_cast<uint32_t>(attachments_size);
-    info.pAttachments = attachments_data;
+    info.attachmentCount = static_cast<uint32_t>(std::size(attachments));
+    info.pAttachments = std::data(attachments);
     info.subpassCount = 1;
     info.pSubpasses = &subpass_description;
     info.dependencyCount = 1;
@@ -502,14 +495,11 @@ renderer::init_framebuffers()
 
     auto const framebuffer_create_info = [this, &attachments]
     {
-      auto const [attachments_data, attachments_size] =
-          utility::bind_data_and_size(attachments);
-
       auto info = VkFramebufferCreateInfo();
       info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
       info.renderPass = render_pass_.get();
-      info.attachmentCount = static_cast<uint32_t>(attachments_size);
-      info.pAttachments = attachments_data;
+      info.attachmentCount = static_cast<uint32_t>(std::size(attachments));
+      info.pAttachments = std::data(attachments);
       info.width = extent_.width;
       info.height = extent_.height;
       info.layers = 1;
@@ -567,13 +557,11 @@ renderer::init_descriptors()
 
   auto const descriptor_set_layout_create_info = [&descriptor_set_bindings]
   {
-    auto const [descriptor_set_binding_data, descriptor_set_binding_size] =
-        utility::bind_data_and_size(descriptor_set_bindings);
-
     auto info = VkDescriptorSetLayoutCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    info.bindingCount = static_cast<uint32_t>(descriptor_set_binding_size);
-    info.pBindings = descriptor_set_binding_data;
+    info.bindingCount =
+        static_cast<uint32_t>(std::size(descriptor_set_bindings));
+    info.pBindings = std::data(descriptor_set_bindings);
     return info;
   }();
 
@@ -605,13 +593,11 @@ renderer::init_descriptors()
   auto const descriptor_pool_create_info =
       [&descriptor_pool_sizes, images_count]
   {
-    auto const [descriptor_pool_sizes_data, descriptor_pool_sizes_count] =
-        utility::bind_data_and_size(descriptor_pool_sizes);
-
     auto info = VkDescriptorPoolCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    info.poolSizeCount = static_cast<uint32_t>(descriptor_pool_sizes_count);
-    info.pPoolSizes = descriptor_pool_sizes_data;
+    info.poolSizeCount =
+        static_cast<uint32_t>(std::size(descriptor_pool_sizes));
+    info.pPoolSizes = std::data(descriptor_pool_sizes);
     info.maxSets = images_count;
     info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     return info;
@@ -627,15 +613,12 @@ renderer::init_descriptors()
 
   auto const descriptor_sets_allocate_info = [this, &descriptor_set_layouts]
   {
-    auto const [descriptor_set_layouts_data, descriptor_set_layouts_size] =
-        utility::bind_data_and_size(descriptor_set_layouts);
-
     auto info = VkDescriptorSetAllocateInfo();
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     info.descriptorPool = descriptor_pool_.get();
     info.descriptorSetCount =
-        static_cast<uint32_t>(descriptor_set_layouts_size);
-    info.pSetLayouts = descriptor_set_layouts_data;
+        static_cast<uint32_t>(std::size(descriptor_set_layouts));
+    info.pSetLayouts = std::data(descriptor_set_layouts);
     return info;
   }();
 
@@ -669,6 +652,7 @@ renderer::init_descriptors()
     mapped_datas_.push_back(
         detail::map_memory(types::decay(device_),
                            types::decay(uniform_buffer_memory), sizeof(pvm)));
+
     uniform_buffers_memory_.push_back(std::move(uniform_buffer_memory));
   }
 
@@ -793,16 +777,13 @@ renderer::init_pipeline()
   auto const vertex_input_create_info =
       [&vertex_input_binding_description, &vertex_attributes]
   {
-    auto const [vertex_attributes_data, vertex_attributes_size] =
-        utility::bind_data_and_size(vertex_attributes);
-
     auto info = VkPipelineVertexInputStateCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     info.vertexBindingDescriptionCount = 1;
     info.pVertexBindingDescriptions = &vertex_input_binding_description;
     info.vertexAttributeDescriptionCount =
-        static_cast<uint32_t>(vertex_attributes_size);
-    info.pVertexAttributeDescriptions = vertex_attributes_data;
+        static_cast<uint32_t>(std::size(vertex_attributes));
+    info.pVertexAttributeDescriptions = std::data(vertex_attributes);
     return info;
   }();
 
@@ -925,13 +906,11 @@ renderer::init_pipeline()
   auto const pipeline_create_info = [&, this]
   {
     auto const shader_stages = builder_.stages();
-    auto const [shader_stages_data, shader_stages_size] =
-        utility::bind_data_and_size(shader_stages);
 
     auto info = VkGraphicsPipelineCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    info.stageCount = static_cast<uint32_t>(shader_stages_size);
-    info.pStages = shader_stages_data;
+    info.stageCount = static_cast<uint32_t>(std::size(shader_stages));
+    info.pStages = std::data(shader_stages);
     info.pVertexInputState = &vertex_input_create_info;
     info.pInputAssemblyState = &input_assembly_create_info;
     info.pViewportState = &viewport_state_create_info;
@@ -940,8 +919,8 @@ renderer::init_pipeline()
     info.pDepthStencilState = &depth_stencil_state_create_info;
     info.pColorBlendState = &color_blend_create_info;
     info.pDynamicState = nullptr;
-    info.layout = pipeline_layout_.get();
-    info.renderPass = render_pass_.get();
+    info.layout = types::get(pipeline_layout_);
+    info.renderPass = types::get(render_pass_);
     info.subpass = 0;
     info.basePipelineHandle = nullptr;
     info.basePipelineIndex = -1;
@@ -1062,9 +1041,6 @@ renderer::begin_draw()
 
   auto const render_pass_begin_info = [this, &clear_values]
   {
-    auto const [clear_values_data, clear_values_size] =
-        utility::bind_data_and_size(clear_values);
-
     auto info = VkRenderPassBeginInfo();
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     info.renderPass = render_pass_.get();
@@ -1072,8 +1048,8 @@ renderer::begin_draw()
     info.renderArea.offset.x = 0;
     info.renderArea.offset.y = 0;
     info.renderArea.extent = extent_;
-    info.clearValueCount = static_cast<uint32_t>(clear_values_size);
-    info.pClearValues = clear_values_data;
+    info.clearValueCount = static_cast<uint32_t>(std::size(clear_values));
+    info.pClearValues = std::data(clear_values);
     return info;
   }();
 
@@ -1098,9 +1074,9 @@ renderer::begin_draw()
                        &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 }
 void
-renderer::basic_draw(utility::slice<std::byte> const vertices,
-                     utility::slice<std::byte> const indices,
-                     utility::slice<std::byte> const pvm)
+renderer::basic_draw(utility::slice<std::byte const> const vertices,
+                     utility::slice<std::byte const> const indices,
+                     utility::slice<std::byte const> const pvm)
 {
   auto const [vertex_buffer, vertex_offset] =
       vertex_buffer_manager_.map(vertices);

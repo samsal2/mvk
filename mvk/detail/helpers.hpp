@@ -11,17 +11,17 @@ namespace mvk::detail
 [[nodiscard]] bool
 is_extension_present(
     std::string const & extension_name,
-    utility::slice<VkExtensionProperties> extensions) noexcept;
+    utility::slice<VkExtensionProperties const> extensions) noexcept;
 
 [[nodiscard]] bool
 check_extension_support(
     types::physical_device physical_device,
-    utility::slice<char const *> device_extensions) noexcept;
+    utility::slice<char const * const> device_extensions) noexcept;
 
 [[nodiscard]] std::optional<types::physical_device>
 choose_physical_device(
     types::instance instance, types::surface surface,
-    utility::slice<char const *> device_extensions) noexcept;
+    utility::slice<char const * const> device_extensions) noexcept;
 
 [[nodiscard]] bool
 check_graphic_requirements(

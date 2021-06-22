@@ -1,7 +1,6 @@
 target_sources(${PROJECT_NAME} PRIVATE pack.hpp
                                        compressed_pair.hpp
                                        concepts.hpp
-                                       misc.hpp
                                        slice.hpp
                                        types.hpp
                                        verify.cpp

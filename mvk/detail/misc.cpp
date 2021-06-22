@@ -1,7 +1,6 @@
 #include "detail/misc.hpp"
 
 #include "detail/creators.hpp"
-#include "utility/misc.hpp"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
@@ -33,22 +32,18 @@ submit_draw_commands(types::device const device,
   auto const submit_info =
       [&wait_semaphores, &signal_semaphores, &wait_stages, &command_buffers]
   {
-    auto const [wait_semaphores_data, wait_semaphores_size] =
-        utility::bind_data_and_size(wait_semaphores);
-    auto const [signal_semaphores_data, signal_semaphores_size] =
-        utility::bind_data_and_size(signal_semaphores);
-    auto const [command_buffers_data, command_buffers_size] =
-        utility::bind_data_and_size(command_buffers);
-
     auto info = VkSubmitInfo();
     info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    info.waitSemaphoreCount = static_cast<uint32_t>(wait_semaphores_size);
-    info.pWaitSemaphores = wait_semaphores_data;
+    info.waitSemaphoreCount =
+        static_cast<uint32_t>(std::size(wait_semaphores));
+    info.pWaitSemaphores = std::data(wait_semaphores);
     info.pWaitDstStageMask = std::data(wait_stages);
-    info.commandBufferCount = 1;
-    info.pCommandBuffers = command_buffers_data;
-    info.signalSemaphoreCount = static_cast<uint32_t>(signal_semaphores_size);
-    info.pSignalSemaphores = signal_semaphores_data;
+    info.commandBufferCount =
+        static_cast<uint32_t>(std::size(command_buffers));
+    info.pCommandBuffers = std::data(command_buffers);
+    info.signalSemaphoreCount =
+        static_cast<uint32_t>(std::size(signal_semaphores));
+    info.pSignalSemaphores = std::data(signal_semaphores);
     return info;
   }();
 
@@ -62,7 +57,7 @@ stage(types::device const device,
       types::physical_device const physical_device,
       types::queue const graphics_queue,
       types::command_pool const command_pool, types::buffer const buffer,
-      utility::slice<std::byte> src, types::device_size offset)
+      utility::slice<std::byte const> src, types::device_size offset)
 {
   auto const begin_info = []
   {
@@ -102,7 +97,7 @@ stage(types::device const device,
                                         types::get(command_buffer));
 }
 
-std::span<std::byte>
+[[nodiscard]] utility::slice<std::byte>
 map_memory(types::device const device, types::device_memory const memory,
            types::device_size const size,
            types::device_size const offset) noexcept
@@ -209,7 +204,7 @@ void
 stage(types::device const device,
       types::physical_device const physical_device,
       types::queue const graphics_queue, types::command_pool command_pool,
-      types::image const buffer, utility::slice<std::byte> src,
+      types::image const buffer, utility::slice<std::byte const> src,
       uint32_t width, uint32_t height) noexcept
 {
   auto const [staging_buffer, staging_buffer_memory] =
@@ -397,9 +392,9 @@ load_texture(std::filesystem::path const & path)
 }
 
 [[nodiscard]] std::pair<types::unique_buffer, types::unique_device_memory>
-create_staging_buffer_and_memory(types::device const device,
-                                 types::physical_device const physical_device,
-                                 utility::slice<std::byte> const src) noexcept
+create_staging_buffer_and_memory(
+    types::device const device, types::physical_device const physical_device,
+    utility::slice<std::byte const> const src) noexcept
 {
   auto const size = std::size(src);
 

@@ -1,5 +1,5 @@
-#ifndef MVK_WRAPPER_ALLOCATED_HPP_INCLUDED
-#define MVK_WRAPPER_ALLOCATED_HPP_INCLUDED
+#ifndef MVK_WRAPPER_OBJECT_ALLOCATE_HPP_INCLUDED
+#define MVK_WRAPPER_OBJECT_ALLOCATE_HPP_INCLUDED
 
 #include "wrapper/fwd.hpp"
 
@@ -9,29 +9,29 @@ namespace mvk::wrapper
 {
 namespace creator
 {
-struct allocated
+struct object_allocate
 {
 };
 
 } // namespace creator
 
 template <auto Call, typename Wrapper>
-class allocated;
+class object_allocate;
 
 template <typename... Args>
 constexpr auto
-creator_selector([[maybe_unused]] creator::allocated option)
+creator_selector([[maybe_unused]] creator::object_allocate option)
 {
   using wrapper = any_wrapper<Args...>;
 
   constexpr auto call = select<options::creator_call>(Args{}...);
   static_assert(!utility::is_none(call), "Expected creator_call option");
 
-  return detail::select<allocated<call, wrapper>>{};
+  return detail::select<object_allocate<call, wrapper>>{};
 }
 
 template <auto Call, typename Wrapper>
-class allocated
+class object_allocate
 {
   using wrapper_type = Wrapper;
   static constexpr auto create_call = Call;

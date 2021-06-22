@@ -51,7 +51,7 @@ static constexpr auto g_debug_create_info = []
 
 [[nodiscard]] static bool
 is_layer_present(VkLayerProperties const layer,
-                 utility::slice<char const *> const layers) noexcept
+                 utility::slice<char const * const> const layers) noexcept
 {
   auto const matches = [&layer](auto const & current_layer)
   {
@@ -116,7 +116,7 @@ destroy_debug_messenger(VkInstance const instance,
   f(instance, messenger, callback);
 }
 
-[[nodiscard]] static constexpr utility::slice<char const *>
+[[nodiscard]] static constexpr utility::slice<char const * const>
 validation_layers_data() noexcept
 {
   if constexpr (!g_use_validation)
@@ -138,7 +138,7 @@ debug_create_info_ref() noexcept
   return &g_debug_create_info;
 }
 
-[[nodiscard]] static utility::slice<char const *>
+[[nodiscard]] static utility::slice<char const * const>
 required_instance_extensions()
 {
   if constexpr (!g_use_validation)

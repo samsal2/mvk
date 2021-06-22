@@ -4,13 +4,11 @@
 #include "detail/checkers.hpp"
 #include "detail/query.hpp"
 #include "types/types.hpp"
-#include "utility/misc.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
 
 #include <filesystem>
 #include <optional>
-#include <span>
 
 namespace mvk::detail
 {
@@ -24,10 +22,10 @@ submit_draw_commands(types::device device, types::queue graphics_queue,
 void
 stage(types::device device, types::physical_device physical_device,
       types::queue graphics_queue, types::command_pool command_pool,
-      types::buffer buffer, utility::slice<std::byte> src,
+      types::buffer buffer, utility::slice<std::byte const> src,
       types::device_size offset);
 
-[[nodiscard]] std::span<std::byte>
+[[nodiscard]] utility::slice<std::byte>
 map_memory(types::device device, types::device_memory memory,
            types::device_size size = VK_WHOLE_SIZE,
            types::device_size offset = 0) noexcept;
@@ -41,8 +39,8 @@ transition_layout(types::device device, types::queue graphics_queue,
 void
 stage(types::device device, types::physical_device physical_device,
       types::queue graphics_queue, types::command_pool command_pool,
-      types::image buffer, utility::slice<std::byte> src, uint32_t width,
-      uint32_t height) noexcept;
+      types::image buffer, utility::slice<std::byte const> src,
+      uint32_t width, uint32_t height) noexcept;
 
 void
 generate_mipmaps(types::device device, types::queue graphics_queue,
@@ -53,9 +51,9 @@ generate_mipmaps(types::device device, types::queue graphics_queue,
 load_texture(std::filesystem::path const & path);
 
 [[nodiscard]] std::pair<types::unique_buffer, types::unique_device_memory>
-create_staging_buffer_and_memory(types::device device,
-                                 types::physical_device physical_device,
-                                 utility::slice<std::byte> src) noexcept;
+create_staging_buffer_and_memory(
+    types::device device, types::physical_device physical_device,
+    utility::slice<std::byte const> src) noexcept;
 
 [[nodiscard]] types::unique_command_buffer
 create_staging_command_buffer(types::device,
@@ -107,22 +105,14 @@ present_swapchain(types::queue const present_queue,
 
   auto const present_info = [&signal_semaphores, &swapchains, &image_indices]
   {
-    auto const [signal_semaphores_data, signal_semaphores_size] =
-        utility::bind_data_and_size(signal_semaphores);
-
-    auto const [swapchains_data, swapchains_size] =
-        utility::bind_data_and_size(swapchains);
-
-    auto const [image_indices_data, image_indices_size] =
-        utility::bind_data_and_size(image_indices);
-
     auto info = VkPresentInfoKHR();
     info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    info.waitSemaphoreCount = static_cast<uint32_t>(signal_semaphores_size);
-    info.pWaitSemaphores = signal_semaphores_data;
-    info.swapchainCount = static_cast<uint32_t>(swapchains_size);
-    info.pSwapchains = swapchains_data;
-    info.pImageIndices = image_indices_data;
+    info.waitSemaphoreCount =
+        static_cast<uint32_t>(std::size(signal_semaphores));
+    info.pWaitSemaphores = std::data(signal_semaphores);
+    info.swapchainCount = static_cast<uint32_t>(std::size(swapchains));
+    info.pSwapchains = std::data(swapchains);
+    info.pImageIndices = std::data(image_indices);
     info.pResults = nullptr;
     return info;
   }();

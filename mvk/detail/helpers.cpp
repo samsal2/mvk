@@ -10,7 +10,7 @@ namespace mvk::detail
 [[nodiscard]] bool
 is_extension_present(
     std::string const & extension_name,
-    utility::slice<VkExtensionProperties> const extensions) noexcept
+    utility::slice<VkExtensionProperties const> const extensions) noexcept
 {
   auto const matches = [&extension_name](auto const & extension)
   {
@@ -23,7 +23,7 @@ is_extension_present(
 [[nodiscard]] bool
 check_extension_support(
     types::physical_device physical_device,
-    utility::slice<char const *> device_extensions) noexcept
+    utility::slice<char const * const> device_extensions) noexcept
 {
   auto const extensions = query<vkEnumerateDeviceExtensionProperties>::with(
       types::get(physical_device), nullptr);
@@ -41,7 +41,7 @@ check_extension_support(
 [[nodiscard]] std::optional<types::physical_device>
 choose_physical_device(
     types::instance const instance, types::surface const surface,
-    utility::slice<char const *> const device_extensions) noexcept
+    utility::slice<char const * const> const device_extensions) noexcept
 {
   auto const physical_devices =
       query<vkEnumeratePhysicalDevices>::with(types::get(instance));

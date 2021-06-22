@@ -29,7 +29,7 @@ buffer_manager::buffer_manager(types::device const device,
 // as much with the downside of needed to call allocate on every element using
 // a buffer each time
 [[nodiscard]] buffer_manager::allocation
-buffer_manager::map(utility::slice<std::byte> const src)
+buffer_manager::map(utility::slice<std::byte const> const src)
 {
   auto const size = std::size(src);
   auto const next_offset = current_offset() + size;

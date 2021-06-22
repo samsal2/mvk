@@ -23,32 +23,25 @@ create_instance(types::window const & window,
   auto instance_create_info =
       [validation_layers, &required_extensions, &application_info]
   {
-    auto const [validation_data, validation_count] =
-        utility::bind_data_and_size(validation_layers);
-    auto const [required_data, required_count] =
-        utility::bind_data_and_size(required_extensions);
-
     auto info = VkInstanceCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     info.pNext = validation::debug_create_info_ref();
     info.pApplicationInfo = &application_info;
-    info.enabledLayerCount = static_cast<uint32_t>(validation_count);
-    info.ppEnabledLayerNames = validation_data;
-    info.enabledExtensionCount = static_cast<uint32_t>(required_count);
-    info.ppEnabledExtensionNames = required_data;
+    info.enabledLayerCount =
+        static_cast<uint32_t>(std::size(validation_layers));
+    info.ppEnabledLayerNames = std::data(validation_layers);
+    info.enabledExtensionCount =
+        static_cast<uint32_t>(std::size(required_extensions));
+    info.ppEnabledExtensionNames = std::data(required_extensions);
     return info;
   }();
 
-  // TODO(samuel): missing creators
-  auto handle = VkInstance();
-  vkCreateInstance(&instance_create_info, nullptr, &handle);
-
-  return types::unique_instance(handle);
+  return types::unique_instance::create(instance_create_info);
 }
 
 [[nodiscard]] types::unique_shader_module
 create_shader_module(types::device const device,
-                     utility::slice<char> const code) noexcept
+                     utility::slice<char const> const code) noexcept
 {
   auto info = VkShaderModuleCreateInfo();
   info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

@@ -39,7 +39,7 @@ public:
   };
 
   [[nodiscard]] allocation
-  map(utility::slice<std::byte> src);
+  map(utility::slice<std::byte const> src);
 
   void
   next_frame();
@@ -160,7 +160,8 @@ public:
   add_stage(types::unique_shader_module shader_module,
             VkShaderStageFlagBits stage) noexcept;
 
-  [[nodiscard]] constexpr utility::slice<VkPipelineShaderStageCreateInfo>
+  [[nodiscard]] constexpr utility::slice<
+      VkPipelineShaderStageCreateInfo const>
   stages() const noexcept;
 
 private:
@@ -170,7 +171,7 @@ private:
   std::vector<types::unique_shader_module> shader_modules_;
 };
 
-[[nodiscard]] constexpr utility::slice<VkPipelineShaderStageCreateInfo>
+[[nodiscard]] constexpr utility::slice<VkPipelineShaderStageCreateInfo const>
 shader_stage_builder::stages() const noexcept
 {
   return stages_;
