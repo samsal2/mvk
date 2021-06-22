@@ -4,6 +4,7 @@
 #include "detail/checkers.hpp"
 #include "detail/query.hpp"
 #include "types/types.hpp"
+#include "utility/misc.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
 
@@ -17,61 +18,63 @@ namespace mvk::detail
 void
 submit_draw_commands(types::queue graphics_queue,
                      types::command_buffer command_buffer,
-                     types::semaphore const & image_available,
-                     types::semaphore const & render_finished,
-                     types::fence & frame_in_flight_fence) noexcept;
+                     types::unique_semaphore const & image_available,
+                     types::unique_semaphore const & render_finished,
+                     types::unique_fence & frame_in_flight_fence) noexcept;
 
 void
-stage(types::device const & device, types::physical_device physical_device,
-      types::queue graphics_queue, types::command_pool const & command_pool,
-      types::buffer const & buffer, utility::slice<std::byte> src,
+stage(types::unique_device const & device,
+      types::physical_device physical_device, types::queue graphics_queue,
+      types::unique_command_pool const & command_pool,
+      types::unique_buffer const & buffer, utility::slice<std::byte> src,
       types::device_size offset);
 
 [[nodiscard]] std::span<std::byte>
-map_memory(types::device_memory const & memory,
+map_memory(types::unique_device_memory const & memory,
            types::device_size size = VK_WHOLE_SIZE,
            types::device_size offset = 0) noexcept;
 
 void
 transition_layout(types::queue graphics_queue,
-                  types::command_pool const & command_pool,
-                  types::image const & image, VkImageLayout old_layout,
+                  types::unique_command_pool const & command_pool,
+                  types::unique_image const & image, VkImageLayout old_layout,
                   VkImageLayout new_layout, uint32_t mipmap_levels) noexcept;
 
 void
-stage(types::device const & device, types::physical_device physical_device,
-      types::queue graphics_queue, types::command_pool const & command_pool,
-      types::image const & buffer, utility::slice<std::byte> src,
+stage(types::unique_device const & device,
+      types::physical_device physical_device, types::queue graphics_queue,
+      types::unique_command_pool const & command_pool,
+      types::unique_image const & buffer, utility::slice<std::byte> src,
       uint32_t width, uint32_t height) noexcept;
 
 void
 generate_mipmaps(types::queue graphics_queue,
-                 types::command_pool const & command_pool,
-                 types::image const & image, uint32_t width, uint32_t height,
-                 uint32_t mipmap_levels);
+                 types::unique_command_pool const & command_pool,
+                 types::unique_image const & image, uint32_t width,
+                 uint32_t height, uint32_t mipmap_levels);
 
 [[nodiscard]] std::tuple<std::vector<unsigned char>, uint32_t, uint32_t>
 load_texture(std::filesystem::path const & path);
 
-[[nodiscard]] std::pair<types::buffer, types::device_memory>
-create_staging_buffer_and_memory(types::device const & device,
+[[nodiscard]] std::pair<types::unique_buffer, types::unique_device_memory>
+create_staging_buffer_and_memory(types::unique_device const & device,
                                  types::physical_device physical_device,
                                  utility::slice<std::byte> src) noexcept;
 
-[[nodiscard]] types::command_buffers
-create_staging_command_buffer(types::command_pool const & pool) noexcept;
+[[nodiscard]] types::unique_command_buffer
+create_staging_command_buffer(
+    types::unique_command_pool const & pool) noexcept;
 
 void
-submit_staging_command_buffer(
-    types::queue graphics_queue,
-    types::command_buffers const & command_buffer) noexcept;
+submit_staging_command_buffer(types::queue graphics_queue,
+                              types::command_buffer command_buffer) noexcept;
 
 template <typename Checker>
 requires result_checker<Checker>
 void
 present_swapchain(types::queue present_queue,
-                  types::swapchain const & swapchain,
-                  types::semaphore const & render_finished,
+                  types::unique_swapchain const & swapchain,
+                  types::unique_semaphore const & render_finished,
                   uint32_t image_index, Checker && check) noexcept;
 
 template <typename Checker>
@@ -99,8 +102,8 @@ template <typename Checker>
 requires result_checker<Checker>
 void
 present_swapchain(types::queue const present_queue,
-                  types::swapchain const & swapchain,
-                  types::semaphore const & render_finished,
+                  types::unique_swapchain const & swapchain,
+                  types::unique_semaphore const & render_finished,
                   uint32_t const image_index, Checker && check) noexcept
 {
   auto const signal_semaphores = std::array{render_finished.get()};

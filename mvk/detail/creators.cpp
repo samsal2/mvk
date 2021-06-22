@@ -3,7 +3,7 @@
 namespace mvk::detail
 {
 
-[[nodiscard]] types::instance
+[[nodiscard]] types::unique_instance
 create_instance(types::window const & window,
                 std::string const & name) noexcept
 {
@@ -40,22 +40,26 @@ create_instance(types::window const & window,
     return info;
   }();
 
-  return types::instance(instance_create_info);
+  // TODO(samuel): missing creators
+  auto handle = VkInstance();
+  vkCreateInstance(&instance_create_info, nullptr, &handle);
+
+  return types::unique_instance(handle);
 }
 
-[[nodiscard]] types::shader_module
-create_shader_module(types::device const & device,
+[[nodiscard]] types::unique_shader_module
+create_shader_module(types::unique_device const & device,
                      utility::slice<char> const code) noexcept
 {
   auto info = VkShaderModuleCreateInfo();
   info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   info.codeSize = static_cast<uint32_t>(std::size(code));
   info.pCode = reinterpret_cast<uint32_t const *>(std::data(code));
-  return types::shader_module(types::get(device), info);
+  return types::unique_shader_module::create(types::get(device), info);
 }
 
-[[nodiscard]] types::command_pool
-create_command_pool(types::device const & device,
+[[nodiscard]] types::unique_command_pool
+create_command_pool(types::unique_device const & device,
                     types::queue_index const queue_index,
                     VkCommandPoolCreateFlags const flags) noexcept
 {
@@ -63,24 +67,24 @@ create_command_pool(types::device const & device,
   info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   info.queueFamilyIndex = queue_index;
   info.flags = flags;
-  return types::command_pool(types::get(device), info);
+  return types::unique_command_pool::create(types::get(device), info);
 }
 
-[[nodiscard]] types::command_buffers
-create_command_buffers(types::command_pool const & pool, uint32_t count,
-                       VkCommandBufferLevel level) noexcept
+[[nodiscard]] std::vector<types::unique_command_buffer>
+create_command_buffers(types::unique_command_pool const & pool,
+                       uint32_t count, VkCommandBufferLevel level) noexcept
 {
   auto info = VkCommandBufferAllocateInfo();
   info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   info.commandPool = types::get(pool);
   info.level = level;
   info.commandBufferCount = count;
-  return types::command_buffers(types::parent(pool), info);
+  return types::unique_command_buffer::allocate(types::parent(pool), info);
 }
 
-[[nodiscard]] types::device_memory
+[[nodiscard]] types::unique_device_memory
 create_device_memory(types::physical_device const physical_device,
-                     types::buffer const & buffer,
+                     types::unique_buffer const & buffer,
                      VkMemoryPropertyFlags const properties) noexcept
 {
   auto const requirements = query<vkGetBufferMemoryRequirements>::with(
@@ -96,15 +100,16 @@ create_device_memory(types::physical_device const physical_device,
   allocate_info.allocationSize = requirements.size;
   allocate_info.memoryTypeIndex = memory_type_index.value();
 
-  auto tmp = types::device_memory(types::parent(buffer), allocate_info);
+  auto tmp = types::unique_device_memory::create(types::parent(buffer),
+                                                 allocate_info);
   vkBindBufferMemory(types::parent(tmp), types::get(buffer), types::get(tmp),
                      0);
   return tmp;
 }
 
-[[nodiscard]] types::device_memory
+[[nodiscard]] types::unique_device_memory
 create_device_memory(types::physical_device const physical_device,
-                     types::image const & buffer,
+                     types::unique_image const & buffer,
                      VkMemoryPropertyFlags const properties) noexcept
 {
   auto const requirements = query<vkGetImageMemoryRequirements>::with(
@@ -120,7 +125,8 @@ create_device_memory(types::physical_device const physical_device,
   allocate_info.allocationSize = requirements.size;
   allocate_info.memoryTypeIndex = memory_type_index.value();
 
-  auto tmp = types::device_memory(types::parent(buffer), allocate_info);
+  auto tmp = types::unique_device_memory::create(types::parent(buffer),
+                                                 allocate_info);
   vkBindImageMemory(types::parent(tmp), types::get(buffer), types::get(tmp),
                     0);
   return tmp;

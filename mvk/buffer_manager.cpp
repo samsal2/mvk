@@ -14,11 +14,12 @@ get_usage(buffer_manager::type type) noexcept;
 
 } // namespace detail
 
-buffer_manager::buffer_manager(types::device * const device,
-                               types::physical_device const physical_device,
-                               types::command_pool * const command_pool,
-                               types::queue graphics_queue, type const type,
-                               types::device_size const default_size)
+buffer_manager::buffer_manager(
+    types::unique_device * const device,
+    types::physical_device const physical_device,
+    types::unique_command_pool * const command_pool,
+    types::queue graphics_queue, type const type,
+    types::device_size const default_size)
     : device_(device), physical_device_(physical_device),
       command_pool_(command_pool), graphics_queue_(graphics_queue),
       type_(type)
@@ -68,7 +69,8 @@ buffer_manager::create_new_buffers_and_memories(
 
   auto const create_buffer = [this, &vertex_buffer_create_info]
   {
-    return types::buffer(device_->get(), vertex_buffer_create_info);
+    return types::unique_buffer::create(device_->get(),
+                                        vertex_buffer_create_info);
   };
 
   std::generate(std::begin(buffers_), std::end(buffers_), create_buffer);
@@ -103,7 +105,8 @@ buffer_manager::create_new_buffers_and_memories(
   allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocate_info.allocationSize = std::size(buffers_) * aligned_size_;
   allocate_info.memoryTypeIndex = memory_type_index.value();
-  buffers_memory_ = types::device_memory(types::get(*device_), allocate_info);
+  buffers_memory_ = types::unique_device_memory::create(types::get(*device_),
+                                                        allocate_info);
 
   for (size_t i = 0; i < std::size(buffers_); ++i)
   {
@@ -167,7 +170,7 @@ get_usage(buffer_manager::type const type) noexcept
 } // namespace detail
 
 shader_stage_builder &
-shader_stage_builder::add_stage(types::shader_module shader_module,
+shader_stage_builder::add_stage(types::unique_shader_module shader_module,
                                 VkShaderStageFlagBits const stage) noexcept
 {
   auto info = VkPipelineShaderStageCreateInfo();

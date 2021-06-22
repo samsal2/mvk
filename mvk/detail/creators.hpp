@@ -8,31 +8,31 @@
 namespace mvk::detail
 {
 
-[[nodiscard]] types::instance
+[[nodiscard]] types::unique_instance
 create_instance(types::window const & window,
                 std::string const & name) noexcept;
 
-[[nodiscard]] types::command_pool
-create_command_pool(types::device const & device,
+[[nodiscard]] types::unique_command_pool
+create_command_pool(types::unique_device const & device,
                     types::queue_index queue_index,
                     VkCommandPoolCreateFlags flags = 0) noexcept;
 
-[[nodiscard]] types::command_buffers
-create_command_buffers(types::command_pool const & pool, uint32_t count,
-                       VkCommandBufferLevel level) noexcept;
+[[nodiscard]] std::vector<types::unique_command_buffer>
+create_command_buffers(types::unique_command_pool const & pool,
+                       uint32_t count, VkCommandBufferLevel level) noexcept;
 
-[[nodiscard]] types::device_memory
+[[nodiscard]] types::unique_device_memory
 create_device_memory(types::physical_device physical_device,
-                     types::buffer const & buffer,
+                     types::unique_buffer const & buffer,
                      VkMemoryPropertyFlags properties) noexcept;
 
-[[nodiscard]] types::device_memory
+[[nodiscard]] types::unique_device_memory
 create_device_memory(types::physical_device physical_device,
-                     types::image const & buffer,
+                     types::unique_image const & buffer,
                      VkMemoryPropertyFlags properties) noexcept;
 
-[[nodiscard]] types::shader_module
-create_shader_module(types::device const & device,
+[[nodiscard]] types::unique_shader_module
+create_shader_module(types::unique_device const & device,
                      utility::slice<char> code) noexcept;
 
 } // namespace mvk::detail

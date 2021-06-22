@@ -1,9 +1,9 @@
 #ifndef MVK_TYPES_TMP_HPP_INCLUDED
 #define MVK_TYPES_TMP_HPP_INCLUDED
 
-#include "types/detail/wrapper.hpp"
 #include "types/window.hpp"
 #include "validation/validation.hpp"
+#include "wrapper/wrapper.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -22,16 +22,30 @@ get(Wrapper const & wrapper) noexcept
 
 template <typename Wrapper>
 constexpr decltype(auto)
+get(Wrapper & wrapper) noexcept
+{
+  return wrapper.get();
+}
+
+template <typename Wrapper>
+constexpr decltype(auto)
 parent(Wrapper const & wrapper) noexcept
 {
-  return wrapper.parent();
+  return wrapper.deleter().parent();
 }
 
 template <typename Wrapper>
 constexpr decltype(auto)
 pool(Wrapper const & wrapper) noexcept
 {
-  return wrapper.pool();
+  return wrapper.deleter().parent();
+}
+
+template <typename Wrapper>
+constexpr wrapper::decay_wrapper_t<Wrapper>
+decay(Wrapper const & wrapper) noexcept
+{
+  return get(wrapper);
 }
 
 } // namespace mvk::types
@@ -39,121 +53,205 @@ pool(Wrapper const & wrapper) noexcept
 namespace mvk::types
 {
 
-using buffer =
-    detail::wrapper<detail::creator<vkCreateBuffer>, detail::handle<VkBuffer>,
-                    detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyBuffer>>;
+using unique_buffer = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateBuffer>,
+    wrapper::options::handle<VkBuffer>, wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyBuffer>>;
 
-using pipeline_layout = detail::wrapper<
-    detail::creator<vkCreatePipelineLayout>, detail::handle<VkPipelineLayout>,
-    detail::parent<VkDevice>, detail::deleter<vkDestroyPipelineLayout>>;
+using unique_pipeline_layout = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreatePipelineLayout>,
+    wrapper::options::handle<VkPipelineLayout>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyPipelineLayout>>;
 
-using command_buffers =
-    detail::wrapper<detail::creator<vkAllocateCommandBuffers>,
-                    detail::handle<std::vector<VkCommandBuffer>>,
-                    detail::parent<VkDevice>, detail::pool<VkCommandPool>,
-                    detail::deleter<vkFreeCommandBuffers>>;
+using unique_command_buffer = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_free>,
+    wrapper::options::creator<wrapper::creator::allocated>,
+    wrapper::options::creator_call<vkAllocateCommandBuffers>,
+    wrapper::options::handle<VkCommandBuffer>,
+    wrapper::options::parent<VkDevice>, wrapper::options::pool<VkCommandPool>,
+    wrapper::options::deleter_call<vkFreeCommandBuffers>>;
 
-using command_buffer = detail::wrapper<detail::handle<VkCommandBuffer>>;
+using command_buffer = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::handle_only>,
+    wrapper::options::handle<VkCommandBuffer>>;
 
-using command_pool =
-    detail::wrapper<detail::creator<vkCreateCommandPool>,
-                    detail::handle<VkCommandPool>, detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyCommandPool>>;
+using unique_command_pool = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateCommandPool>,
+    wrapper::options::handle<VkCommandPool>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyCommandPool>>;
 
-using debug_messenger =
-    detail::wrapper<detail::creator<validation::setup_debug_messenger>,
-                    detail::handle<VkDebugUtilsMessengerEXT>,
-                    detail::parent<VkInstance>,
-                    detail::deleter<validation::destroy_debug_messenger>>;
+using unique_debug_messenger = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<validation::setup_debug_messenger>,
+    wrapper::options::handle<VkDebugUtilsMessengerEXT>,
+    wrapper::options::parent<VkInstance>,
+    wrapper::options::deleter_call<validation::destroy_debug_messenger>>;
 
-using descriptor_pool = detail::wrapper<
-    detail::creator<vkCreateDescriptorPool>, detail::handle<VkDescriptorPool>,
-    detail::parent<VkDevice>, detail::deleter<vkDestroyDescriptorPool>>;
+using unique_descriptor_pool = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateDescriptorPool>,
+    wrapper::options::handle<VkDescriptorPool>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyDescriptorPool>>;
 
-using descriptor_set_layout =
-    detail::wrapper<detail::creator<vkCreateDescriptorSetLayout>,
-                    detail::handle<VkDescriptorSetLayout>,
-                    detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyDescriptorSetLayout>>;
+using unique_descriptor_set_layout = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateDescriptorSetLayout>,
+    wrapper::options::handle<VkDescriptorSetLayout>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyDescriptorSetLayout>>;
 
-using descriptor_sets =
-    detail::wrapper<detail::creator<vkAllocateDescriptorSets>,
-                    detail::handle<std::vector<VkDescriptorSet>>,
-                    detail::parent<VkDevice>, detail::pool<VkDescriptorPool>,
-                    detail::deleter<vkFreeDescriptorSets>>;
+using unique_descriptor_set = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_free>,
+    wrapper::options::creator<wrapper::creator::allocated>,
+    wrapper::options::creator_call<vkAllocateDescriptorSets>,
+    wrapper::options::handle<VkDescriptorSet>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::pool<VkDescriptorPool>,
+    wrapper::options::deleter_call<vkFreeDescriptorSets>>;
 
-using device_memory =
-    detail::wrapper<detail::creator<vkAllocateMemory>,
-                    detail::handle<VkDeviceMemory>, detail::parent<VkDevice>,
-                    detail::deleter<vkFreeMemory>>;
+using unique_device_memory = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkAllocateMemory>,
+    wrapper::options::handle<VkDeviceMemory>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkFreeMemory>>;
 
-using queue = detail::wrapper<detail::creator<vkGetDeviceQueue>,
-                              detail::handle<VkQueue>>;
+using queue = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::handle_only>,
+    wrapper::options::handle<VkQueue>>;
 
-using physical_device = detail::wrapper<detail::handle<VkPhysicalDevice>>;
+using physical_device = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::handle_only>,
+    wrapper::options::handle<VkPhysicalDevice>>;
 
-using device =
-    detail::wrapper<detail::creator<vkCreateDevice>, detail::handle<VkDevice>,
-                    detail::deleter<vkDestroyDevice>>;
+using unique_device = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::owner_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateDevice>,
+    wrapper::options::handle<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyDevice>>;
 
-using fence =
-    detail::wrapper<detail::creator<vkCreateFence>, detail::handle<VkFence>,
-                    detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyFence>>;
+using unique_fence = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateFence>,
+    wrapper::options::handle<VkFence>, wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyFence>>;
 
-using framebuffer =
-    detail::wrapper<detail::creator<vkCreateFramebuffer>,
-                    detail::handle<VkFramebuffer>, detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyFramebuffer>>;
+using unique_framebuffer = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateFramebuffer>,
+    wrapper::options::handle<VkFramebuffer>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyFramebuffer>>;
 
-using image_view =
-    detail::wrapper<detail::creator<vkCreateImageView>,
-                    detail::handle<VkImageView>, detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyImageView>>;
+using unique_image_view = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateImageView>,
+    wrapper::options::handle<VkImageView>, wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyImageView>>;
 
-using instance = detail::wrapper<detail::creator<vkCreateInstance>,
-                                 detail::handle<VkInstance>,
-                                 detail::deleter<vkDestroyInstance>>;
+using unique_instance = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::owner_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateInstance>,
+    wrapper::options::handle<VkInstance>,
+    wrapper::options::deleter_call<vkDestroyInstance>>;
 
-using pipeline =
-    detail::wrapper<detail::creator<vkCreateGraphicsPipelines>,
-                    detail::handle<VkPipeline>, detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyPipeline>>;
+using unique_pipeline = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateGraphicsPipelines>,
+    wrapper::options::handle<VkPipeline>, wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyPipeline>>;
 
-using render_pass =
-    detail::wrapper<detail::creator<vkCreateRenderPass>,
-                    detail::handle<VkRenderPass>, detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyRenderPass>>;
+using unique_render_pass = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateRenderPass>,
+    wrapper::options::handle<VkRenderPass>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyRenderPass>>;
 
-using sampler =
-    detail::wrapper<detail::creator<vkCreateSampler>,
-                    detail::handle<VkSampler>, detail::parent<VkDevice>,
-                    detail::deleter<vkDestroySampler>>;
+using unique_sampler = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateSampler>,
+    wrapper::options::handle<VkSampler>, wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroySampler>>;
 
-using semaphore =
-    detail::wrapper<detail::creator<vkCreateSemaphore>,
-                    detail::handle<VkSemaphore>, detail::parent<VkDevice>,
-                    detail::deleter<vkDestroySemaphore>>;
+using unique_semaphore = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateSemaphore>,
+    wrapper::options::handle<VkSemaphore>, wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroySemaphore>>;
 
-using surface =
-    detail::wrapper<detail::handle<VkSurfaceKHR>, detail::parent<VkInstance>,
-                    detail::deleter<vkDestroySurfaceKHR>>;
+using unique_surface = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::handle<VkSurfaceKHR>,
+    wrapper::options::parent<VkInstance>,
+    wrapper::options::deleter_call<vkDestroySurfaceKHR>>;
 
-using image =
-    detail::wrapper<detail::creator<vkCreateImage>, detail::handle<VkImage>,
-                    detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyImage>>;
+using unique_image = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateImage>,
+    wrapper::options::handle<VkImage>, wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyImage>>;
 
-using shader_module =
-    detail::wrapper<detail::creator<vkCreateShaderModule>,
-                    detail::handle<VkShaderModule>, detail::parent<VkDevice>,
-                    detail::deleter<vkDestroyShaderModule>>;
+using unique_shader_module = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateShaderModule>,
+    wrapper::options::handle<VkShaderModule>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroyShaderModule>>;
 
-using swapchain =
-    detail::wrapper<detail::creator<vkCreateSwapchainKHR>,
-                    detail::handle<VkSwapchainKHR>, detail::parent<VkDevice>,
-                    detail::deleter<vkDestroySwapchainKHR>>;
+using unique_swapchain = wrapper::any_wrapper<
+    wrapper::options::storage<wrapper::storage::unique>,
+    wrapper::options::deleter<wrapper::deleter::object_destroy>,
+    wrapper::options::creator<wrapper::creator::created>,
+    wrapper::options::creator_call<vkCreateSwapchainKHR>,
+    wrapper::options::handle<VkSwapchainKHR>,
+    wrapper::options::parent<VkDevice>,
+    wrapper::options::deleter_call<vkDestroySwapchainKHR>>;
 
 } // namespace mvk::types
 

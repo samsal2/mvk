@@ -82,24 +82,24 @@ private:
   types::window window_;
 
   // init_vulkan
-  types::instance instance_;
-  types::surface surface_;
-  types::debug_messenger debug_messenger_;
+  types::unique_instance instance_;
+  types::unique_surface surface_;
+  types::unique_debug_messenger debug_messenger_;
   types::physical_device physical_device_;
-  types::device device_;
-  types::command_pool command_pool_;
+  types::unique_device device_;
+  types::unique_command_pool command_pool_;
   uint32_t graphics_queue_index_ = {};
   uint32_t present_queue_index_ = {};
   types::queue graphics_queue_;
   types::queue present_queue_;
 
   // init_swapchain
-  types::swapchain swapchain_;
+  types::unique_swapchain swapchain_;
   std::vector<VkImage> swapchain_images_;
-  std::vector<types::image_view> swapchain_image_views_;
-  types::image depth_image_;
-  types::device_memory depth_image_memory_;
-  types::image_view depth_image_view_;
+  std::vector<types::unique_image_view> swapchain_image_views_;
+  types::unique_image depth_image_;
+  types::unique_device_memory depth_image_memory_;
+  types::unique_image_view depth_image_view_;
   VkExtent2D extent_ = {};
 
   // preload_stuff
@@ -107,50 +107,51 @@ private:
   std::vector<unsigned char> texture_;
   uint32_t width_ = {};
   uint32_t height_ = {};
-  types::image image_;
-  types::device_memory image_memory_;
-  types::image_view image_view_;
-  types::sampler sampler_;
+  types::unique_image image_;
+  types::unique_device_memory image_memory_;
+  types::unique_image_view image_view_;
+  types::unique_sampler sampler_;
   buffer_manager vertex_buffer_manager_;
   buffer_manager index_buffer_manager_;
   std::vector<vertex> vertices_;
   std::vector<uint32_t> indices_;
 
   // init_main_renderpass
-  types::render_pass render_pass_;
+  types::unique_render_pass render_pass_;
 
   // init_framebuffers
-  std::vector<types::framebuffer> framebuffers_;
+  std::vector<types::unique_framebuffer> framebuffers_;
 
   // init_commands
-  types::command_buffers command_buffers_;
+  std::vector<types::unique_command_buffer> command_buffers_;
 
   // init_descriptors
-  types::descriptor_set_layout descriptor_set_layout_;
-  types::descriptor_pool descriptor_pool_;
-  types::descriptor_sets descriptor_sets_;
-  std::vector<types::buffer> uniform_buffers_;
-  std::vector<types::device_memory> uniform_buffers_memory_;
+  types::unique_descriptor_set_layout descriptor_set_layout_;
+  types::unique_descriptor_pool descriptor_pool_;
+  std::vector<types::unique_descriptor_set> descriptor_sets_;
+  std::vector<types::unique_buffer> uniform_buffers_;
+  std::vector<types::unique_device_memory> uniform_buffers_memory_;
   std::vector<std::span<std::byte>> mapped_datas_;
 
   // init_pipeline
-  types::pipeline_layout pipeline_layout_;
-  types::pipeline pipeline_;
+  types::unique_pipeline_layout pipeline_layout_;
+  types::unique_pipeline pipeline_;
 
   // init_sync
   template <typename T>
   using frame_array = std::array<T, max_frames_in_flight>;
 
-  frame_array<types::semaphore> image_available_semaphores_;
-  frame_array<types::semaphore> render_finished_semaphores_;
-  frame_array<types::fence> frame_in_flight_fences_;
+  frame_array<types::unique_semaphore> image_available_semaphores_;
+  frame_array<types::unique_semaphore> render_finished_semaphores_;
+  frame_array<types::unique_fence> frame_in_flight_fences_;
 
   // vector of ptrs as optional references
-  std::vector<types::fence *> image_in_flight_fences_;
+  std::vector<types::unique_fence *> image_in_flight_fences_;
 
   // rendering fino
   size_t current_frame_index_ = 0;
   uint32_t current_image_index_ = 0;
+  types::command_buffer current_command_buffer_ = VK_NULL_HANDLE;
 
   std::chrono::time_point<std::chrono::high_resolution_clock> start_time =
       std::chrono::high_resolution_clock::now();

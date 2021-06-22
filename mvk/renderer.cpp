@@ -40,8 +40,12 @@ renderer::init_vulkan()
   glfwCreateWindowSurface(types::get(instance_), types::get(window_), nullptr,
                           &surface);
 
-  surface_ = types::surface(surface, types::get(instance_));
-  debug_messenger_ = types::debug_messenger(instance_.get());
+  surface_ = types::unique_surface(
+      surface,
+      typename types::unique_surface::deleter_type(types::get(instance_)));
+
+  debug_messenger_ =
+      types::unique_debug_messenger::create(types::get(instance_));
 
   auto const physical_device_result =
       detail::choose_physical_device(instance_, surface_, device_extensions);
@@ -114,9 +118,15 @@ renderer::init_vulkan()
     return info;
   }();
 
-  device_ = types::device(types::get(physical_device_), device_create_info);
-  graphics_queue_ = types::queue(types::get(device_), graphics_queue_index_);
-  present_queue_ = types::queue(types::get(device_), present_queue_index_);
+  device_ = types::unique_device::create(types::get(physical_device_),
+                                         device_create_info);
+
+  vkGetDeviceQueue(types::get(device_), graphics_queue_index_, 0,
+                   &types::get(graphics_queue_));
+
+  vkGetDeviceQueue(types::get(device_), present_queue_index_, 0,
+                   &types::get(present_queue_));
+
   command_pool_ = detail::create_command_pool(device_, graphics_queue_index_);
 }
 
@@ -175,7 +185,8 @@ renderer::init_swapchain()
     return info;
   }();
 
-  swapchain_ = types::swapchain(types::get(device_), swapchain_create_info);
+  swapchain_ = types::unique_swapchain::create(types::get(device_),
+                                               swapchain_create_info);
   swapchain_images_ = detail::query<vkGetSwapchainImagesKHR>::with(
       types::get(device_), types::get(swapchain_));
 
@@ -202,8 +213,8 @@ renderer::init_swapchain()
       return view_info;
     }();
 
-    swapchain_image_views_.emplace_back(types::get(device_),
-                                        image_view_create_info);
+    swapchain_image_views_.push_back(types::unique_image_view::create(
+        types::get(device_), image_view_create_info));
   };
 
   std::for_each(std::begin(swapchain_images_), std::end(swapchain_images_),
@@ -229,7 +240,8 @@ renderer::init_swapchain()
     return info;
   }();
 
-  depth_image_ = types::image(types::get(device_), depth_image_create_info);
+  depth_image_ = types::unique_image::create(types::get(device_),
+                                             depth_image_create_info);
 
   depth_image_memory_ = detail::create_device_memory(
       physical_device_, depth_image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -253,8 +265,8 @@ renderer::init_swapchain()
     return info;
   }();
 
-  depth_image_view_ =
-      types::image_view(types::get(device_), depth_image_view_create_info);
+  depth_image_view_ = types::unique_image_view::create(
+      types::get(device_), depth_image_view_create_info);
 
   detail::transition_layout(graphics_queue_, command_pool_, depth_image_,
                             VK_IMAGE_LAYOUT_UNDEFINED,
@@ -300,7 +312,8 @@ renderer::preload_stuff()
     return info;
   }();
 
-  image_ = types::image(types::get(device_), image_create_info);
+  image_ =
+      types::unique_image::create(types::get(device_), image_create_info);
 
   image_memory_ = detail::create_device_memory(
       physical_device_, image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -331,7 +344,8 @@ renderer::preload_stuff()
     return info;
   }();
 
-  image_view_ = types::image_view(device_.get(), image_view_create_info);
+  image_view_ =
+      types::unique_image_view::create(device_.get(), image_view_create_info);
 
   auto const sampler_create_info = [&image_create_info]
   {
@@ -356,7 +370,8 @@ renderer::preload_stuff()
     return info;
   }();
 
-  sampler_ = types::sampler(device_.get(), sampler_create_info);
+  sampler_ =
+      types::unique_sampler::create(device_.get(), sampler_create_info);
 
   vertex_buffer_manager_ =
       buffer_manager(&device_, physical_device_, &command_pool_,
@@ -460,7 +475,8 @@ renderer::init_main_renderpass()
     return info;
   }();
 
-  render_pass_ = types::render_pass(device_.get(), render_pass_create_info);
+  render_pass_ = types::unique_render_pass::create(device_.get(),
+                                                   render_pass_create_info);
 }
 
 void
@@ -490,7 +506,8 @@ renderer::init_framebuffers()
       return info;
     }();
 
-    framebuffers_.emplace_back(device_.get(), framebuffer_create_info);
+    framebuffers_.push_back(types::unique_framebuffer::create(
+        device_.get(), framebuffer_create_info));
   };
   std::for_each(std::begin(swapchain_image_views_),
                 std::end(swapchain_image_views_), add_framebuffer);
@@ -501,8 +518,14 @@ renderer::init_commands()
 {
   auto const count = static_cast<uint32_t>(std::size(framebuffers_));
 
-  command_buffers_ = detail::create_command_buffers(
-      command_pool_, count, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+  auto info = VkCommandBufferAllocateInfo();
+  info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  info.commandPool = types::get(command_pool_);
+  info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  info.commandBufferCount = count;
+
+  command_buffers_ =
+      types::unique_command_buffer::allocate(types::get(device_), info);
 }
 
 void
@@ -544,7 +567,7 @@ renderer::init_descriptors()
     return info;
   }();
 
-  descriptor_set_layout_ = types::descriptor_set_layout(
+  descriptor_set_layout_ = types::unique_descriptor_set_layout::create(
       device_.get(), descriptor_set_layout_create_info);
 
   auto const images_count =
@@ -584,8 +607,8 @@ renderer::init_descriptors()
     return info;
   }();
 
-  descriptor_pool_ =
-      types::descriptor_pool(device_.get(), descriptor_pool_create_info);
+  descriptor_pool_ = types::unique_descriptor_pool::create(
+      types::get(device_), descriptor_pool_create_info);
 
   auto const images_size = std::size(swapchain_images_);
 
@@ -606,8 +629,8 @@ renderer::init_descriptors()
     return info;
   }();
 
-  descriptor_sets_ =
-      types::descriptor_sets(device_.get(), descriptor_sets_allocate_info);
+  descriptor_sets_ = types::unique_descriptor_set::allocate(
+      device_.get(), descriptor_sets_allocate_info);
 
   uniform_buffers_.reserve(images_size);
   uniform_buffers_memory_.reserve(images_size);
@@ -624,7 +647,8 @@ renderer::init_descriptors()
       return info;
     }();
 
-    uniform_buffers_.emplace_back(device_.get(), uniform_buffer_create_info);
+    uniform_buffers_.push_back(types::unique_buffer::create(
+        device_.get(), uniform_buffer_create_info));
 
     auto uniform_buffer_memory = detail::create_device_memory(
         physical_device_, uniform_buffers_.back(),
@@ -660,7 +684,7 @@ renderer::init_descriptors()
     {
       auto write = VkWriteDescriptorSet();
       write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      write.dstSet = descriptor_sets_.get()[i];
+      write.dstSet = types::get(descriptor_sets_[i]);
       write.dstBinding = 0;
       write.dstArrayElement = 0;
       write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -675,7 +699,7 @@ renderer::init_descriptors()
     {
       auto image = VkWriteDescriptorSet();
       image.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      image.dstSet = descriptor_sets_.get()[i];
+      image.dstSet = types::get(descriptor_sets_[i]);
       image.dstBinding = 1;
       image.dstArrayElement = 0;
       image.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -709,8 +733,8 @@ renderer::init_pipeline()
     return info;
   }();
 
-  pipeline_layout_ =
-      types::pipeline_layout(device_.get(), pipeline_layout_create_info);
+  pipeline_layout_ = types::unique_pipeline_layout::create(
+      device_.get(), pipeline_layout_create_info);
 
   auto const vertex_input_binding_description = []
   {
@@ -912,7 +936,8 @@ renderer::init_pipeline()
     return info;
   }();
 
-  pipeline_ = types::pipeline(device_.get(), pipeline_create_info);
+  pipeline_ =
+      types::unique_pipeline::create(device_.get(), pipeline_create_info);
 }
 void
 renderer::init_sync()
@@ -935,11 +960,11 @@ renderer::init_sync()
   for (auto i = size_t(0); i < max_frames_in_flight; ++i)
   {
     image_available_semaphores_[i] =
-        types::semaphore(device_.get(), semaphore_create_info);
+        types::unique_semaphore::create(device_.get(), semaphore_create_info);
     render_finished_semaphores_[i] =
-        types::semaphore(device_.get(), semaphore_create_info);
+        types::unique_semaphore::create(device_.get(), semaphore_create_info);
     frame_in_flight_fences_[i] =
-        types::fence(device_.get(), fence_create_info);
+        types::unique_fence::create(device_.get(), fence_create_info);
   }
 
   image_in_flight_fences_.resize(std::size(swapchain_images_), nullptr);
@@ -968,8 +993,7 @@ renderer::recreate_after_framebuffer_change()
 
   uniform_buffers_.clear();
   uniform_buffers_memory_.clear();
-
-  descriptor_sets_.release();
+  descriptor_sets_.clear();
 
   init_descriptors();
   init_pipeline();
@@ -1032,7 +1056,7 @@ renderer::begin_draw()
     auto info = VkRenderPassBeginInfo();
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     info.renderPass = render_pass_.get();
-    info.framebuffer = framebuffers_[current_image_index_].get();
+    info.framebuffer = types::get(framebuffers_[current_image_index_]);
     info.renderArea.offset.x = 0;
     info.renderArea.offset.y = 0;
     info.renderArea.extent = extent_;
@@ -1053,9 +1077,12 @@ renderer::begin_draw()
   // Recreate command buffer
   init_commands();
 
-  vkBeginCommandBuffer(types::get(command_buffers_)[current_image_index_],
+  current_command_buffer_ =
+      types::decay(command_buffers_[current_image_index_]);
+
+  vkBeginCommandBuffer(types::get(current_command_buffer_),
                        &command_buffer_begin_info);
-  vkCmdBeginRenderPass(types::get(command_buffers_)[current_image_index_],
+  vkCmdBeginRenderPass(types::get(current_command_buffer_),
                        &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 }
 void
@@ -1073,26 +1100,26 @@ renderer::basic_draw(utility::slice<std::byte> const vertices,
 
   std::copy(std::begin(pvm_bytes), std::end(pvm_bytes), std::begin(data));
 
-  vkCmdBindPipeline(types::get(command_buffers_)[current_image_index_],
+  vkCmdBindPipeline(types::get(current_command_buffer_),
                     VK_PIPELINE_BIND_POINT_GRAPHICS, types::get(pipeline_));
-  vkCmdBindVertexBuffers(types::get(command_buffers_)[current_image_index_],
-                         0, 1, &types::get(vertex_buffer), &vertex_offset);
-  vkCmdBindIndexBuffer(types::get(command_buffers_)[current_image_index_],
+  vkCmdBindVertexBuffers(types::get(current_command_buffer_), 0, 1,
+                         &types::get(vertex_buffer), &vertex_offset);
+  vkCmdBindIndexBuffer(types::get(current_command_buffer_),
                        types::get(index_buffer), index_offset,
                        VK_INDEX_TYPE_UINT32);
   vkCmdBindDescriptorSets(
-      types::get(command_buffers_)[current_image_index_],
-      VK_PIPELINE_BIND_POINT_GRAPHICS, types::get(pipeline_layout_), 0, 1,
-      &types::get(descriptor_sets_)[current_image_index_], 0, nullptr);
-  vkCmdDrawIndexed(types::get(command_buffers_)[current_image_index_],
+      types::get(current_command_buffer_), VK_PIPELINE_BIND_POINT_GRAPHICS,
+      types::get(pipeline_layout_), 0, 1,
+      &types::get(descriptor_sets_[current_image_index_]), 0, nullptr);
+  vkCmdDrawIndexed(types::get(current_command_buffer_),
                    static_cast<uint32_t>(std::size(indices_)), 1, 0, 0, 0);
 }
 
 void
 renderer::end_draw()
 {
-  vkCmdEndRenderPass(types::get(command_buffers_)[current_image_index_]);
-  vkEndCommandBuffer(types::get(command_buffers_)[current_image_index_]);
+  vkCmdEndRenderPass(types::get(current_command_buffer_));
+  vkEndCommandBuffer(types::get(current_command_buffer_));
   // Wait for the image in flight to end if it is
   auto & image_in_flight_fence =
       image_in_flight_fences_[current_image_index_];
@@ -1113,7 +1140,7 @@ renderer::end_draw()
       render_finished_semaphores_[current_frame_index_];
 
   detail::submit_draw_commands(
-      graphics_queue_, types::get(command_buffers_)[current_image_index_],
+      graphics_queue_, types::get(current_command_buffer_),
       image_available_semaphore, render_finished_semaphore,
       *image_in_flight_fence);
 

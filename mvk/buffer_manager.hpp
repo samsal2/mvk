@@ -28,15 +28,15 @@ public:
 
   constexpr buffer_manager() noexcept = default;
 
-  buffer_manager(types::device * device,
+  buffer_manager(types::unique_device * device,
                  types::physical_device physical_device,
-                 types::command_pool * command_pool,
+                 types::unique_command_pool * command_pool,
                  types::queue graphics_queue, type type,
                  types::device_size default_size = default_buffer_size);
 
   struct allocation
   {
-    types::buffer & buffer;
+    types::unique_buffer & buffer;
     types::device_size offset;
   };
 
@@ -56,22 +56,22 @@ protected:
   void
   clear_garbage();
 
-  [[nodiscard]] constexpr types::buffer &
+  [[nodiscard]] constexpr types::unique_buffer &
   current_buffer() noexcept;
 
-  [[nodiscard]] constexpr types::buffer const &
+  [[nodiscard]] constexpr types::unique_buffer const &
   current_buffer() const noexcept;
 
-  [[nodiscard]] constexpr std::vector<types::buffer> &
+  [[nodiscard]] constexpr std::vector<types::unique_buffer> &
   current_garbage_buffers() noexcept;
 
-  [[nodiscard]] constexpr std::vector<types::buffer> const &
+  [[nodiscard]] constexpr std::vector<types::unique_buffer> const &
   current_garbage_buffers() const noexcept;
 
-  [[nodiscard]] constexpr std::vector<types::device_memory> &
+  [[nodiscard]] constexpr std::vector<types::unique_device_memory> &
   current_garbage_memories() noexcept;
 
-  [[nodiscard]] constexpr std::vector<types::device_memory> const &
+  [[nodiscard]] constexpr std::vector<types::unique_device_memory> const &
   current_garbage_memories() const noexcept;
 
   [[nodiscard]] constexpr types::device_size
@@ -81,21 +81,22 @@ protected:
   update_current_offset(types::device_size size) noexcept;
 
 private:
-  types::device * device_ = nullptr;
+  types::unique_device * device_ = nullptr;
   types::physical_device physical_device_ = nullptr;
-  types::command_pool * command_pool_ = nullptr;
+  types::unique_command_pool * command_pool_ = nullptr;
   types::queue graphics_queue_ = {};
 
-  std::array<types::buffer, dynamic_buffer_count> buffers_ = {};
+  std::array<types::unique_buffer, dynamic_buffer_count> buffers_ = {};
   std::array<types::device_size, dynamic_buffer_count> offsets_ = {};
-  types::device_memory buffers_memory_ = {};
+  types::unique_device_memory buffers_memory_ = {};
 
   template <typename T>
   using garbage_collection_array =
       std::array<std::vector<T>, garbage_buffer_count>;
 
-  garbage_collection_array<types::buffer> garbage_buffers_ = {};
-  garbage_collection_array<types::device_memory> garbage_memories_ = {};
+  garbage_collection_array<types::unique_buffer> garbage_buffers_ = {};
+  garbage_collection_array<types::unique_device_memory> garbage_memories_ =
+      {};
 
   size_t current_buffer_index_ = 0;
   size_t current_garbage_index_ = 0;
@@ -104,37 +105,37 @@ private:
   type type_ = type::none;
 };
 
-[[nodiscard]] constexpr types::buffer &
+[[nodiscard]] constexpr types::unique_buffer &
 buffer_manager::current_buffer() noexcept
 {
   return buffers_[current_buffer_index_];
 }
 
-[[nodiscard]] constexpr types::buffer const &
+[[nodiscard]] constexpr types::unique_buffer const &
 buffer_manager::current_buffer() const noexcept
 {
   return buffers_[current_buffer_index_];
 }
 
-[[nodiscard]] constexpr std::vector<types::buffer> &
+[[nodiscard]] constexpr std::vector<types::unique_buffer> &
 buffer_manager::current_garbage_buffers() noexcept
 {
   return garbage_buffers_[current_garbage_index_];
 }
 
-[[nodiscard]] constexpr std::vector<types::buffer> const &
+[[nodiscard]] constexpr std::vector<types::unique_buffer> const &
 buffer_manager::current_garbage_buffers() const noexcept
 {
   return garbage_buffers_[current_garbage_index_];
 }
 
-[[nodiscard]] constexpr std::vector<types::device_memory> &
+[[nodiscard]] constexpr std::vector<types::unique_device_memory> &
 buffer_manager::current_garbage_memories() noexcept
 {
   return garbage_memories_[current_garbage_index_];
 }
 
-[[nodiscard]] constexpr std::vector<types::device_memory> const &
+[[nodiscard]] constexpr std::vector<types::unique_device_memory> const &
 buffer_manager::current_garbage_memories() const noexcept
 {
   return garbage_memories_[current_garbage_index_];
@@ -158,7 +159,7 @@ class shader_stage_builder
 {
 public:
   shader_stage_builder &
-  add_stage(types::shader_module shader_module,
+  add_stage(types::unique_shader_module shader_module,
             VkShaderStageFlagBits stage) noexcept;
 
   [[nodiscard]] constexpr utility::slice<VkPipelineShaderStageCreateInfo>
@@ -168,7 +169,7 @@ private:
   std::vector<VkPipelineShaderStageCreateInfo> stages_;
   // Just to keep the shader modules alive for the duration of the stage
   // builder
-  std::vector<types::shader_module> shader_modules_;
+  std::vector<types::unique_shader_module> shader_modules_;
 };
 
 [[nodiscard]] constexpr utility::slice<VkPipelineShaderStageCreateInfo>

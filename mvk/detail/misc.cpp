@@ -10,9 +10,9 @@
 #pragma clang diagnostic pop
 
 #include <array>
+#include <cmath>
 #include <optional>
 #include <utility>
-#include <cmath>
 
 namespace mvk::detail
 {
@@ -20,9 +20,9 @@ namespace mvk::detail
 void
 submit_draw_commands(types::queue const graphics_queue,
                      types::command_buffer const command_buffer,
-                     types::semaphore const & image_available,
-                     types::semaphore const & render_finished,
-                     types::fence & frame_in_flight_fence) noexcept
+                     types::unique_semaphore const & image_available,
+                     types::unique_semaphore const & render_finished,
+                     types::unique_fence & frame_in_flight_fence) noexcept
 {
   auto const wait_semaphores = std::array{image_available.get()};
   auto const signal_semaphores = std::array{render_finished.get()};
@@ -59,11 +59,12 @@ submit_draw_commands(types::queue const graphics_queue,
 }
 
 void
-stage(types::device const & device,
+stage(types::unique_device const & device,
       types::physical_device const physical_device,
       types::queue const graphics_queue,
-      types::command_pool const & command_pool, types::buffer const & buffer,
-      utility::slice<std::byte> src, types::device_size offset)
+      types::unique_command_pool const & command_pool,
+      types::unique_buffer const & buffer, utility::slice<std::byte> src,
+      types::device_size offset)
 {
   auto const begin_info = []
   {
@@ -94,17 +95,18 @@ stage(types::device const & device,
   auto const command_buffer =
       detail::create_staging_command_buffer(command_pool);
 
-  vkBeginCommandBuffer(types::get(command_buffer)[0], &begin_info);
-  vkCmdCopyBuffer(types::get(command_buffer)[0], types::get(staging_buffer),
+  vkBeginCommandBuffer(types::get(command_buffer), &begin_info);
+  vkCmdCopyBuffer(types::get(command_buffer), types::get(staging_buffer),
                   types::get(buffer), 1, &copy_region);
-  vkEndCommandBuffer(types::get(command_buffer)[0]);
+  vkEndCommandBuffer(types::get(command_buffer));
 
-  detail::submit_staging_command_buffer(graphics_queue, command_buffer);
+  detail::submit_staging_command_buffer(graphics_queue,
+                                        types::get(command_buffer));
 }
 
 std::span<std::byte>
-map_memory(types::device_memory const & memory, types::device_size size,
-           types::device_size offset) noexcept
+map_memory(types::unique_device_memory const & memory,
+           types::device_size size, types::device_size offset) noexcept
 {
   void * data = nullptr;
   vkMapMemory(types::parent(memory), types::get(memory), offset, size, 0,
@@ -114,8 +116,9 @@ map_memory(types::device_memory const & memory, types::device_size size,
 
 void
 transition_layout(types::queue graphics_queue,
-                  types::command_pool const & command_pool,
-                  types::image const & image, VkImageLayout const old_layout,
+                  types::unique_command_pool const & command_pool,
+                  types::unique_image const & image,
+                  VkImageLayout const old_layout,
                   VkImageLayout const new_layout,
                   uint32_t const mipmap_levels) noexcept
 {
@@ -194,19 +197,21 @@ transition_layout(types::queue graphics_queue,
   auto const command_buffer =
       detail::create_staging_command_buffer(command_pool);
 
-  vkBeginCommandBuffer(types::get(command_buffer)[0], &begin_info);
-  vkCmdPipelineBarrier(types::get(command_buffer)[0], source_stage,
+  vkBeginCommandBuffer(types::get(command_buffer), &begin_info);
+  vkCmdPipelineBarrier(types::get(command_buffer), source_stage,
                        destination_stage, 0, 0, nullptr, 0, nullptr, 1,
                        &image_memory_barrier);
-  vkEndCommandBuffer(types::get(command_buffer)[0]);
+  vkEndCommandBuffer(types::get(command_buffer));
 
-  detail::submit_staging_command_buffer(graphics_queue, command_buffer);
+  detail::submit_staging_command_buffer(graphics_queue,
+                                        types::get(command_buffer));
 }
 
 void
-stage(types::device const & device, types::physical_device physical_device,
-      types::queue graphics_queue, types::command_pool const & command_pool,
-      types::image const & buffer, utility::slice<std::byte> src,
+stage(types::unique_device const & device,
+      types::physical_device physical_device, types::queue graphics_queue,
+      types::unique_command_pool const & command_pool,
+      types::unique_image const & buffer, utility::slice<std::byte> src,
       uint32_t width, uint32_t height) noexcept
 {
   auto const [staging_buffer, staging_buffer_memory] =
@@ -243,21 +248,22 @@ stage(types::device const & device, types::physical_device physical_device,
   auto const command_buffer =
       detail::create_staging_command_buffer(command_pool);
 
-  vkBeginCommandBuffer(types::get(command_buffer)[0], &begin_info);
-  vkCmdCopyBufferToImage(types::get(command_buffer)[0],
+  vkBeginCommandBuffer(types::get(command_buffer), &begin_info);
+  vkCmdCopyBufferToImage(types::get(command_buffer),
                          types::get(staging_buffer), types::get(buffer),
                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                          &copy_region);
-  vkEndCommandBuffer(types::get(command_buffer)[0]);
+  vkEndCommandBuffer(types::get(command_buffer));
 
-  detail::submit_staging_command_buffer(graphics_queue, command_buffer);
+  detail::submit_staging_command_buffer(graphics_queue,
+                                        types::get(command_buffer));
 }
 
 void
 generate_mipmaps(types::queue graphics_queue,
-                 types::command_pool const & command_pool,
-                 types::image const & image, uint32_t width, uint32_t height,
-                 uint32_t mipmap_levels)
+                 types::unique_command_pool const & command_pool,
+                 types::unique_image const & image, uint32_t width,
+                 uint32_t height, uint32_t mipmap_levels)
 {
   if (mipmap_levels == 1 || mipmap_levels == 0)
   {
@@ -274,7 +280,7 @@ generate_mipmaps(types::queue graphics_queue,
   }();
 
   auto command_buffer = detail::create_staging_command_buffer(command_pool);
-  vkBeginCommandBuffer(types::get(command_buffer)[0], &begin_info);
+  vkBeginCommandBuffer(types::get(command_buffer), &begin_info);
 
   auto barrier = VkImageMemoryBarrier();
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -308,7 +314,7 @@ generate_mipmaps(types::queue graphics_queue,
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-    vkCmdPipelineBarrier(types::get(command_buffer)[0],
+    vkCmdPipelineBarrier(types::get(command_buffer),
                          VK_PIPELINE_STAGE_TRANSFER_BIT,
                          VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0,
                          nullptr, 1, &barrier);
@@ -335,7 +341,7 @@ generate_mipmaps(types::queue graphics_queue,
     blit.dstSubresource.baseArrayLayer = 0;
     blit.dstSubresource.layerCount = 1;
 
-    vkCmdBlitImage(types::get(command_buffer)[0], types::get(image),
+    vkCmdBlitImage(types::get(command_buffer), types::get(image),
                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, types::get(image),
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit,
                    VK_FILTER_LINEAR);
@@ -345,7 +351,7 @@ generate_mipmaps(types::queue graphics_queue,
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
     barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-    vkCmdPipelineBarrier(types::get(command_buffer)[0],
+    vkCmdPipelineBarrier(types::get(command_buffer),
                          VK_PIPELINE_STAGE_TRANSFER_BIT,
                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr,
                          0, nullptr, 1, &barrier);
@@ -357,13 +363,14 @@ generate_mipmaps(types::queue graphics_queue,
   barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
   barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-  vkCmdPipelineBarrier(types::get(command_buffer)[0],
+  vkCmdPipelineBarrier(types::get(command_buffer),
                        VK_PIPELINE_STAGE_TRANSFER_BIT,
                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr,
                        0, nullptr, 1, &barrier);
-  vkEndCommandBuffer(types::get(command_buffer)[0]);
+  vkEndCommandBuffer(types::get(command_buffer));
 
-  detail::submit_staging_command_buffer(graphics_queue, command_buffer);
+  detail::submit_staging_command_buffer(graphics_queue,
+                                        types::get(command_buffer));
 }
 
 [[nodiscard]] std::tuple<std::vector<unsigned char>, uint32_t, uint32_t>
@@ -390,8 +397,8 @@ load_texture(std::filesystem::path const & path)
   return {std::move(buffer), width, height};
 }
 
-[[nodiscard]] std::pair<types::buffer, types::device_memory>
-create_staging_buffer_and_memory(types::device const & device,
+[[nodiscard]] std::pair<types::unique_buffer, types::unique_device_memory>
+create_staging_buffer_and_memory(types::unique_device const & device,
                                  types::physical_device const physical_device,
                                  utility::slice<std::byte> const src) noexcept
 {
@@ -404,7 +411,7 @@ create_staging_buffer_and_memory(types::device const & device,
     info.size = size;
     info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    return types::buffer(types::get(device), info);
+    return types::unique_buffer::create(types::get(device), info);
   }();
 
   auto buffer_memory = [&device, physical_device, &staging_buffer]
@@ -424,7 +431,7 @@ create_staging_buffer_and_memory(types::device const & device,
     info.allocationSize = requirements.size;
     info.memoryTypeIndex = memory_type_index.value();
 
-    return types::device_memory(types::get(device), info);
+    return types::unique_device_memory::create(types::get(device), info);
   }();
 
   vkBindBufferMemory(types::parent(staging_buffer),
@@ -438,25 +445,24 @@ create_staging_buffer_and_memory(types::device const & device,
   return {std::move(staging_buffer), std::move(buffer_memory)};
 }
 
-[[nodiscard]] types::command_buffers
-create_staging_command_buffer(types::command_pool const & pool) noexcept
+[[nodiscard]] types::unique_command_buffer
+create_staging_command_buffer(
+    types::unique_command_pool const & pool) noexcept
 {
-  return create_command_buffers(pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+  return std::move(
+      create_command_buffers(pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY)[0]);
 }
 
 void
 submit_staging_command_buffer(
     types::queue const graphics_queue,
-    types::command_buffers const & command_buffer) noexcept
+    types::command_buffer const command_buffer) noexcept
 {
-
-  auto const command_buffer_count =
-      static_cast<uint32_t>(std::size(types::get(command_buffer)));
 
   auto submit_info = VkSubmitInfo();
   submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submit_info.commandBufferCount = command_buffer_count;
-  submit_info.pCommandBuffers = std::data(types::get(command_buffer));
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &types::get(command_buffer);
 
   vkQueueSubmit(types::get(graphics_queue), 1, &submit_info, nullptr);
   vkQueueWaitIdle(types::get(graphics_queue));

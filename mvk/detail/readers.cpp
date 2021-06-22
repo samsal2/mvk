@@ -1,5 +1,7 @@
 #include "detail/readers.hpp"
 
+#include "utility/misc.hpp"
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
 #define TINYOBJLOADER_IMPLEMENTATION
