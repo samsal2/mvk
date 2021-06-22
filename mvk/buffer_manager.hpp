@@ -27,9 +27,8 @@ public:
 
   constexpr buffer_manager() noexcept = default;
 
-  buffer_manager(types::unique_device * device,
-                 types::physical_device physical_device,
-                 types::unique_command_pool * command_pool,
+  buffer_manager(types::device device, types::physical_device physical_device,
+                 types::command_pool command_pool,
                  types::queue graphics_queue, type type,
                  types::device_size default_size = default_buffer_size);
 
@@ -80,9 +79,9 @@ protected:
   update_current_offset(types::device_size size) noexcept;
 
 private:
-  types::unique_device * device_ = nullptr;
-  types::physical_device physical_device_ = nullptr;
-  types::unique_command_pool * command_pool_ = nullptr;
+  types::device device_ = VK_NULL_HANDLE;
+  types::physical_device physical_device_ = VK_NULL_HANDLE;
+  types::command_pool command_pool_ = VK_NULL_HANDLE;
   types::queue graphics_queue_ = {};
 
   std::array<types::unique_buffer, dynamic_buffer_count> buffers_ = {};

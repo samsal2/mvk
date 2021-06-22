@@ -12,12 +12,12 @@ get_usage(buffer_manager::type type) noexcept;
 
 } // namespace detail
 
-buffer_manager::buffer_manager(
-    types::unique_device * const device,
-    types::physical_device const physical_device,
-    types::unique_command_pool * const command_pool,
-    types::queue graphics_queue, type const type,
-    types::device_size const default_size)
+buffer_manager::buffer_manager(types::device const device,
+                               types::physical_device const physical_device,
+                               types::command_pool const command_pool,
+                               types::queue const graphics_queue,
+                               type const type,
+                               types::device_size const default_size)
     : device_(device), physical_device_(physical_device),
       command_pool_(command_pool), graphics_queue_(graphics_queue),
       type_(type)
@@ -46,8 +46,8 @@ buffer_manager::map(utility::slice<std::byte> const src)
   auto const offset = current_offset();
   // TODO(samuel): stage creates a new staging buffer and memory on every
   // call
-  detail::stage(*device_, physical_device_, graphics_queue_, *command_pool_,
-                current_buffer(), src, offset);
+  detail::stage(device_, physical_device_, graphics_queue_, command_pool_,
+                types::decay(current_buffer()), src, offset);
   return {current_buffer(), update_current_offset(size)};
 }
 
@@ -67,7 +67,7 @@ buffer_manager::create_new_buffers_and_memories(
 
   auto const create_buffer = [this, &vertex_buffer_create_info]
   {
-    return types::unique_buffer::create(device_->get(),
+    return types::unique_buffer::create(types::get(device_),
                                         vertex_buffer_create_info);
   };
 
@@ -103,8 +103,8 @@ buffer_manager::create_new_buffers_and_memories(
   allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocate_info.allocationSize = std::size(buffers_) * aligned_size_;
   allocate_info.memoryTypeIndex = memory_type_index.value();
-  buffers_memory_ = types::unique_device_memory::create(types::get(*device_),
-                                                        allocate_info);
+  buffers_memory_ =
+      types::unique_device_memory::create(types::get(device_), allocate_info);
 
   for (size_t i = 0; i < std::size(buffers_); ++i)
   {

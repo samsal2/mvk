@@ -54,6 +54,12 @@ public:
     return handle_;
   }
 
+  constexpr bool
+  operator!=(handle_type const handle) const noexcept
+  {
+    return handle_ != handle;
+  }
+
 private:
   handle_type handle_;
 };

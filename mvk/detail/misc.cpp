@@ -17,11 +17,12 @@
 namespace mvk::detail
 {
 void
-submit_draw_commands(types::queue const graphics_queue,
+submit_draw_commands(types::device const device,
+                     types::queue const graphics_queue,
                      types::command_buffer const command_buffer,
-                     types::unique_semaphore const & image_available,
-                     types::unique_semaphore const & render_finished,
-                     types::unique_fence & frame_in_flight_fence) noexcept
+                     types::semaphore const image_available,
+                     types::semaphore const render_finished,
+                     types::fence const frame_in_flight_fence) noexcept
 {
   auto const wait_semaphores = std::array{image_available.get()};
   auto const signal_semaphores = std::array{render_finished.get()};
@@ -51,19 +52,17 @@ submit_draw_commands(types::queue const graphics_queue,
     return info;
   }();
 
-  vkResetFences(types::parent(frame_in_flight_fence), 1,
-                &types::get(frame_in_flight_fence));
+  vkResetFences(types::get(device), 1, &types::get(frame_in_flight_fence));
   vkQueueSubmit(types::get(graphics_queue), 1, &submit_info,
                 types::get(frame_in_flight_fence));
 }
 
 void
-stage(types::unique_device const & device,
+stage(types::device const device,
       types::physical_device const physical_device,
       types::queue const graphics_queue,
-      types::unique_command_pool const & command_pool,
-      types::unique_buffer const & buffer, utility::slice<std::byte> src,
-      types::device_size offset)
+      types::command_pool const command_pool, types::buffer const buffer,
+      utility::slice<std::byte> src, types::device_size offset)
 {
   auto const begin_info = []
   {
@@ -92,7 +91,7 @@ stage(types::unique_device const & device,
   }();
 
   auto const command_buffer =
-      detail::create_staging_command_buffer(command_pool);
+      detail::create_staging_command_buffer(device, command_pool);
 
   vkBeginCommandBuffer(types::get(command_buffer), &begin_info);
   vkCmdCopyBuffer(types::get(command_buffer), types::get(staging_buffer),
@@ -114,10 +113,10 @@ map_memory(types::unique_device_memory const & memory,
 }
 
 void
-transition_layout(types::queue graphics_queue,
-                  types::unique_command_pool const & command_pool,
-                  types::unique_image const & image,
-                  VkImageLayout const old_layout,
+transition_layout(types::device const device,
+                  types::queue const graphics_queue,
+                  types::command_pool const command_pool,
+                  types::image const image, VkImageLayout const old_layout,
                   VkImageLayout const new_layout,
                   uint32_t const mipmap_levels) noexcept
 {
@@ -194,7 +193,7 @@ transition_layout(types::queue graphics_queue,
   }();
 
   auto const command_buffer =
-      detail::create_staging_command_buffer(command_pool);
+      detail::create_staging_command_buffer(device, command_pool);
 
   vkBeginCommandBuffer(types::get(command_buffer), &begin_info);
   vkCmdPipelineBarrier(types::get(command_buffer), source_stage,
@@ -207,10 +206,10 @@ transition_layout(types::queue graphics_queue,
 }
 
 void
-stage(types::unique_device const & device,
-      types::physical_device physical_device, types::queue graphics_queue,
-      types::unique_command_pool const & command_pool,
-      types::unique_image const & buffer, utility::slice<std::byte> src,
+stage(types::device const device,
+      types::physical_device const physical_device,
+      types::queue const graphics_queue, types::command_pool command_pool,
+      types::image const buffer, utility::slice<std::byte> src,
       uint32_t width, uint32_t height) noexcept
 {
   auto const [staging_buffer, staging_buffer_memory] =
@@ -245,7 +244,7 @@ stage(types::unique_device const & device,
   }();
 
   auto const command_buffer =
-      detail::create_staging_command_buffer(command_pool);
+      detail::create_staging_command_buffer(device, command_pool);
 
   vkBeginCommandBuffer(types::get(command_buffer), &begin_info);
   vkCmdCopyBufferToImage(types::get(command_buffer),
@@ -259,10 +258,11 @@ stage(types::unique_device const & device,
 }
 
 void
-generate_mipmaps(types::queue graphics_queue,
-                 types::unique_command_pool const & command_pool,
-                 types::unique_image const & image, uint32_t width,
-                 uint32_t height, uint32_t mipmap_levels)
+generate_mipmaps(types::device const device,
+                 types::queue const graphics_queue,
+                 types::command_pool const command_pool,
+                 types::image const image, uint32_t width, uint32_t height,
+                 uint32_t mipmap_levels)
 {
   if (mipmap_levels == 1 || mipmap_levels == 0)
   {
@@ -278,7 +278,8 @@ generate_mipmaps(types::queue graphics_queue,
     return info;
   }();
 
-  auto command_buffer = detail::create_staging_command_buffer(command_pool);
+  auto command_buffer =
+      detail::create_staging_command_buffer(device, command_pool);
   vkBeginCommandBuffer(types::get(command_buffer), &begin_info);
 
   auto barrier = VkImageMemoryBarrier();
@@ -396,7 +397,7 @@ load_texture(std::filesystem::path const & path)
 }
 
 [[nodiscard]] std::pair<types::unique_buffer, types::unique_device_memory>
-create_staging_buffer_and_memory(types::unique_device const & device,
+create_staging_buffer_and_memory(types::device const device,
                                  types::physical_device const physical_device,
                                  utility::slice<std::byte> const src) noexcept
 {
@@ -444,11 +445,11 @@ create_staging_buffer_and_memory(types::unique_device const & device,
 }
 
 [[nodiscard]] types::unique_command_buffer
-create_staging_command_buffer(
-    types::unique_command_pool const & pool) noexcept
+create_staging_command_buffer(types::device const device,
+                              types::command_pool const pool) noexcept
 {
-  return std::move(
-      create_command_buffers(pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY)[0]);
+  return std::move(create_command_buffers(
+      device, pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY)[0]);
 }
 
 void

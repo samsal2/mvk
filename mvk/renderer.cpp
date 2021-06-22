@@ -126,7 +126,8 @@ renderer::init_vulkan()
   vkGetDeviceQueue(types::get(device_), present_queue_index_, 0,
                    &types::get(present_queue_));
 
-  command_pool_ = detail::create_command_pool(device_, graphics_queue_index_);
+  command_pool_ = detail::create_command_pool(types::decay(device_),
+                                              graphics_queue_index_);
 }
 
 void
@@ -243,7 +244,8 @@ renderer::init_swapchain()
                                              depth_image_create_info);
 
   depth_image_memory_ = detail::create_device_memory(
-      physical_device_, depth_image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      types::decay(device_), physical_device_, types::decay(depth_image_),
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
   auto const depth_image_view_create_info = [this]
   {
@@ -267,20 +269,23 @@ renderer::init_swapchain()
   depth_image_view_ = types::unique_image_view::create(
       types::get(device_), depth_image_view_create_info);
 
-  detail::transition_layout(graphics_queue_, command_pool_, depth_image_,
-                            VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                            depth_image_create_info.mipLevels);
+  detail::transition_layout(
+      types::decay(device_), graphics_queue_, types::decay(command_pool_),
+      types::decay(depth_image_), VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+      depth_image_create_info.mipLevels);
 }
 
 void
 renderer::preload_stuff()
 {
   auto const vertex_code = detail::read_file("../../shaders/vert.spv");
-  auto vertex_shader = detail::create_shader_module(device_, vertex_code);
+  auto vertex_shader =
+      detail::create_shader_module(types::decay(device_), vertex_code);
 
   auto const fragment_code = detail::read_file("../../shaders/frag.spv");
-  auto fragment_shader = detail::create_shader_module(device_, fragment_code);
+  auto fragment_shader =
+      detail::create_shader_module(types::decay(device_), fragment_code);
 
   builder_.add_stage(std::move(vertex_shader), VK_SHADER_STAGE_VERTEX_BIT)
       .add_stage(std::move(fragment_shader), VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -315,14 +320,18 @@ renderer::preload_stuff()
       types::unique_image::create(types::get(device_), image_create_info);
 
   image_memory_ = detail::create_device_memory(
-      physical_device_, image_, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      types::decay(device_), physical_device_, types::decay(image_),
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   detail::transition_layout(
-      graphics_queue_, command_pool_, image_, VK_IMAGE_LAYOUT_UNDEFINED,
+      types::decay(device_), graphics_queue_, types::decay(command_pool_),
+      types::decay(image_), VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image_create_info.mipLevels);
-  detail::stage(device_, physical_device_, graphics_queue_, command_pool_,
-                image_, utility::as_bytes(texture_), width_, height_);
-  detail::generate_mipmaps(graphics_queue_, command_pool_, image_, width_,
-                           height_, image_create_info.mipLevels);
+  detail::stage(types::decay(device_), physical_device_, graphics_queue_,
+                types::decay(command_pool_), types::decay(image_),
+                utility::as_bytes(texture_), width_, height_);
+  detail::generate_mipmaps(types::decay(device_), graphics_queue_,
+                           types::decay(command_pool_), types::decay(image_),
+                           width_, height_, image_create_info.mipLevels);
 
   auto const image_view_create_info = [this, &image_create_info]
   {
@@ -343,8 +352,8 @@ renderer::preload_stuff()
     return info;
   }();
 
-  image_view_ =
-      types::unique_image_view::create(device_.get(), image_view_create_info);
+  image_view_ = types::unique_image_view::create(types::get(device_),
+                                                 image_view_create_info);
 
   auto const sampler_create_info = [&image_create_info]
   {
@@ -372,12 +381,12 @@ renderer::preload_stuff()
   sampler_ =
       types::unique_sampler::create(device_.get(), sampler_create_info);
 
-  vertex_buffer_manager_ =
-      buffer_manager(&device_, physical_device_, &command_pool_,
-                     graphics_queue_, buffer_manager::type::vertex);
-  index_buffer_manager_ =
-      buffer_manager(&device_, physical_device_, &command_pool_,
-                     graphics_queue_, buffer_manager::type::index);
+  vertex_buffer_manager_ = buffer_manager(
+      types::decay(device_), physical_device_, types::decay(command_pool_),
+      graphics_queue_, buffer_manager::type::vertex);
+  index_buffer_manager_ = buffer_manager(
+      types::decay(device_), physical_device_, types::decay(command_pool_),
+      graphics_queue_, buffer_manager::type::index);
 }
 
 void
@@ -646,10 +655,11 @@ renderer::init_descriptors()
     }();
 
     uniform_buffers_.push_back(types::unique_buffer::create(
-        device_.get(), uniform_buffer_create_info));
+        types::get(device_), uniform_buffer_create_info));
 
     auto uniform_buffer_memory = detail::create_device_memory(
-        physical_device_, uniform_buffers_.back(),
+        types::decay(device_), physical_device_,
+        types::decay(uniform_buffers_.back()),
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
@@ -1124,7 +1134,7 @@ renderer::end_draw()
 
   if (image_in_flight_fence != nullptr)
   {
-    vkWaitForFences(types::parent(*image_in_flight_fence), 1,
+    vkWaitForFences(types::get(device_), 1,
                     &types::get(*image_in_flight_fence), VK_TRUE,
                     std::numeric_limits<int64_t>::max());
   }
@@ -1132,15 +1142,16 @@ renderer::end_draw()
   image_in_flight_fence = &frame_in_flight_fences_[current_frame_index_];
 
   // get current semaphores
-  auto const & image_available_semaphore =
-      image_available_semaphores_[current_frame_index_];
-  auto const & render_finished_semaphore =
-      render_finished_semaphores_[current_frame_index_];
+  auto const image_available_semaphore =
+      types::decay(image_available_semaphores_[current_frame_index_]);
+
+  auto const render_finished_semaphore =
+      types::decay(render_finished_semaphores_[current_frame_index_]);
 
   detail::submit_draw_commands(
-      graphics_queue_, types::get(current_command_buffer_),
-      image_available_semaphore, render_finished_semaphore,
-      *image_in_flight_fence);
+      types::decay(device_), graphics_queue_,
+      types::get(current_command_buffer_), image_available_semaphore,
+      render_finished_semaphore, types::decay(*image_in_flight_fence));
 
   auto present_result = VK_ERROR_UNKNOWN;
   auto const check_present_result = [&present_result](auto const result)
@@ -1148,9 +1159,9 @@ renderer::end_draw()
     present_result = result;
   };
 
-  detail::present_swapchain(present_queue_, swapchain_,
-                            render_finished_semaphore, current_image_index_,
-                            check_present_result);
+  detail::present_swapchain(present_queue_, types::decay(swapchain_),
+                            types::decay(render_finished_semaphore),
+                            current_image_index_, check_present_result);
 
   auto const resized = window_.framebuffer_resized();
   auto const change_swapchain =
