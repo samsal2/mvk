@@ -41,12 +41,20 @@ pool(Wrapper const & wrapper) noexcept
   return wrapper.deleter().parent();
 }
 
-template <typename Wrapper>
-constexpr wrapper::decay_wrapper_t<Wrapper>
-decay(Wrapper const & wrapper) noexcept
+template <typename... Args>
+constexpr auto
+decay(wrapper::any_wrapper<Args...> const & wrapper) noexcept
 {
-  return get(wrapper);
+  using handle =
+      decltype(wrapper::select<wrapper::options::handle>(Args{}...));
+
+  return wrapper::any_wrapper<
+      wrapper::options::storage<wrapper::storage::handle_only>,
+      wrapper::options::handle<handle>>(get(wrapper));
 }
+
+template <typename Wrapper>
+using decay_wrapper_t = decltype(decay(std::declval<Wrapper>()));
 
 } // namespace mvk::types
 
@@ -60,7 +68,7 @@ using unique_buffer = wrapper::any_wrapper<
     wrapper::options::handle<VkBuffer>, wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyBuffer>>;
 
-using buffer = wrapper::decay_wrapper_t<unique_buffer>;
+using buffer = decay_wrapper_t<unique_buffer>;
 
 using unique_pipeline_layout = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -71,7 +79,7 @@ using unique_pipeline_layout = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyPipelineLayout>>;
 
-using pipeline_layout = wrapper::decay_wrapper_t<unique_pipeline_layout>;
+using pipeline_layout = decay_wrapper_t<unique_pipeline_layout>;
 
 using unique_command_buffer = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -82,7 +90,7 @@ using unique_command_buffer = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>, wrapper::options::pool<VkCommandPool>,
     wrapper::options::deleter_call<vkFreeCommandBuffers>>;
 
-using command_buffer = wrapper::decay_wrapper_t<unique_command_buffer>;
+using command_buffer = decay_wrapper_t<unique_command_buffer>;
 
 using unique_command_pool = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -93,7 +101,7 @@ using unique_command_pool = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyCommandPool>>;
 
-using command_pool = wrapper::decay_wrapper_t<unique_command_pool>;
+using command_pool = decay_wrapper_t<unique_command_pool>;
 
 using unique_debug_messenger = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -113,7 +121,7 @@ using unique_descriptor_pool = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyDescriptorPool>>;
 
-using descriptor_pool = wrapper::decay_wrapper_t<unique_descriptor_pool>;
+using descriptor_pool = decay_wrapper_t<unique_descriptor_pool>;
 
 using unique_descriptor_set_layout = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -124,8 +132,7 @@ using unique_descriptor_set_layout = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyDescriptorSetLayout>>;
 
-using descriptor_set_layout =
-    wrapper::decay_wrapper_t<unique_descriptor_set_layout>;
+using descriptor_set_layout = decay_wrapper_t<unique_descriptor_set_layout>;
 
 using unique_descriptor_set = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -137,7 +144,7 @@ using unique_descriptor_set = wrapper::any_wrapper<
     wrapper::options::pool<VkDescriptorPool>,
     wrapper::options::deleter_call<vkFreeDescriptorSets>>;
 
-using descriptor_set = wrapper::decay_wrapper_t<unique_descriptor_set>;
+using descriptor_set = decay_wrapper_t<unique_descriptor_set>;
 
 using unique_device_memory = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -148,7 +155,7 @@ using unique_device_memory = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkFreeMemory>>;
 
-using device_memory = wrapper::decay_wrapper_t<unique_device_memory>;
+using device_memory = decay_wrapper_t<unique_device_memory>;
 
 using queue = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::handle_only>,
@@ -166,7 +173,7 @@ using unique_device = wrapper::any_wrapper<
     wrapper::options::handle<VkDevice>,
     wrapper::options::deleter_call<vkDestroyDevice>>;
 
-using device = wrapper::decay_wrapper_t<unique_device>;
+using device = decay_wrapper_t<unique_device>;
 
 using unique_fence = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -176,7 +183,7 @@ using unique_fence = wrapper::any_wrapper<
     wrapper::options::handle<VkFence>, wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyFence>>;
 
-using fence = wrapper::decay_wrapper_t<unique_fence>;
+using fence = decay_wrapper_t<unique_fence>;
 
 using unique_framebuffer = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -187,7 +194,7 @@ using unique_framebuffer = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyFramebuffer>>;
 
-using framebuffer = wrapper::decay_wrapper_t<unique_framebuffer>;
+using framebuffer = decay_wrapper_t<unique_framebuffer>;
 
 using unique_image_view = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -197,7 +204,7 @@ using unique_image_view = wrapper::any_wrapper<
     wrapper::options::handle<VkImageView>, wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyImageView>>;
 
-using image_view = wrapper::decay_wrapper_t<unique_image_view>;
+using image_view = decay_wrapper_t<unique_image_view>;
 using unique_instance = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
     wrapper::options::deleter<wrapper::deleter::owner_destroy>,
@@ -206,7 +213,7 @@ using unique_instance = wrapper::any_wrapper<
     wrapper::options::handle<VkInstance>,
     wrapper::options::deleter_call<vkDestroyInstance>>;
 
-using instance = wrapper::decay_wrapper_t<unique_instance>;
+using instance = decay_wrapper_t<unique_instance>;
 
 using unique_pipeline = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -216,7 +223,7 @@ using unique_pipeline = wrapper::any_wrapper<
     wrapper::options::handle<VkPipeline>, wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyPipeline>>;
 
-using pipeline = wrapper::decay_wrapper_t<unique_pipeline>;
+using pipeline = decay_wrapper_t<unique_pipeline>;
 
 using unique_render_pass = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -227,7 +234,7 @@ using unique_render_pass = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyRenderPass>>;
 
-using render_pass = wrapper::decay_wrapper_t<unique_render_pass>;
+using render_pass = decay_wrapper_t<unique_render_pass>;
 
 using unique_sampler = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -237,7 +244,7 @@ using unique_sampler = wrapper::any_wrapper<
     wrapper::options::handle<VkSampler>, wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroySampler>>;
 
-using sampler = wrapper::decay_wrapper_t<unique_sampler>;
+using sampler = decay_wrapper_t<unique_sampler>;
 
 using unique_semaphore = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -247,7 +254,7 @@ using unique_semaphore = wrapper::any_wrapper<
     wrapper::options::handle<VkSemaphore>, wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroySemaphore>>;
 
-using semaphore = wrapper::decay_wrapper_t<unique_semaphore>;
+using semaphore = decay_wrapper_t<unique_semaphore>;
 
 using unique_surface = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -256,7 +263,7 @@ using unique_surface = wrapper::any_wrapper<
     wrapper::options::parent<VkInstance>,
     wrapper::options::deleter_call<vkDestroySurfaceKHR>>;
 
-using surface = wrapper::decay_wrapper_t<unique_surface>;
+using surface = decay_wrapper_t<unique_surface>;
 
 using unique_image = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -266,7 +273,7 @@ using unique_image = wrapper::any_wrapper<
     wrapper::options::handle<VkImage>, wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyImage>>;
 
-using image = wrapper::decay_wrapper_t<unique_image>;
+using image = decay_wrapper_t<unique_image>;
 
 using unique_shader_module = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -277,7 +284,7 @@ using unique_shader_module = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroyShaderModule>>;
 
-using shader_module = wrapper::decay_wrapper_t<unique_shader_module>;
+using shader_module = decay_wrapper_t<unique_shader_module>;
 
 using unique_swapchain = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::unique>,
@@ -288,7 +295,7 @@ using unique_swapchain = wrapper::any_wrapper<
     wrapper::options::parent<VkDevice>,
     wrapper::options::deleter_call<vkDestroySwapchainKHR>>;
 
-using swapchain = wrapper::decay_wrapper_t<unique_swapchain>;
+using swapchain = decay_wrapper_t<unique_swapchain>;
 
 } // namespace mvk::types
 

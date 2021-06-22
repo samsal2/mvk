@@ -322,13 +322,16 @@ renderer::preload_stuff()
   image_memory_ = detail::create_device_memory(
       types::decay(device_), physical_device_, types::decay(image_),
       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
   detail::transition_layout(
       types::decay(device_), graphics_queue_, types::decay(command_pool_),
       types::decay(image_), VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image_create_info.mipLevels);
+
   detail::stage(types::decay(device_), physical_device_, graphics_queue_,
                 types::decay(command_pool_), types::decay(image_),
                 utility::as_bytes(texture_), width_, height_);
+
   detail::generate_mipmaps(types::decay(device_), graphics_queue_,
                            types::decay(command_pool_), types::decay(image_),
                            width_, height_, image_create_info.mipLevels);

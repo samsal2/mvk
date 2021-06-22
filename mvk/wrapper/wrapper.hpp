@@ -9,20 +9,4 @@
 #include "wrapper/owner_destroy.hpp"
 #include "wrapper/unique.hpp"
 
-namespace mvk::wrapper
-{
-template <typename... Args>
-constexpr auto
-decay_wrapper([[maybe_unused]] any_wrapper<Args...> const & wrapper) noexcept
-{
-  using handle = decltype(select<options::handle>(Args{}...));
-  return any_wrapper<options::storage<storage::handle_only>,
-                     options::handle<handle>>{};
-}
-
-template <typename Wrapper>
-using decay_wrapper_t = decltype(decay_wrapper(std::declval<Wrapper>()));
-
-}; // namespace mvk::wrapper
-
 #endif
