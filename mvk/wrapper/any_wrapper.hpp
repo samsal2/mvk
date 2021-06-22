@@ -1,5 +1,5 @@
-#ifndef MVK_TYPES_DETAIL_ANY_WRAPPER_HPP_INCLUDED
-#define MVK_TYPES_DETAIL_ANY_WRAPPER_HPP_INCLUDED
+#ifndef MVK_WRAPPER_ANY_WRAPPER_HPP_INCLUDED
+#define MVK_WRAPPER_ANY_WRAPPER_HPP_INCLUDED
 
 #include "wrapper/allocated.hpp"
 #include "wrapper/created.hpp"

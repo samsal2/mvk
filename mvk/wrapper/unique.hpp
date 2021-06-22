@@ -1,5 +1,5 @@
-#ifndef MVK_TYPES_DETAIL_UNIQUE_HPP_INCLUDED
-#define MVK_TYPES_DETAIL_UNIQUE_HPP_INCLUDED
+#ifndef MVK_WRAPPER_UNIQUE_HPP_INCLUDED
+#define MVK_WRAPPER_UNIQUE_HPP_INCLUDED
 
 #include "utility/compressed_pair.hpp"
 #include "wrapper/fwd.hpp"

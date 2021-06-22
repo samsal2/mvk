@@ -1,5 +1,5 @@
-#ifndef MVK_TYPES_DETAIL_HANDLE_ONLY_HPP_INCLUDED
-#define MVK_TYPES_DETAIL_HANDLE_ONLY_HPP_INCLUDED
+#ifndef MVK_WRAPPER_HANDLE_ONLY_HPP_INCLUDED
+#define MVK_WRAPPER_HANDLE_ONLY_HPP_INCLUDED
 
 #include "utility/concepts.hpp"
 #include "wrapper/fwd.hpp"

@@ -1,5 +1,5 @@
-#ifndef MVK_TYPES_DETAIL_CREATED_HPP_INCLUDED
-#define MVK_TYPES_DETAIL_CREATED_HPP_INCLUDED
+#ifndef MVK_WRAPPER_CREATED_HPP_INCLUDED
+#define MVK_WRAPPER_CREATED_HPP_INCLUDED
 
 #include "validation/validation.hpp"
 #include "wrapper/fwd.hpp"
