@@ -1,4 +1,5 @@
 #include "detail/creators.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace mvk::detail
 {
@@ -81,8 +82,10 @@ create_device_memory(types::device const device,
                      types::buffer const buffer,
                      VkMemoryPropertyFlags const properties) noexcept
 {
-  auto const requirements = query<vkGetBufferMemoryRequirements>::with(
-      types::get(device), types::get(buffer));
+
+  auto requirements = VkMemoryRequirements();
+  vkGetBufferMemoryRequirements(types::get(device), types::get(buffer),
+                                &requirements);
 
   auto const memory_type_index = find_memory_type(
       types::get(physical_device), requirements.memoryTypeBits, properties);
@@ -107,8 +110,10 @@ create_device_memory(types::device const device,
                      types::image const buffer,
                      VkMemoryPropertyFlags const properties) noexcept
 {
-  auto const requirements = query<vkGetImageMemoryRequirements>::with(
-      types::get(device), types::get(buffer));
+
+  auto requirements = VkMemoryRequirements();
+  vkGetImageMemoryRequirements(types::get(device), types::get(buffer),
+                               &requirements);
 
   auto const memory_type_index = find_memory_type(
       types::get(physical_device), requirements.memoryTypeBits, properties);

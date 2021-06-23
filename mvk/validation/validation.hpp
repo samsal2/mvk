@@ -1,8 +1,8 @@
 #ifndef MVK_TYPES_VALIDATION_HPP_INCLUDE
 #define MVK_TYPES_VALIDATION_HPP_INCLUDE
 
-#include "detail/query.hpp"
 #include "utility/slice.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <array>
 #include <iostream>
@@ -70,15 +70,22 @@ check_support() noexcept
     return true;
   }
 
-  auto const availables =
-      detail::query<vkEnumerateInstanceLayerProperties>::with();
+  auto layer_properties_count = uint32_t(0);
+  vkEnumerateInstanceLayerProperties(&layer_properties_count, nullptr);
+
+  auto layer_properties =
+      std::vector<VkLayerProperties>(layer_properties_count);
+
+  vkEnumerateInstanceLayerProperties(&layer_properties_count,
+                                     std::data(layer_properties));
 
   auto const exists = [](auto const & available_layer)
   {
     return is_layer_present(available_layer, g_validation_layers);
   };
 
-  return std::any_of(std::begin(availables), std::end(availables), exists);
+  return std::any_of(std::begin(layer_properties), std::end(layer_properties),
+                     exists);
 }
 
 [[nodiscard]] static VkDebugUtilsMessengerEXT

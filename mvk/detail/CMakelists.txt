@@ -1,6 +1,5 @@
 
 target_sources(${PROJECT_NAME} PRIVATE 
-                                       query.hpp
                                        checkers.hpp
                                        checkers.cpp
                                        misc.hpp 

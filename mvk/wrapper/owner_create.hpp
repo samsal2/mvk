@@ -5,10 +5,8 @@
 
 namespace mvk::wrapper
 {
-
 namespace creator
 {
-
 struct owner_create
 {
 };

@@ -1,6 +1,7 @@
 #include "detail/misc.hpp"
 
 #include "detail/creators.hpp"
+#include "vulkan/vulkan_core.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
@@ -23,11 +24,11 @@ submit_draw_commands(types::device const device,
                      types::semaphore const render_finished,
                      types::fence const frame_in_flight_fence) noexcept
 {
-  auto const wait_semaphores = std::array{image_available.get()};
-  auto const signal_semaphores = std::array{render_finished.get()};
+  auto const wait_semaphores = std::array{types::get(image_available)};
+  auto const signal_semaphores = std::array{types::get(render_finished)};
   auto const wait_stages = std::array<VkPipelineStageFlags, 1>{
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  auto const command_buffers = std::array{command_buffer.get()};
+  auto const command_buffers = std::array{types::get(command_buffer)};
 
   auto const submit_info =
       [&wait_semaphores, &signal_semaphores, &wait_stages, &command_buffers]
@@ -71,10 +72,11 @@ stage(types::device const device,
   auto const [staging_buffer, staging_buffer_memory] =
       detail::create_staging_buffer_and_memory(device, physical_device, src);
 
-  auto const size =
-      detail::query<vkGetBufferMemoryRequirements>::with(
-          types::parent(staging_buffer), types::get(staging_buffer))
-          .size;
+  auto requirements = VkMemoryRequirements();
+  vkGetBufferMemoryRequirements(types::parent(staging_buffer),
+                                types::get(staging_buffer), &requirements);
+
+  auto const size = requirements.size;
 
   auto const copy_region = [size, offset]
   {
@@ -410,8 +412,10 @@ create_staging_buffer_and_memory(
 
   auto buffer_memory = [&device, physical_device, &staging_buffer]
   {
-    auto const requirements = query<vkGetBufferMemoryRequirements>::with(
-        types::parent(staging_buffer), types::get(staging_buffer));
+    auto requirements = VkMemoryRequirements();
+    vkGetBufferMemoryRequirements(types::parent(staging_buffer),
+                                  types::get(staging_buffer), &requirements);
+
     auto const type_bits = requirements.memoryTypeBits;
     auto const properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
@@ -466,8 +470,9 @@ find_memory_type(VkPhysicalDevice const physical_device,
                  uint32_t const filter,
                  VkMemoryPropertyFlags const properties_flags)
 {
-  auto const memory_properties =
-      query<vkGetPhysicalDeviceMemoryProperties>::with(physical_device);
+  auto memory_properties = VkPhysicalDeviceMemoryProperties();
+  vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
+
   auto const type_count = memory_properties.memoryTypeCount;
 
   for (auto i = uint32_t(0); i < type_count; ++i)

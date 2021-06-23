@@ -2,6 +2,7 @@
 
 #include "detail/misc.hpp"
 #include "utility/verify.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace mvk
 {
@@ -74,9 +75,9 @@ buffer_manager::create_new_buffers_and_memories(
   std::generate(std::begin(buffers_), std::end(buffers_), create_buffer);
   std::fill(std::begin(offsets_), std::end(offsets_), 0);
 
-  auto const requirements =
-      detail::query<vkGetBufferMemoryRequirements>::with(
-          types::parent(current_buffer()), types::get(current_buffer()));
+  auto requirements = VkMemoryRequirements();
+  vkGetBufferMemoryRequirements(types::get(device_),
+                                types::get(current_buffer()), &requirements);
 
   aligned_size_ = [requirements]
   {

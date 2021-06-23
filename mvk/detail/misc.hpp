@@ -2,7 +2,6 @@
 #define MVK_DETAIL_MISC_HPP_INCLUDED
 
 #include "detail/checkers.hpp"
-#include "detail/query.hpp"
 #include "types/types.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
@@ -99,8 +98,8 @@ present_swapchain(types::queue const present_queue,
                   types::semaphore const render_finished,
                   uint32_t const image_index, Checker && check) noexcept
 {
-  auto const signal_semaphores = std::array{render_finished.get()};
-  auto const swapchains = std::array{swapchain.get()};
+  auto const signal_semaphores = std::array{types::get(render_finished)};
+  auto const swapchains = std::array{types::get(swapchain)};
   auto const image_indices = std::array{image_index};
 
   auto const present_info = [&signal_semaphores, &swapchains, &image_indices]
@@ -129,8 +128,14 @@ requires requirement_checker<Checker>
 choose_surface_format(VkPhysicalDevice physical_device, VkSurfaceKHR surface,
                       Checker && check) noexcept
 {
-  auto const formats = query<vkGetPhysicalDeviceSurfaceFormatsKHR>::with(
-      physical_device, surface);
+  auto formats_count = uint32_t(0);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface,
+                                       &formats_count, nullptr);
+
+  auto formats = std::vector<VkSurfaceFormatKHR>(formats_count);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface,
+                                       &formats_count, std::data(formats));
+
   auto const it = std::find_if(std::begin(formats), std::end(formats),
                                std::forward<Checker>(check));
 

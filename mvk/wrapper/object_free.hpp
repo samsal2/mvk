@@ -27,7 +27,7 @@ deleter_selector([[maybe_unused]] deleter::object_free option) noexcept
   static_assert(!utility::is_none(parent{}), "Expected a parent option");
 
   using pool = decltype(select<options::pool>(Args{}...));
-  static_assert(!utility::is_none(parent{}), "Expected a Pool option");
+  static_assert(!utility::is_none(pool{}), "Expected a pool option");
 
   constexpr auto deleter_call = select<options::deleter_call>(Args{}...);
   static_assert(!utility::is_none(deleter_call),

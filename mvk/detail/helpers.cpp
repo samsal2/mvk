@@ -1,7 +1,6 @@
 #include "detail/helpers.hpp"
 
 #include "detail/misc.hpp"
-#include "detail/query.hpp"
 
 #include <algorithm>
 
@@ -25,8 +24,14 @@ check_extension_support(
     types::physical_device physical_device,
     utility::slice<char const * const> device_extensions) noexcept
 {
-  auto const extensions = query<vkEnumerateDeviceExtensionProperties>::with(
-      types::get(physical_device), nullptr);
+  auto extensions_count = uint32_t(0);
+  vkEnumerateDeviceExtensionProperties(types::get(physical_device), nullptr,
+                                       &extensions_count, nullptr);
+
+  auto extensions = std::vector<VkExtensionProperties>(extensions_count);
+  vkEnumerateDeviceExtensionProperties(types::get(physical_device), nullptr,
+                                       &extensions_count,
+                                       std::data(extensions));
 
   auto is_present = [&extensions](auto const & extension)
   {
@@ -43,14 +48,20 @@ choose_physical_device(
     types::instance const instance, types::surface const surface,
     utility::slice<char const * const> const device_extensions) noexcept
 {
-  auto const physical_devices =
-      query<vkEnumeratePhysicalDevices>::with(types::get(instance));
+  auto physical_device_count = uint32_t(0);
+  vkEnumeratePhysicalDevices(types::get(instance), &physical_device_count,
+                             nullptr);
+
+  auto physical_devices =
+      std::vector<VkPhysicalDevice>(physical_device_count);
+  vkEnumeratePhysicalDevices(types::get(instance), &physical_device_count,
+                             std::data(physical_devices));
 
   auto const supported =
       [device_extensions, &surface](auto const physical_device)
   {
-    auto const features =
-        query<vkGetPhysicalDeviceFeatures>::with(physical_device);
+    auto features = VkPhysicalDeviceFeatures();
+    vkGetPhysicalDeviceFeatures(physical_device, &features);
 
     auto const extensions_supported =
         check_extension_support(physical_device, device_extensions);
@@ -65,9 +76,8 @@ choose_physical_device(
            family_indices_found && features.samplerAnisotropy;
   };
 
-  auto const begin = std::begin(physical_devices);
-  auto const end = std::end(physical_devices);
-  auto const it = std::find_if(begin, end, supported);
+  auto const it = std::find_if(std::begin(physical_devices),
+                               std::end(physical_devices), supported);
 
   if (it != std::end(physical_devices))
   {
@@ -117,9 +127,15 @@ check_surface_support(types::physical_device const physical_device,
 query_family_indices(types::physical_device const physical_device,
                      types::surface const surface)
 {
-  auto const queue_families =
-      query<vkGetPhysicalDeviceQueueFamilyProperties>::with(
-          types::get(physical_device));
+  auto queue_families_count = uint32_t(0);
+  vkGetPhysicalDeviceQueueFamilyProperties(types::get(physical_device),
+                                           &queue_families_count, nullptr);
+
+  auto queue_families =
+      std::vector<VkQueueFamilyProperties>(queue_families_count);
+  vkGetPhysicalDeviceQueueFamilyProperties(types::get(physical_device),
+                                           &queue_families_count,
+                                           std::data(queue_families));
 
   auto graphics_family = std::optional<uint32_t>();
   auto present_family = std::optional<uint32_t>();
@@ -180,8 +196,15 @@ choose_image_count(VkSurfaceCapabilitiesKHR const & capabilities) noexcept
 choose_present_mode(types::physical_device const physical_device,
                     types::surface const surface) noexcept
 {
-  auto const modes = query<vkGetPhysicalDeviceSurfacePresentModesKHR>::with(
-      types::get(physical_device), types::get(surface));
+  auto modes_count = uint32_t(0);
+  vkGetPhysicalDeviceSurfacePresentModesKHR(types::get(physical_device),
+                                            types::get(surface), &modes_count,
+                                            nullptr);
+
+  auto modes = std::vector<VkPresentModeKHR>(modes_count);
+  vkGetPhysicalDeviceSurfacePresentModesKHR(types::get(physical_device),
+                                            types::get(surface), &modes_count,
+                                            std::data(modes));
 
   auto const it = std::find(std::begin(modes), std::end(modes),
                             VK_PRESENT_MODE_MAILBOX_KHR);

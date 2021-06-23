@@ -6,8 +6,7 @@
 #include "detail/readers.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
-
-#include <limits>
+#include "vulkan/vulkan_core.h"
 
 namespace mvk
 {
@@ -60,8 +59,8 @@ renderer::init_vulkan()
   auto const queue_indices = queue_indices_result.value();
   std::tie(graphics_queue_index_, present_queue_index_) = queue_indices;
 
-  auto const features = detail::query<vkGetPhysicalDeviceFeatures>::with(
-      types::get(physical_device_));
+  auto features = VkPhysicalDeviceFeatures();
+  vkGetPhysicalDeviceFeatures(types::get(physical_device_), &features);
 
   auto queue_priority = 1.0F;
 
@@ -140,9 +139,10 @@ renderer::init_swapchain()
     auto const format = detail::choose_surface_format(
         types::get(physical_device_), types::get(surface_),
         detail::default_format_checker);
-    auto const capabilities =
-        detail::query<vkGetPhysicalDeviceSurfaceCapabilitiesKHR>::with(
-            types::get(physical_device_), types::get(surface_));
+
+    auto capabilities = VkSurfaceCapabilitiesKHR();
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+        types::get(physical_device_), types::get(surface_), &capabilities);
 
     auto const present_mode =
         detail::choose_present_mode(physical_device_, types::decay(surface_));
@@ -152,7 +152,7 @@ renderer::init_swapchain()
 
     auto info = VkSwapchainCreateInfoKHR();
     info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    info.surface = surface_.get();
+    info.surface = types::get(surface_);
     info.minImageCount = image_count;
     info.imageFormat = format.format;
     info.imageColorSpace = format.colorSpace;
@@ -183,8 +183,16 @@ renderer::init_swapchain()
 
   swapchain_ = types::unique_swapchain::create(types::get(device_),
                                                swapchain_create_info);
-  swapchain_images_ = detail::query<vkGetSwapchainImagesKHR>::with(
-      types::get(device_), types::get(swapchain_));
+
+  auto swapchain_images_count = uint32_t(0);
+  vkGetSwapchainImagesKHR(types::get(device_), types::get(swapchain_),
+                          &swapchain_images_count, nullptr);
+
+  swapchain_images_.resize(swapchain_images_count);
+
+  vkGetSwapchainImagesKHR(types::get(device_), types::get(swapchain_),
+                          &swapchain_images_count,
+                          std::data(swapchain_images_));
 
   swapchain_image_views_.reserve(std::size(swapchain_images_));
 
@@ -247,7 +255,7 @@ renderer::init_swapchain()
   {
     auto info = VkImageViewCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    info.image = depth_image_.get();
+    info.image = types::get(depth_image_);
     info.viewType = VK_IMAGE_VIEW_TYPE_2D;
     info.format = VK_FORMAT_D32_SFLOAT;
     info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -336,7 +344,7 @@ renderer::preload_stuff()
   {
     auto info = VkImageViewCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    info.image = image_.get();
+    info.image = types::get(image_);
     info.viewType = VK_IMAGE_VIEW_TYPE_2D;
     info.format = VK_FORMAT_R8G8B8A8_SRGB;
     info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -378,7 +386,7 @@ renderer::preload_stuff()
   }();
 
   sampler_ =
-      types::unique_sampler::create(device_.get(), sampler_create_info);
+      types::unique_sampler::create(types::get(device_), sampler_create_info);
 
   vertex_buffer_manager_ = buffer_manager(
       types::decay(device_), physical_device_, types::decay(command_pool_),
@@ -479,7 +487,7 @@ renderer::init_main_renderpass()
     return info;
   }();
 
-  render_pass_ = types::unique_render_pass::create(device_.get(),
+  render_pass_ = types::unique_render_pass::create(types::get(device_),
                                                    render_pass_create_info);
 }
 
@@ -491,13 +499,13 @@ renderer::init_framebuffers()
   auto const add_framebuffer = [this](auto const & image_view)
   {
     auto const attachments =
-        std::array{image_view.get(), depth_image_view_.get()};
+        std::array{types::get(image_view), types::get(depth_image_view_)};
 
     auto const framebuffer_create_info = [this, &attachments]
     {
       auto info = VkFramebufferCreateInfo();
       info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-      info.renderPass = render_pass_.get();
+      info.renderPass = types::get(render_pass_);
       info.attachmentCount = static_cast<uint32_t>(std::size(attachments));
       info.pAttachments = std::data(attachments);
       info.width = extent_.width;
@@ -507,7 +515,7 @@ renderer::init_framebuffers()
     }();
 
     framebuffers_.push_back(types::unique_framebuffer::create(
-        device_.get(), framebuffer_create_info));
+        types::get(device_), framebuffer_create_info));
   };
   std::for_each(std::begin(swapchain_image_views_),
                 std::end(swapchain_image_views_), add_framebuffer);
@@ -566,7 +574,7 @@ renderer::init_descriptors()
   }();
 
   descriptor_set_layout_ = types::unique_descriptor_set_layout::create(
-      device_.get(), descriptor_set_layout_create_info);
+      types::get(device_), descriptor_set_layout_create_info);
 
   auto const images_count =
       static_cast<uint32_t>(std::size(swapchain_images_));
@@ -609,13 +617,13 @@ renderer::init_descriptors()
   auto const images_size = std::size(swapchain_images_);
 
   auto descriptor_set_layouts =
-      std::vector(images_size, descriptor_set_layout_.get());
+      std::vector(images_size, types::get(descriptor_set_layout_));
 
   auto const descriptor_sets_allocate_info = [this, &descriptor_set_layouts]
   {
     auto info = VkDescriptorSetAllocateInfo();
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    info.descriptorPool = descriptor_pool_.get();
+    info.descriptorPool = types::get(descriptor_pool_);
     info.descriptorSetCount =
         static_cast<uint32_t>(std::size(descriptor_set_layouts));
     info.pSetLayouts = std::data(descriptor_set_layouts);
@@ -623,7 +631,7 @@ renderer::init_descriptors()
   }();
 
   descriptor_sets_ = types::unique_descriptor_set::allocate(
-      device_.get(), descriptor_sets_allocate_info);
+      types::get(device_), descriptor_sets_allocate_info);
 
   uniform_buffers_.reserve(images_size);
   uniform_buffers_memory_.reserve(images_size);
@@ -661,7 +669,7 @@ renderer::init_descriptors()
     auto const descriptor_buffer_info = [this, i]
     {
       auto info = VkDescriptorBufferInfo();
-      info.buffer = uniform_buffers_[i].get();
+      info.buffer = types::get(uniform_buffers_[i]);
       info.offset = 0;
       info.range = sizeof(pvm);
       return info;
@@ -671,8 +679,8 @@ renderer::init_descriptors()
     {
       auto info = VkDescriptorImageInfo();
       info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      info.imageView = image_view_.get();
-      info.sampler = sampler_.get();
+      info.imageView = types::get(image_view_);
+      info.sampler = types::get(sampler_);
       return info;
     }();
 
@@ -716,7 +724,7 @@ renderer::init_descriptors()
 void
 renderer::init_pipeline()
 {
-  auto const descriptor_set_layout = descriptor_set_layout_.get();
+  auto const descriptor_set_layout = types::get(descriptor_set_layout_);
 
   auto const pipeline_layout_create_info = [&descriptor_set_layout]
   {
@@ -730,7 +738,7 @@ renderer::init_pipeline()
   }();
 
   pipeline_layout_ = types::unique_pipeline_layout::create(
-      device_.get(), pipeline_layout_create_info);
+      types::get(device_), pipeline_layout_create_info);
 
   auto const vertex_input_binding_description = []
   {
@@ -927,8 +935,8 @@ renderer::init_pipeline()
     return info;
   }();
 
-  pipeline_ =
-      types::unique_pipeline::create(device_.get(), pipeline_create_info);
+  pipeline_ = types::unique_pipeline::create(types::get(device_),
+                                             pipeline_create_info);
 }
 void
 renderer::init_sync()
@@ -950,12 +958,12 @@ renderer::init_sync()
 
   for (auto i = size_t(0); i < max_frames_in_flight; ++i)
   {
-    image_available_semaphores_[i] =
-        types::unique_semaphore::create(device_.get(), semaphore_create_info);
-    render_finished_semaphores_[i] =
-        types::unique_semaphore::create(device_.get(), semaphore_create_info);
+    image_available_semaphores_[i] = types::unique_semaphore::create(
+        types::get(device_), semaphore_create_info);
+    render_finished_semaphores_[i] = types::unique_semaphore::create(
+        types::get(device_), semaphore_create_info);
     frame_in_flight_fences_[i] =
-        types::unique_fence::create(device_.get(), fence_create_info);
+        types::unique_fence::create(types::get(device_), fence_create_info);
   }
 
   image_in_flight_fences_.resize(std::size(swapchain_images_), nullptr);
@@ -1043,7 +1051,7 @@ renderer::begin_draw()
   {
     auto info = VkRenderPassBeginInfo();
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    info.renderPass = render_pass_.get();
+    info.renderPass = types::get(render_pass_);
     info.framebuffer = types::get(framebuffers_[current_image_index_]);
     info.renderArea.offset.x = 0;
     info.renderArea.offset.y = 0;
