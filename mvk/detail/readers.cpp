@@ -8,7 +8,7 @@
 
 namespace mvk::detail
 {
-[[nodiscard]] std::pair<std::vector<vertex>, std::vector<uint32_t>>
+[[nodiscard]] std::pair<std::vector<vertex>, std::vector<u32>>
 read_object(std::filesystem::path const & path) noexcept
 {
   auto attrib = tinyobj::attrib_t();
@@ -23,13 +23,13 @@ read_object(std::filesystem::path const & path) noexcept
   MVK_VERIFY(success);
 
   auto vertices = std::vector<vertex>();
-  auto indices = std::vector<uint32_t>();
+  auto indices = std::vector<u32>();
 
   for (auto const & shape : shapes)
   {
     for (auto const & index : shape.mesh.indices)
     {
-      indices.push_back(static_cast<uint32_t>(std::size(indices)));
+      indices.push_back(static_cast<u32>(std::size(indices)));
 
       auto vtx = vertex();
       auto const vertex_index = static_cast<size_t>(index.vertex_index);

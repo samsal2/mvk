@@ -1,8 +1,8 @@
 #ifndef MVK_TYPES_VALIDATION_HPP_INCLUDE
 #define MVK_TYPES_VALIDATION_HPP_INCLUDE
 
+#include "basic_types.hpp"
 #include "utility/slice.hpp"
-#include "vulkan/vulkan_core.h"
 
 #include <array>
 #include <iostream>
@@ -70,7 +70,7 @@ check_support() noexcept
     return true;
   }
 
-  auto layer_properties_count = uint32_t(0);
+  auto layer_properties_count = u32(0);
   vkEnumerateInstanceLayerProperties(&layer_properties_count, nullptr);
 
   auto layer_properties =

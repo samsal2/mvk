@@ -3,7 +3,7 @@
 
 #include "buffer_manager.hpp"
 #include "detail/helpers.hpp"
-#include "fwd.hpp"
+#include "shader_types.hpp"
 #include "types/types.hpp"
 
 namespace mvk
@@ -84,8 +84,8 @@ private:
   types::physical_device physical_device_;
   types::unique_device device_;
   types::unique_command_pool command_pool_;
-  uint32_t graphics_queue_index_ = {};
-  uint32_t present_queue_index_ = {};
+  u32 graphics_queue_index_ = {};
+  u32 present_queue_index_ = {};
   types::queue graphics_queue_;
   types::queue present_queue_;
 
@@ -101,8 +101,8 @@ private:
   // preload_stuff
   shader_stage_builder builder_;
   std::vector<unsigned char> texture_;
-  uint32_t width_ = {};
-  uint32_t height_ = {};
+  u32 width_ = {};
+  u32 height_ = {};
   types::unique_image image_;
   types::unique_device_memory image_memory_;
   types::unique_image_view image_view_;
@@ -110,7 +110,7 @@ private:
   buffer_manager vertex_buffer_manager_;
   buffer_manager index_buffer_manager_;
   std::vector<vertex> vertices_;
-  std::vector<uint32_t> indices_;
+  std::vector<u32> indices_;
 
   // init_main_renderpass
   types::unique_render_pass render_pass_;
@@ -146,7 +146,7 @@ private:
 
   // rendering fino
   size_t current_frame_index_ = 0;
-  uint32_t current_image_index_ = 0;
+  u32 current_image_index_ = 0;
   types::command_buffer current_command_buffer_ = VK_NULL_HANDLE;
 
   std::chrono::time_point<std::chrono::high_resolution_clock> start_time =

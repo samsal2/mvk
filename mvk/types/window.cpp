@@ -1,5 +1,6 @@
 #include "types/window.hpp"
 
+#include "basic_types.hpp"
 #include "utility/slice.hpp"
 #include "validation/validation.hpp"
 
@@ -49,7 +50,7 @@ window::required_extensions() const noexcept
 {
   auto const glfw_extensions = []
   {
-    auto count = uint32_t(0);
+    auto count = u32(0);
     auto const data = glfwGetRequiredInstanceExtensions(&count);
     return utility::slice(data, count);
   }();

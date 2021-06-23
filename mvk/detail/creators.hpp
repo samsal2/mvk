@@ -16,7 +16,7 @@ create_command_pool(types::device device, types::queue_index queue_index,
 
 [[nodiscard]] std::vector<types::unique_command_buffer>
 create_command_buffers(types::device device, types::command_pool pool,
-                       uint32_t count, VkCommandBufferLevel level) noexcept;
+                       u32 count, VkCommandBufferLevel level) noexcept;
 
 [[nodiscard]] types::unique_device_memory
 create_device_memory(types::device device,

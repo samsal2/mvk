@@ -28,11 +28,10 @@ create_instance(types::window const & window,
     info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     info.pNext = validation::debug_create_info_ref();
     info.pApplicationInfo = &application_info;
-    info.enabledLayerCount =
-        static_cast<uint32_t>(std::size(validation_layers));
+    info.enabledLayerCount = static_cast<u32>(std::size(validation_layers));
     info.ppEnabledLayerNames = std::data(validation_layers);
     info.enabledExtensionCount =
-        static_cast<uint32_t>(std::size(required_extensions));
+        static_cast<u32>(std::size(required_extensions));
     info.ppEnabledExtensionNames = std::data(required_extensions);
     return info;
   }();
@@ -46,8 +45,8 @@ create_shader_module(types::device const device,
 {
   auto info = VkShaderModuleCreateInfo();
   info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  info.codeSize = static_cast<uint32_t>(std::size(code));
-  info.pCode = reinterpret_cast<uint32_t const *>(std::data(code));
+  info.codeSize = static_cast<u32>(std::size(code));
+  info.pCode = reinterpret_cast<u32 const *>(std::data(code));
   return types::unique_shader_module::create(types::get(device), info);
 }
 
@@ -65,7 +64,7 @@ create_command_pool(types::device const device,
 
 [[nodiscard]] std::vector<types::unique_command_buffer>
 create_command_buffers(types::device const device,
-                       types::command_pool const pool, uint32_t count,
+                       types::command_pool const pool, u32 count,
                        VkCommandBufferLevel level) noexcept
 {
   auto info = VkCommandBufferAllocateInfo();

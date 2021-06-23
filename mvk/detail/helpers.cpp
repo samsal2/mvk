@@ -24,7 +24,7 @@ check_extension_support(
     types::physical_device physical_device,
     utility::slice<char const * const> device_extensions) noexcept
 {
-  auto extensions_count = uint32_t(0);
+  auto extensions_count = u32(0);
   vkEnumerateDeviceExtensionProperties(types::get(physical_device), nullptr,
                                        &extensions_count, nullptr);
 
@@ -48,7 +48,7 @@ choose_physical_device(
     types::instance const instance, types::surface const surface,
     utility::slice<char const * const> const device_extensions) noexcept
 {
-  auto physical_device_count = uint32_t(0);
+  auto physical_device_count = u32(0);
   vkEnumeratePhysicalDevices(types::get(instance), &physical_device_count,
                              nullptr);
 
@@ -99,12 +99,12 @@ check_format_and_present_mode_availability(
     types::physical_device physical_device,
     types::surface const surface) noexcept
 {
-  auto format_count = uint32_t(0);
+  auto format_count = u32(0);
   vkGetPhysicalDeviceSurfaceFormatsKHR(types::get(physical_device),
                                        types::get(surface), &format_count,
                                        nullptr);
 
-  auto present_mode_count = uint32_t(0);
+  auto present_mode_count = u32(0);
   vkGetPhysicalDeviceSurfacePresentModesKHR(types::get(physical_device),
                                             types::get(surface),
                                             &present_mode_count, nullptr);
@@ -114,7 +114,7 @@ check_format_and_present_mode_availability(
 
 [[nodiscard]] bool
 check_surface_support(types::physical_device const physical_device,
-                      types::surface const surface, uint32_t index) noexcept
+                      types::surface const surface, u32 index) noexcept
 {
   auto supported = VkBool32(false);
   vkGetPhysicalDeviceSurfaceSupportKHR(types::get(physical_device), index,
@@ -127,7 +127,7 @@ check_surface_support(types::physical_device const physical_device,
 query_family_indices(types::physical_device const physical_device,
                      types::surface const surface)
 {
-  auto queue_families_count = uint32_t(0);
+  auto queue_families_count = u32(0);
   vkGetPhysicalDeviceQueueFamilyProperties(types::get(physical_device),
                                            &queue_families_count, nullptr);
 
@@ -137,8 +137,8 @@ query_family_indices(types::physical_device const physical_device,
                                            &queue_families_count,
                                            std::data(queue_families));
 
-  auto graphics_family = std::optional<uint32_t>();
-  auto present_family = std::optional<uint32_t>();
+  auto graphics_family = std::optional<u32>();
+  auto present_family = std::optional<u32>();
 
   auto const is_complete = [&, i = 0U](auto const & queue_family) mutable
   {
@@ -178,7 +178,7 @@ query_family_indices(types::physical_device const physical_device,
   return std::nullopt;
 }
 
-[[nodiscard]] uint32_t
+[[nodiscard]] u32
 choose_image_count(VkSurfaceCapabilitiesKHR const & capabilities) noexcept
 {
   auto const candidate = capabilities.minImageCount + 1;
@@ -196,7 +196,7 @@ choose_image_count(VkSurfaceCapabilitiesKHR const & capabilities) noexcept
 choose_present_mode(types::physical_device const physical_device,
                     types::surface const surface) noexcept
 {
-  auto modes_count = uint32_t(0);
+  auto modes_count = u32(0);
   vkGetPhysicalDeviceSurfacePresentModesKHR(types::get(physical_device),
                                             types::get(surface), &modes_count,
                                             nullptr);
@@ -221,8 +221,7 @@ choose_present_mode(types::physical_device const physical_device,
 choose_extent(VkSurfaceCapabilitiesKHR const & capabilities,
               VkExtent2D const & extent) noexcept
 {
-  if (capabilities.currentExtent.width !=
-      std::numeric_limits<uint32_t>::max())
+  if (capabilities.currentExtent.width != std::numeric_limits<u32>::max())
   {
     return capabilities.currentExtent;
   }

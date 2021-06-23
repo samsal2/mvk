@@ -33,13 +33,13 @@ check_format_and_present_mode_availability(
 
 [[nodiscard]] bool
 check_surface_support(types::physical_device physical_device,
-                      types::surface surface, uint32_t index) noexcept;
+                      types::surface surface, u32 index) noexcept;
 
 [[nodiscard]] std::optional<std::pair<types::queue_index, types::queue_index>>
 query_family_indices(types::physical_device physical_device,
                      types::surface surface);
 
-[[nodiscard]] uint32_t
+[[nodiscard]] u32
 choose_image_count(VkSurfaceCapabilitiesKHR const & capabilities) noexcept;
 
 [[nodiscard]] VkPresentModeKHR

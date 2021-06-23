@@ -33,20 +33,20 @@ void
 transition_layout(types::device device, types::queue graphics_queue,
                   types::command_pool command_pool, types::image image,
                   VkImageLayout old_layout, VkImageLayout new_layout,
-                  uint32_t mipmap_levels) noexcept;
+                  u32 mipmap_levels) noexcept;
 
 void
 stage(types::device device, types::physical_device physical_device,
       types::queue graphics_queue, types::command_pool command_pool,
-      types::image buffer, utility::slice<std::byte const> src,
-      uint32_t width, uint32_t height) noexcept;
+      types::image buffer, utility::slice<std::byte const> src, u32 width,
+      u32 height) noexcept;
 
 void
 generate_mipmaps(types::device device, types::queue graphics_queue,
                  types::command_pool command_pool, types::image image,
-                 uint32_t width, uint32_t height, uint32_t mipmap_levels);
+                 u32 width, u32 height, u32 mipmap_levels);
 
-[[nodiscard]] std::tuple<std::vector<unsigned char>, uint32_t, uint32_t>
+[[nodiscard]] std::tuple<std::vector<unsigned char>, u32, u32>
 load_texture(std::filesystem::path const & path);
 
 [[nodiscard]] std::pair<types::unique_buffer, types::unique_device_memory>
@@ -66,7 +66,7 @@ template <typename Checker>
 requires result_checker<Checker>
 void
 present_swapchain(types::queue present_queue, types::swapchain swapchain,
-                  types::semaphore render_finished, uint32_t image_index,
+                  types::semaphore render_finished, u32 image_index,
                   Checker && check) noexcept;
 
 template <typename Checker>
@@ -75,16 +75,16 @@ requires requirement_checker<Checker>
 choose_surface_format(VkPhysicalDevice physical_device, VkSurfaceKHR surface,
                       Checker && check) noexcept;
 
-[[nodiscard]] std::optional<uint32_t>
-find_memory_type(VkPhysicalDevice physical_device, uint32_t filter,
+[[nodiscard]] std::optional<u32>
+find_memory_type(VkPhysicalDevice physical_device, u32 filter,
                  VkMemoryPropertyFlags properties_flags);
 
-[[nodiscard]] std::optional<uint32_t>
+[[nodiscard]] std::optional<u32>
 next_swapchain_image(VkDevice device, VkSwapchainKHR swapchain,
                      VkSemaphore semaphore, VkFence fence);
 
-[[nodiscard]] uint32_t
-calculate_mimap_levels(uint32_t height, uint32_t width) noexcept;
+[[nodiscard]] u32
+calculate_mimap_levels(u32 height, u32 width) noexcept;
 
 } // namespace mvk::detail
 
@@ -96,7 +96,7 @@ void
 present_swapchain(types::queue const present_queue,
                   types::swapchain const swapchain,
                   types::semaphore const render_finished,
-                  uint32_t const image_index, Checker && check) noexcept
+                  u32 const image_index, Checker && check) noexcept
 {
   auto const signal_semaphores = std::array{types::get(render_finished)};
   auto const swapchains = std::array{types::get(swapchain)};
@@ -106,10 +106,9 @@ present_swapchain(types::queue const present_queue,
   {
     auto info = VkPresentInfoKHR();
     info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    info.waitSemaphoreCount =
-        static_cast<uint32_t>(std::size(signal_semaphores));
+    info.waitSemaphoreCount = static_cast<u32>(std::size(signal_semaphores));
     info.pWaitSemaphores = std::data(signal_semaphores);
-    info.swapchainCount = static_cast<uint32_t>(std::size(swapchains));
+    info.swapchainCount = static_cast<u32>(std::size(swapchains));
     info.pSwapchains = std::data(swapchains);
     info.pImageIndices = std::data(image_indices);
     info.pResults = nullptr;
@@ -128,7 +127,7 @@ requires requirement_checker<Checker>
 choose_surface_format(VkPhysicalDevice physical_device, VkSurfaceKHR surface,
                       Checker && check) noexcept
 {
-  auto formats_count = uint32_t(0);
+  auto formats_count = u32(0);
   vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface,
                                        &formats_count, nullptr);
 

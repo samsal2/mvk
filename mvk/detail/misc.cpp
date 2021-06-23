@@ -35,15 +35,13 @@ submit_draw_commands(types::device const device,
   {
     auto info = VkSubmitInfo();
     info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    info.waitSemaphoreCount =
-        static_cast<uint32_t>(std::size(wait_semaphores));
+    info.waitSemaphoreCount = static_cast<u32>(std::size(wait_semaphores));
     info.pWaitSemaphores = std::data(wait_semaphores);
     info.pWaitDstStageMask = std::data(wait_stages);
-    info.commandBufferCount =
-        static_cast<uint32_t>(std::size(command_buffers));
+    info.commandBufferCount = static_cast<u32>(std::size(command_buffers));
     info.pCommandBuffers = std::data(command_buffers);
     info.signalSemaphoreCount =
-        static_cast<uint32_t>(std::size(signal_semaphores));
+        static_cast<u32>(std::size(signal_semaphores));
     info.pSignalSemaphores = std::data(signal_semaphores);
     return info;
   }();
@@ -115,7 +113,7 @@ transition_layout(types::device const device,
                   types::command_pool const command_pool,
                   types::image const image, VkImageLayout const old_layout,
                   VkImageLayout const new_layout,
-                  uint32_t const mipmap_levels) noexcept
+                  u32 const mipmap_levels) noexcept
 {
   auto const [image_memory_barrier, source_stage, destination_stage] =
       [old_layout, new_layout, &image, mipmap_levels]
@@ -207,7 +205,7 @@ stage(types::device const device,
       types::physical_device const physical_device,
       types::queue const graphics_queue, types::command_pool command_pool,
       types::image const buffer, utility::slice<std::byte const> src,
-      uint32_t width, uint32_t height) noexcept
+      u32 width, u32 height) noexcept
 {
   auto const [staging_buffer, staging_buffer_memory] =
       detail::create_staging_buffer_and_memory(device, physical_device, src);
@@ -258,8 +256,8 @@ void
 generate_mipmaps(types::device const device,
                  types::queue const graphics_queue,
                  types::command_pool const command_pool,
-                 types::image const image, uint32_t width, uint32_t height,
-                 uint32_t mipmap_levels)
+                 types::image const image, u32 width, u32 height,
+                 u32 mipmap_levels)
 {
   if (mipmap_levels == 1 || mipmap_levels == 0)
   {
@@ -303,7 +301,7 @@ generate_mipmaps(types::device const device,
     return 1;
   };
 
-  for (auto i = uint32_t(0); i < (mipmap_levels - 1); ++i)
+  for (auto i = u32(0); i < (mipmap_levels - 1); ++i)
   {
     barrier.subresourceRange.baseMipLevel = i;
     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -370,7 +368,7 @@ generate_mipmaps(types::device const device,
                                         types::get(command_buffer));
 }
 
-[[nodiscard]] std::tuple<std::vector<unsigned char>, uint32_t, uint32_t>
+[[nodiscard]] std::tuple<std::vector<unsigned char>, u32, u32>
 load_texture(std::filesystem::path const & path)
 {
   MVK_VERIFY(std::filesystem::exists(path));
@@ -381,8 +379,8 @@ load_texture(std::filesystem::path const & path)
   auto const pixels =
       stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
-  auto buffer = std::vector<unsigned char>(static_cast<uint32_t>(width) *
-                                           static_cast<uint32_t>(height) * 4 *
+  auto buffer = std::vector<unsigned char>(static_cast<u32>(width) *
+                                           static_cast<u32>(height) * 4 *
                                            sizeof(*pixels));
   std::copy(pixels,
             std::next(pixels, static_cast<int64_t>(std::size(buffer))),
@@ -465,9 +463,8 @@ submit_staging_command_buffer(
   vkQueueWaitIdle(types::get(graphics_queue));
 }
 
-[[nodiscard]] std::optional<uint32_t>
-find_memory_type(VkPhysicalDevice const physical_device,
-                 uint32_t const filter,
+[[nodiscard]] std::optional<u32>
+find_memory_type(VkPhysicalDevice const physical_device, u32 const filter,
                  VkMemoryPropertyFlags const properties_flags)
 {
   auto memory_properties = VkPhysicalDeviceMemoryProperties();
@@ -475,7 +472,7 @@ find_memory_type(VkPhysicalDevice const physical_device,
 
   auto const type_count = memory_properties.memoryTypeCount;
 
-  for (auto i = uint32_t(0); i < type_count; ++i)
+  for (auto i = u32(0); i < type_count; ++i)
   {
     auto const & current_type = memory_properties.memoryTypes[i];
     auto const current_flags = current_type.propertyFlags;
@@ -491,11 +488,11 @@ find_memory_type(VkPhysicalDevice const physical_device,
   return std::nullopt;
 }
 
-[[nodiscard]] std::optional<uint32_t>
+[[nodiscard]] std::optional<u32>
 next_swapchain_image(VkDevice const device, VkSwapchainKHR const swapchain,
                      VkSemaphore const semaphore, VkFence const fence)
 {
-  auto index = uint32_t(0);
+  auto index = u32(0);
 
   auto const result = vkAcquireNextImageKHR(
       device, swapchain, std::numeric_limits<uint64_t>::max(), semaphore,
@@ -509,11 +506,10 @@ next_swapchain_image(VkDevice const device, VkSwapchainKHR const swapchain,
   return std::nullopt;
 }
 
-[[nodiscard]] uint32_t
-calculate_mimap_levels(uint32_t const height, uint32_t const width) noexcept
+[[nodiscard]] u32
+calculate_mimap_levels(u32 const height, u32 const width) noexcept
 {
-  return static_cast<uint32_t>(
-      std::floor(std::log2(std::max(height, width))) + 1);
+  return static_cast<u32>(std::floor(std::log2(std::max(height, width))) + 1);
 }
 
 } // namespace mvk::detail

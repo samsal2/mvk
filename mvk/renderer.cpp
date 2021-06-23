@@ -91,8 +91,8 @@ renderer::init_vulkan()
   auto const queue_create_info =
       std::array{graphics_queue_create_info, present_queue_create_info};
 
-  auto const queue_create_info_count = static_cast<uint32_t>(
-      queue_indices.first != queue_indices.second ? 2 : 1);
+  auto const queue_create_info_count =
+      static_cast<u32>(queue_indices.first != queue_indices.second ? 2 : 1);
 
   auto const validation_layers = validation::validation_layers_data();
   auto const device_create_info = [validation_layers, &queue_create_info,
@@ -104,10 +104,9 @@ renderer::init_vulkan()
     info.pQueueCreateInfos = std::data(queue_create_info);
     info.pEnabledFeatures = &features;
     info.enabledExtensionCount =
-        static_cast<uint32_t>(std::size(device_extensions));
+        static_cast<u32>(std::size(device_extensions));
     info.ppEnabledExtensionNames = std::data(device_extensions);
-    info.enabledLayerCount =
-        static_cast<uint32_t>(std::size(validation_layers));
+    info.enabledLayerCount = static_cast<u32>(std::size(validation_layers));
     info.ppEnabledLayerNames = std::data(validation_layers);
     return info;
   }();
@@ -134,8 +133,8 @@ renderer::init_swapchain()
   auto const swapchain_create_info = [this, &family_indices]
   {
     auto const framebuffer_size = window_.query_framebuffer_size();
-    auto const width = static_cast<uint32_t>(framebuffer_size.width_);
-    auto const height = static_cast<uint32_t>(framebuffer_size.height_);
+    auto const width = static_cast<u32>(framebuffer_size.width_);
+    auto const height = static_cast<u32>(framebuffer_size.height_);
     auto const format = detail::choose_surface_format(
         types::get(physical_device_), types::get(surface_),
         detail::default_format_checker);
@@ -184,7 +183,7 @@ renderer::init_swapchain()
   swapchain_ = types::unique_swapchain::create(types::get(device_),
                                                swapchain_create_info);
 
-  auto swapchain_images_count = uint32_t(0);
+  auto swapchain_images_count = u32(0);
   vkGetSwapchainImagesKHR(types::get(device_), types::get(swapchain_),
                           &swapchain_images_count, nullptr);
 
@@ -478,7 +477,7 @@ renderer::init_main_renderpass()
   {
     auto info = VkRenderPassCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    info.attachmentCount = static_cast<uint32_t>(std::size(attachments));
+    info.attachmentCount = static_cast<u32>(std::size(attachments));
     info.pAttachments = std::data(attachments);
     info.subpassCount = 1;
     info.pSubpasses = &subpass_description;
@@ -506,7 +505,7 @@ renderer::init_framebuffers()
       auto info = VkFramebufferCreateInfo();
       info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
       info.renderPass = types::get(render_pass_);
-      info.attachmentCount = static_cast<uint32_t>(std::size(attachments));
+      info.attachmentCount = static_cast<u32>(std::size(attachments));
       info.pAttachments = std::data(attachments);
       info.width = extent_.width;
       info.height = extent_.height;
@@ -524,7 +523,7 @@ renderer::init_framebuffers()
 void
 renderer::init_commands()
 {
-  auto const count = static_cast<uint32_t>(std::size(framebuffers_));
+  auto const count = static_cast<u32>(std::size(framebuffers_));
 
   auto info = VkCommandBufferAllocateInfo();
   info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -567,8 +566,7 @@ renderer::init_descriptors()
   {
     auto info = VkDescriptorSetLayoutCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    info.bindingCount =
-        static_cast<uint32_t>(std::size(descriptor_set_bindings));
+    info.bindingCount = static_cast<u32>(std::size(descriptor_set_bindings));
     info.pBindings = std::data(descriptor_set_bindings);
     return info;
   }();
@@ -576,8 +574,7 @@ renderer::init_descriptors()
   descriptor_set_layout_ = types::unique_descriptor_set_layout::create(
       types::get(device_), descriptor_set_layout_create_info);
 
-  auto const images_count =
-      static_cast<uint32_t>(std::size(swapchain_images_));
+  auto const images_count = static_cast<u32>(std::size(swapchain_images_));
 
   auto const uniform_pool_size = [images_count]
   {
@@ -603,8 +600,7 @@ renderer::init_descriptors()
   {
     auto info = VkDescriptorPoolCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    info.poolSizeCount =
-        static_cast<uint32_t>(std::size(descriptor_pool_sizes));
+    info.poolSizeCount = static_cast<u32>(std::size(descriptor_pool_sizes));
     info.pPoolSizes = std::data(descriptor_pool_sizes);
     info.maxSets = images_count;
     info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -625,7 +621,7 @@ renderer::init_descriptors()
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     info.descriptorPool = types::get(descriptor_pool_);
     info.descriptorSetCount =
-        static_cast<uint32_t>(std::size(descriptor_set_layouts));
+        static_cast<u32>(std::size(descriptor_set_layouts));
     info.pSetLayouts = std::data(descriptor_set_layouts);
     return info;
   }();
@@ -714,10 +710,9 @@ renderer::init_descriptors()
 
     auto const descriptor_writes = std::array{ubo_write, image_write};
 
-    vkUpdateDescriptorSets(
-        types::get(device_),
-        static_cast<uint32_t>(std::size(descriptor_writes)),
-        std::data(descriptor_writes), 0, nullptr);
+    vkUpdateDescriptorSets(types::get(device_),
+                           static_cast<u32>(std::size(descriptor_writes)),
+                           std::data(descriptor_writes), 0, nullptr);
   }
 }
 
@@ -790,7 +785,7 @@ renderer::init_pipeline()
     info.vertexBindingDescriptionCount = 1;
     info.pVertexBindingDescriptions = &vertex_input_binding_description;
     info.vertexAttributeDescriptionCount =
-        static_cast<uint32_t>(std::size(vertex_attributes));
+        static_cast<u32>(std::size(vertex_attributes));
     info.pVertexAttributeDescriptions = std::data(vertex_attributes);
     return info;
   }();
@@ -917,7 +912,7 @@ renderer::init_pipeline()
 
     auto info = VkGraphicsPipelineCreateInfo();
     info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    info.stageCount = static_cast<uint32_t>(std::size(shader_stages));
+    info.stageCount = static_cast<u32>(std::size(shader_stages));
     info.pStages = std::data(shader_stages);
     info.pVertexInputState = &vertex_input_create_info;
     info.pInputAssemblyState = &input_assembly_create_info;
@@ -1056,7 +1051,7 @@ renderer::begin_draw()
     info.renderArea.offset.x = 0;
     info.renderArea.offset.y = 0;
     info.renderArea.extent = extent_;
-    info.clearValueCount = static_cast<uint32_t>(std::size(clear_values));
+    info.clearValueCount = static_cast<u32>(std::size(clear_values));
     info.pClearValues = std::data(clear_values);
     return info;
   }();
@@ -1108,7 +1103,7 @@ renderer::basic_draw(utility::slice<std::byte const> const vertices,
       types::get(pipeline_layout_), 0, 1,
       &types::get(descriptor_sets_[current_image_index_]), 0, nullptr);
   vkCmdDrawIndexed(types::get(current_command_buffer_),
-                   static_cast<uint32_t>(std::size(indices_)), 1, 0, 0, 0);
+                   static_cast<u32>(std::size(indices_)), 1, 0, 0, 0);
 }
 
 void
