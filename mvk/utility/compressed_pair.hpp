@@ -11,10 +11,12 @@ namespace mvk::utility
 template <size_t Idx, typename T, bool IsEmpty = std::is_empty_v<T>>
 class compressed_pair_leaf : public T
 {
+public:
   using value_type = T;
   using base = T;
+  using reference = value_type &;
+  using const_reference = value_type const &;
 
-public:
   constexpr compressed_pair_leaf() noexcept = default;
 
   template <typename U>
@@ -40,9 +42,11 @@ public:
 template <size_t Idx, typename T>
 class compressed_pair_leaf<Idx, T, false>
 {
-  using value_type = T;
-
 public:
+  using value_type = T;
+  using reference = value_type &;
+  using const_reference = value_type const &;
+
   constexpr compressed_pair_leaf() noexcept = default;
 
   template <typename U>
@@ -86,25 +90,25 @@ public:
   {
   }
 
-  [[nodiscard]] constexpr decltype(auto)
+  [[nodiscard]] constexpr typename leaf1::const_reference
   first() const noexcept
   {
     return static_cast<leaf1 const &>(*this).get();
   }
 
-  [[nodiscard]] constexpr decltype(auto)
+  [[nodiscard]] constexpr typename leaf1::reference
   first() noexcept
   {
     return static_cast<leaf1 &>(*this).get();
   }
 
-  [[nodiscard]] constexpr decltype(auto)
+  [[nodiscard]] constexpr typename leaf2::const_reference
   second() const noexcept
   {
     return static_cast<leaf2 const &>(*this).get();
   }
 
-  [[nodiscard]] constexpr decltype(auto)
+  [[nodiscard]] constexpr typename leaf2::reference
   second() noexcept
   {
     return static_cast<leaf2 &>(*this).get();
