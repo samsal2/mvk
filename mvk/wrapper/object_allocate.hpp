@@ -54,8 +54,7 @@ public:
 
     for (auto const handle : handles)
     {
-      using deleter_type = typename wrapper_type::deleter_type;
-      wrappers.emplace_back(handle, deleter_type(parent, pool));
+      wrappers.emplace_back(handle, parent, pool);
     }
 
     return wrappers;

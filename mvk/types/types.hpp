@@ -9,8 +9,10 @@
 
 namespace mvk::types
 {
+
 using device_size = VkDeviceSize;
 using queue_index = u32;
+using flags = VkFlags;
 
 template <typename Wrapper>
 constexpr decltype(auto)

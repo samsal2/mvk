@@ -44,11 +44,12 @@ public:
 
   constexpr unique() noexcept = default;
 
-  template <typename HandleArg, typename DeleterArg = deleter_type>
+  template <typename HandleArg, typename... DeleterArgs>
+  requires utility::not_this<HandleArg, unique>
   constexpr explicit unique(HandleArg && handle,
-                            DeleterArg && deleter = deleter_type()) noexcept
+                            DeleterArgs &&... deleter_args) noexcept
       : container_(std::forward<HandleArg>(handle),
-                   std::forward<DeleterArg>(deleter))
+                   deleter_type(std::forward<DeleterArgs>(deleter_args)...))
   {
   }
 

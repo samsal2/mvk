@@ -53,9 +53,7 @@ public:
     auto handle = handle_type();
 
     create_call(parent, &info, nullptr, &handle);
-
-    using deleter_type = typename wrapper_type::deleter_type;
-    return wrapper_type(handle, deleter_type(parent));
+    return wrapper_type(handle, parent);
   }
 };
 
@@ -70,9 +68,7 @@ public:
   create(VkInstance const parent) noexcept
   {
     auto handle = create_call(parent);
-
-    using deleter_type = typename wrapper_type::deleter_type;
-    return wrapper_type(handle, deleter_type(parent));
+    return wrapper_type(handle, parent);
   }
 };
 
@@ -89,9 +85,7 @@ public:
   {
     auto handle = VkPipeline();
     creator_call(device, nullptr, 1, &info, nullptr, &handle);
-
-    using deleter_type = typename wrapper_type::deleter_type;
-    return wrapper_type(handle, deleter_type(device));
+    return wrapper_type(handle, device);
   }
 };
 
