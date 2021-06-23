@@ -3,11 +3,8 @@
 
 #include "wrapper/handle_get.hpp"
 #include "wrapper/handle_only.hpp"
-#include "wrapper/object_allocate.hpp"
-#include "wrapper/object_create.hpp"
 #include "wrapper/object_destroy.hpp"
 #include "wrapper/object_free.hpp"
-#include "wrapper/owner_create.hpp"
 #include "wrapper/owner_destroy.hpp"
 #include "wrapper/unique.hpp"
 

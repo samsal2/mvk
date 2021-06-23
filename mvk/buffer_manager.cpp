@@ -68,8 +68,8 @@ buffer_manager::create_new_buffers_and_memories(
 
   auto const create_buffer = [this, &vertex_buffer_create_info]
   {
-    return types::unique_buffer::create(types::get(device_),
-                                        vertex_buffer_create_info);
+    return types::create_unique_buffer(types::get(device_),
+                                       vertex_buffer_create_info);
   };
 
   std::generate(std::begin(buffers_), std::end(buffers_), create_buffer);
@@ -105,7 +105,7 @@ buffer_manager::create_new_buffers_and_memories(
   allocate_info.allocationSize = std::size(buffers_) * aligned_size_;
   allocate_info.memoryTypeIndex = memory_type_index.value();
   buffers_memory_ =
-      types::unique_device_memory::create(types::get(device_), allocate_info);
+      types::create_unique_device_memory(types::get(device_), allocate_info);
 
   for (size_t i = 0; i < std::size(buffers_); ++i)
   {

@@ -30,9 +30,9 @@ storage_selector([[maybe_unused]] storage::handle_only option) noexcept
 template <typename Handle>
 class handle_only
 {
+public:
   using handle_type = Handle;
 
-public:
   constexpr handle_only() noexcept = default;
 
   template <typename HandleArg>

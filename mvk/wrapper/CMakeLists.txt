@@ -1,6 +1,4 @@
-target_sources(${PROJECT_NAME} PRIVATE object_allocate.hpp
-                                       any_wrapper.hpp
-                                       object_create.hpp
+target_sources(${PROJECT_NAME} PRIVATE any_wrapper.hpp
                                        fwd.hpp
                                        handle_only.hpp
                                        handle_get.hpp

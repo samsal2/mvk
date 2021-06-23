@@ -405,7 +405,7 @@ create_staging_buffer_and_memory(
     info.size = size;
     info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    return types::unique_buffer::create(types::get(device), info);
+    return types::create_unique_buffer(types::decay(device), info);
   }();
 
   auto buffer_memory = [&device, physical_device, &staging_buffer]
@@ -427,7 +427,7 @@ create_staging_buffer_and_memory(
     info.allocationSize = requirements.size;
     info.memoryTypeIndex = memory_type_index.value();
 
-    return types::unique_device_memory::create(types::get(device), info);
+    return types::create_unique_device_memory(types::decay(device), info);
   }();
 
   vkBindBufferMemory(types::parent(staging_buffer),

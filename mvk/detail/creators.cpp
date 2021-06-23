@@ -36,7 +36,7 @@ create_instance(types::window const & window,
     return info;
   }();
 
-  return types::unique_instance::create(instance_create_info);
+  return types::create_unique_instance(instance_create_info);
 }
 
 [[nodiscard]] types::unique_shader_module
@@ -47,7 +47,7 @@ create_shader_module(types::device const device,
   info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   info.codeSize = static_cast<u32>(std::size(code));
   info.pCode = reinterpret_cast<u32 const *>(std::data(code));
-  return types::unique_shader_module::create(types::get(device), info);
+  return types::create_unique_shader_module(types::get(device), info);
 }
 
 [[nodiscard]] types::unique_command_pool
@@ -59,7 +59,7 @@ create_command_pool(types::device const device,
   info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   info.queueFamilyIndex = queue_index;
   info.flags = flags;
-  return types::unique_command_pool::create(types::get(device), info);
+  return types::create_unique_command_pool(types::get(device), info);
 }
 
 [[nodiscard]] std::vector<types::unique_command_buffer>
@@ -72,7 +72,7 @@ create_command_buffers(types::device const device,
   info.commandPool = types::get(pool);
   info.level = level;
   info.commandBufferCount = count;
-  return types::unique_command_buffer::allocate(types::get(device), info);
+  return types::allocate_unique_command_buffers(types::get(device), info);
 }
 
 [[nodiscard]] types::unique_device_memory
@@ -97,7 +97,7 @@ create_device_memory(types::device const device,
   allocate_info.memoryTypeIndex = memory_type_index.value();
 
   auto tmp =
-      types::unique_device_memory::create(types::get(device), allocate_info);
+      types::create_unique_device_memory(types::get(device), allocate_info);
   vkBindBufferMemory(types::parent(tmp), types::get(buffer), types::get(tmp),
                      0);
   return tmp;
@@ -125,7 +125,7 @@ create_device_memory(types::device const device,
   allocate_info.memoryTypeIndex = memory_type_index.value();
 
   auto tmp =
-      types::unique_device_memory::create(types::get(device), allocate_info);
+      types::create_unique_device_memory(types::get(device), allocate_info);
   vkBindImageMemory(types::parent(tmp), types::get(buffer), types::get(tmp),
                     0);
   return tmp;
