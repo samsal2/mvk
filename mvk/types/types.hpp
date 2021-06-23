@@ -296,92 +296,96 @@ using swapchain = wrapper::any_wrapper<
     wrapper::options::storage<wrapper::storage::handle_only>,
     wrapper::options::handle<VkSwapchainKHR>>;
 
-[[nodiscard]] unique_buffer
-create_unique_buffer(device device, VkBufferCreateInfo const & info) noexcept;
+[[nodiscard]] types::unique_buffer
+create_unique_buffer(types::device device,
+                     VkBufferCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_pipeline_layout
+[[nodiscard]] types::unique_pipeline_layout
 create_unique_pipeline_layout(
-    device device, VkPipelineLayoutCreateInfo const & info) noexcept;
+    types::device device, VkPipelineLayoutCreateInfo const & info) noexcept;
 
 [[nodiscard]] std::vector<unique_command_buffer>
 allocate_unique_command_buffers(
-    device device, VkCommandBufferAllocateInfo const & info) noexcept;
+    types::device device, VkCommandBufferAllocateInfo const & info) noexcept;
 
-[[nodiscard]] unique_command_pool
-create_unique_command_pool(device device,
+[[nodiscard]] types::unique_command_pool
+create_unique_command_pool(types::device device,
                            VkCommandPoolCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_debug_messenger
-create_unique_debug_messenger(instance instance) noexcept;
+[[nodiscard]] types::unique_debug_messenger
+create_unique_debug_messenger(types::instance instance) noexcept;
 
-[[nodiscard]] unique_descriptor_pool
+[[nodiscard]] types::unique_descriptor_pool
 create_unique_descriptor_pool(
-    device device, VkDescriptorPoolCreateInfo const & info) noexcept;
+    types::device device, VkDescriptorPoolCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_descriptor_set_layout
+[[nodiscard]] types::unique_descriptor_set_layout
 create_unique_descriptor_set_layout(
-    device device, VkDescriptorSetLayoutCreateInfo const & info) noexcept;
+    types::device device,
+    VkDescriptorSetLayoutCreateInfo const & info) noexcept;
 
 [[nodiscard]] std::vector<unique_descriptor_set>
 allocate_unique_descriptor_sets(
-    device device, VkDescriptorSetAllocateInfo const & info) noexcept;
+    types::device device, VkDescriptorSetAllocateInfo const & info) noexcept;
 
 [[nodiscard]] queue
-get_queue(device device, queue_index index) noexcept;
+get_queue(types::device device, queue_index index) noexcept;
 
-[[nodiscard]] unique_device_memory
-create_unique_device_memory(device device,
+[[nodiscard]] types::unique_device_memory
+create_unique_device_memory(types::device device,
                             VkMemoryAllocateInfo const & info) noexcept;
 
-[[nodiscard]] unique_device
-create_unique_device(physical_device physical_device,
+[[nodiscard]] types::unique_device
+create_unique_device(types::physical_device physical_device,
                      VkDeviceCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_fence
-create_unique_fence(device device, VkFenceCreateInfo const & info) noexcept;
+[[nodiscard]] types::unique_fence
+create_unique_fence(types::device device,
+                    VkFenceCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_framebuffer
-create_unique_framebuffer(device device,
+[[nodiscard]] types::unique_framebuffer
+create_unique_framebuffer(types::device device,
                           VkFramebufferCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_image_view
-create_unique_image_view(device device,
+[[nodiscard]] types::unique_image_view
+create_unique_image_view(types::device device,
                          VkImageViewCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_instance
+[[nodiscard]] types::unique_instance
 create_unique_instance(VkInstanceCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_pipeline
-create_unique_pipeline(device device,
+[[nodiscard]] types::unique_pipeline
+create_unique_pipeline(types::device device,
                        VkGraphicsPipelineCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_render_pass
-create_unique_render_pass(device device,
+[[nodiscard]] types::unique_render_pass
+create_unique_render_pass(types::device device,
                           VkRenderPassCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_sampler
-create_unique_sampler(device device,
+[[nodiscard]] types::unique_sampler
+create_unique_sampler(types::device device,
                       VkSamplerCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_semaphore
-create_unique_semaphore(device device,
+[[nodiscard]] types::unique_semaphore
+create_unique_semaphore(types::device device,
                         VkSemaphoreCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_image
-create_unique_image(device device, VkImageCreateInfo const & info) noexcept;
+[[nodiscard]] types::unique_image
+create_unique_image(types::device device,
+                    VkImageCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_shader_module
-create_unique_shader_module(device device,
+[[nodiscard]] types::unique_shader_module
+create_unique_shader_module(types::device device,
                             VkShaderModuleCreateInfo const & info) noexcept;
 
-[[nodiscard]] unique_swapchain
-create_unique_swapchain(device device,
+[[nodiscard]] types::unique_swapchain
+create_unique_swapchain(types::device device,
                         VkSwapchainCreateInfoKHR const & info) noexcept;
 
-[[nodiscard]] unique_debug_messenger
+[[nodiscard]] types::unique_debug_messenger
 create_unique_debug_messenger(instance const instance) noexcept
 {
-  return unique_debug_messenger(
+  return types::unique_debug_messenger(
       validation::setup_debug_messenger(types::get(instance)),
       types::get(instance));
 }
