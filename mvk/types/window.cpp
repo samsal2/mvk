@@ -6,87 +6,80 @@
 
 namespace mvk::types
 {
-window::window(extent const extent) noexcept
-{
-  glfwInit();
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-  auto const callback = [](GLFWwindow * const window_ptr,
-                           [[maybe_unused]] int const callback_width,
-                           [[maybe_unused]] int const callback_height)
+  window::window( extent const extent ) noexcept
   {
-    auto const user_ptr = glfwGetWindowUserPointer(window_ptr);
-    auto const ctx = reinterpret_cast<window *>(user_ptr);
-    ctx->set_framebuffer_resized(true);
-  };
+    glfwInit();
+    glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
 
-  auto const [width, height] = extent;
+    auto const callback = []( GLFWwindow * const         window_ptr,
+                              [[maybe_unused]] int const callback_width,
+                              [[maybe_unused]] int const callback_height )
+    {
+      auto const user_ptr = glfwGetWindowUserPointer( window_ptr );
+      auto const ctx      = reinterpret_cast<window *>( user_ptr );
+      ctx->set_framebuffer_resized( true );
+    };
 
-  auto ptr = glfwCreateWindow(width, height, "stan loona", nullptr, nullptr);
-  instance_ = std::unique_ptr<GLFWwindow, deleter>(ptr);
+    auto const [width, height] = extent;
 
-  glfwSetWindowUserPointer(get(), this);
-  glfwSetFramebufferSizeCallback(get(), callback);
-}
+    auto ptr  = glfwCreateWindow( width, height, "stan loona", nullptr, nullptr );
+    instance_ = std::unique_ptr<GLFWwindow, deleter>( ptr );
 
-void
-window::deleter::operator()(GLFWwindow * const window) const noexcept
-{
-  if (window != nullptr)
-  {
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    glfwSetWindowUserPointer( get(), this );
+    glfwSetFramebufferSizeCallback( get(), callback );
   }
-}
 
-void
-window::set_framebuffer_resized(bool const resized) noexcept
-{
-  framebuffer_resized_ = resized;
-}
-
-[[nodiscard]] std::vector<char const *>
-window::required_extensions() const noexcept
-{
-  auto const glfw_extensions = []
+  void window::deleter::operator()( GLFWwindow * const window ) const noexcept
   {
-    auto count = u32(0);
-    auto const data = glfwGetRequiredInstanceExtensions(&count);
-    return utility::slice(data, count);
-  }();
+    if ( window != nullptr )
+    {
+      glfwDestroyWindow( window );
+      glfwTerminate();
+    }
+  }
 
-  auto instance_extensions = validation::required_instance_extensions();
-
-  auto extensions = std::vector<char const *>();
-
-  extensions.insert(std::end(extensions), std::begin(instance_extensions),
-                    std::end(instance_extensions));
-
-  extensions.insert(std::end(extensions), std::begin(glfw_extensions),
-                    std::end(glfw_extensions));
-
-  return extensions;
-}
-
-[[nodiscard]] window::extent
-window::query_framebuffer_size() const noexcept
-{
-  auto width = 0;
-  auto height = 0;
-
-  do
+  void window::set_framebuffer_resized( bool const resized ) noexcept
   {
-    glfwGetFramebufferSize(get(), &width, &height);
-    glfwWaitEvents();
-  } while (width == 0 || height == 0);
+    framebuffer_resized_ = resized;
+  }
 
-  return {width, height};
-}
+  [[nodiscard]] std::vector<char const *> window::required_extensions() const noexcept
+  {
+    auto const glfw_extensions = []
+    {
+      auto       count = u32( 0 );
+      auto const data  = glfwGetRequiredInstanceExtensions( &count );
+      return utility::slice( data, count );
+    }();
 
-[[nodiscard]] bool
-window::should_close() const noexcept
-{
-  return glfwWindowShouldClose(get()) != 0;
-}
+    auto instance_extensions = validation::required_instance_extensions();
 
-} // namespace mvk::types
+    auto extensions = std::vector<char const *>();
+
+    extensions.insert( std::end( extensions ), std::begin( instance_extensions ), std::end( instance_extensions ) );
+
+    extensions.insert( std::end( extensions ), std::begin( glfw_extensions ), std::end( glfw_extensions ) );
+
+    return extensions;
+  }
+
+  [[nodiscard]] window::extent window::query_framebuffer_size() const noexcept
+  {
+    auto width  = 0;
+    auto height = 0;
+
+    do
+    {
+      glfwGetFramebufferSize( get(), &width, &height );
+      glfwWaitEvents();
+    } while ( width == 0 || height == 0 );
+
+    return { width, height };
+  }
+
+  [[nodiscard]] bool window::should_close() const noexcept
+  {
+    return glfwWindowShouldClose( get() ) != 0;
+  }
+
+}  // namespace mvk::types

@@ -1,8 +1,6 @@
 
-target_sources(${PROJECT_NAME} PRIVATE buffer_manager.hpp 
-                                       buffer_manager.cpp
-                                       renderer.hpp 
-                                       renderer.cpp
+target_sources(${PROJECT_NAME} PRIVATE context.hpp 
+                                       context.cpp
                                        basic_types.hpp
                                        shader_types.hpp
                                        main.cpp)

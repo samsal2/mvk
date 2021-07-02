@@ -1,12 +1,10 @@
-#include "renderer.hpp"
+#include "context.hpp"
 #include "utility/verify.hpp"
 
-int
-main()
+int main()
 {
-  auto rdr = mvk::renderer();
-  rdr.init();
-  rdr.run();
+  auto ctx = mvk::create_context( "stan loona", { 600, 600 } );
+  mvk::test_run( ctx );
 
   return 0;
 }

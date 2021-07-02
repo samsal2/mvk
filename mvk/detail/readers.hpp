@@ -10,12 +10,11 @@
 
 namespace mvk::detail
 {
-[[nodiscard]] std::pair<std::vector<vertex>, std::vector<u32>>
-read_object(std::filesystem::path const & path) noexcept;
+  [[nodiscard]] std::pair<std::vector<vertex>, std::vector<u32>>
+    read_object( std::filesystem::path const & path ) noexcept;
 
-[[nodiscard]] std::vector<char>
-read_file(std::filesystem::path const & path) noexcept;
+  [[nodiscard]] std::vector<char> read_file( std::filesystem::path const & path ) noexcept;
 
-} // namespace mvk::detail
+}  // namespace mvk::detail
 
 #endif
