@@ -133,8 +133,11 @@ namespace mvk
 
   void init_debug_messenger( context & ctx ) noexcept
   {
-    ctx.debug_messenger_ =
-      types::create_unique_debug_messenger( types::get( ctx.instance_ ), detail::debug_create_info );
+    if ( context::use_validation )
+    {
+      ctx.debug_messenger_ =
+        types::create_unique_debug_messenger( types::get( ctx.instance_ ), detail::debug_create_info );
+    }
   }
 
   void init_surface( context & ctx ) noexcept
@@ -1720,7 +1723,9 @@ namespace mvk
     }();
 
     ctx.staging_memory_ = types::create_unique_device_memory( types::get( ctx.device_ ), staging_memory_allocate_info );
-    ctx.staging_data_   = detail::map_memory( types::decay( ctx.device_ ), types::decay( ctx.staging_memory_ ) );
+    ctx.staging_data_   = detail::map_memory( types::decay( ctx.device_ ),
+                                            types::decay( ctx.staging_memory_ ),
+                                            context::dynamic_buffer_count * ctx.staging_aligned_size_ );
 
     for ( size_t i = 0; i < context::dynamic_buffer_count; ++i )
     {
@@ -1987,7 +1992,9 @@ namespace mvk
     }();
 
     ctx.uniform_memory_ = types::create_unique_device_memory( types::get( ctx.device_ ), uniform_memory_allocate_info );
-    ctx.uniform_data_   = detail::map_memory( types::decay( ctx.device_ ), types::decay( ctx.uniform_memory_ ) );
+    ctx.uniform_data_   = detail::map_memory( types::decay( ctx.device_ ),
+                                            types::decay( ctx.uniform_memory_ ),
+                                            context::dynamic_buffer_count * ctx.uniform_aligned_size_ );
     ctx.uniform_descriptor_sets_ = allocate_descriptor_sets<context::dynamic_buffer_count>(
       ctx, types::decay( ctx.uniform_descriptor_set_layout_ ) );
 

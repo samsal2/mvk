@@ -52,7 +52,12 @@ namespace mvk
 {
   struct context
   {
-    static constexpr auto use_validation                 = true;
+#ifndef NDEBUG
+    static constexpr auto use_validation = true;
+#else
+    static constexpr auto use_validation = false;
+#endif
+
     static constexpr auto validation_layers              = std::array{ "VK_LAYER_KHRONOS_validation" };
     static constexpr auto validation_instance_extensions = std::array{ VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
 
