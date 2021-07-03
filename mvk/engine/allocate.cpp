@@ -16,28 +16,24 @@ namespace mvk::engine
     info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     info.commandBufferCount = 1;
 
-    auto command_buffer = VkCommandBuffer();
-    auto result         = vkAllocateCommandBuffers( ctx.device, &info, &command_buffer );
+    auto                  command_buffer = VkCommandBuffer();
+    [[maybe_unused]] auto result         = vkAllocateCommandBuffers( ctx.device, &info, &command_buffer );
     MVK_VERIFY( result == VK_SUCCESS );
     return command_buffer;
   }
 
   void create_vertex_buffers_and_memories( context & ctx, VkDeviceSize size ) noexcept
   {
-    auto const vertex_buffer_create_info = [ size ]
-    {
-      auto info        = VkBufferCreateInfo();
-      info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-      info.size        = size;
-      info.usage       = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-      info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-      return info;
-    }();
+    auto vertex_buffer_create_info        = VkBufferCreateInfo();
+    vertex_buffer_create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    vertex_buffer_create_info.size        = size;
+    vertex_buffer_create_info.usage       = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    vertex_buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     auto const create_buffer = [ &ctx, &vertex_buffer_create_info ]
     {
-      auto buffer = VkBuffer();
-      auto result = vkCreateBuffer( ctx.device, &vertex_buffer_create_info, nullptr, &buffer );
+      auto                  buffer = VkBuffer();
+      [[maybe_unused]] auto result = vkCreateBuffer( ctx.device, &vertex_buffer_create_info, nullptr, &buffer );
       MVK_VERIFY( result == VK_SUCCESS );
       return buffer;
     };
@@ -55,16 +51,13 @@ namespace mvk::engine
 
     MVK_VERIFY( memory_type_index.has_value() );
 
-    auto vertex_memory_allocate_info = [ &ctx, memory_type_index ]
-    {
-      auto info            = VkMemoryAllocateInfo();
-      info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-      info.allocationSize  = context::dynamic_buffer_count * ctx.vertex_aligned_size;
-      info.memoryTypeIndex = memory_type_index.value();
-      return info;
-    }();
+    auto vertex_memory_allocate_info            = VkMemoryAllocateInfo();
+    vertex_memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    vertex_memory_allocate_info.allocationSize  = context::dynamic_buffer_count * ctx.vertex_aligned_size;
+    vertex_memory_allocate_info.memoryTypeIndex = memory_type_index.value();
 
-    auto result = vkAllocateMemory( ctx.device, &vertex_memory_allocate_info, nullptr, &ctx.vertex_memory );
+    [[maybe_unused]] auto result =
+      vkAllocateMemory( ctx.device, &vertex_memory_allocate_info, nullptr, &ctx.vertex_memory );
     MVK_VERIFY( result == VK_SUCCESS );
 
     for ( size_t i = 0; i < context::dynamic_buffer_count; ++i )
@@ -75,20 +68,16 @@ namespace mvk::engine
 
   void create_index_buffers_and_memories( context & ctx, VkDeviceSize size ) noexcept
   {
-    auto const index_buffer_create_info = [ size ]
-    {
-      auto info        = VkBufferCreateInfo();
-      info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-      info.size        = size;
-      info.usage       = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-      info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-      return info;
-    }();
+    auto index_buffer_create_info        = VkBufferCreateInfo();
+    index_buffer_create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    index_buffer_create_info.size        = size;
+    index_buffer_create_info.usage       = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    index_buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     auto const create_buffer = [ &ctx, &index_buffer_create_info ]
     {
-      auto buffer = VkBuffer();
-      auto result = vkCreateBuffer( ctx.device, &index_buffer_create_info, nullptr, &buffer );
+      auto                  buffer = VkBuffer();
+      [[maybe_unused]] auto result = vkCreateBuffer( ctx.device, &index_buffer_create_info, nullptr, &buffer );
       MVK_VERIFY( result == VK_SUCCESS );
       return buffer;
     };
@@ -106,16 +95,13 @@ namespace mvk::engine
 
     MVK_VERIFY( memory_type_index.has_value() );
 
-    auto index_memory_allocate_info = [ &ctx, memory_type_index ]
-    {
-      auto info            = VkMemoryAllocateInfo();
-      info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-      info.allocationSize  = context::dynamic_buffer_count * ctx.index_aligned_size;
-      info.memoryTypeIndex = memory_type_index.value();
-      return info;
-    }();
+    auto index_memory_allocate_info            = VkMemoryAllocateInfo();
+    index_memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    index_memory_allocate_info.allocationSize  = context::dynamic_buffer_count * ctx.index_aligned_size;
+    index_memory_allocate_info.memoryTypeIndex = memory_type_index.value();
 
-    auto result = vkAllocateMemory( ctx.device, &index_memory_allocate_info, nullptr, &ctx.index_memory );
+    [[maybe_unused]] auto result =
+      vkAllocateMemory( ctx.device, &index_memory_allocate_info, nullptr, &ctx.index_memory );
     MVK_VERIFY( result == VK_SUCCESS );
 
     for ( size_t i = 0; i < context::dynamic_buffer_count; ++i )
@@ -126,20 +112,16 @@ namespace mvk::engine
 
   void create_staging_buffers_and_memories( context & ctx, VkDeviceSize size ) noexcept
   {
-    auto const staging_buffer_create_info = [ size ]
-    {
-      auto info        = VkBufferCreateInfo();
-      info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-      info.size        = size;
-      info.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-      info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-      return info;
-    }();
+    auto staging_buffer_create_info        = VkBufferCreateInfo();
+    staging_buffer_create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    staging_buffer_create_info.size        = size;
+    staging_buffer_create_info.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    staging_buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     auto const create_buffer = [ &ctx, &staging_buffer_create_info ]
     {
-      auto buffer = VkBuffer();
-      auto result = vkCreateBuffer( ctx.device, &staging_buffer_create_info, nullptr, &buffer );
+      auto                  buffer = VkBuffer();
+      [[maybe_unused]] auto result = vkCreateBuffer( ctx.device, &staging_buffer_create_info, nullptr, &buffer );
       MVK_VERIFY( result == VK_SUCCESS );
       return buffer;
     };
@@ -159,16 +141,13 @@ namespace mvk::engine
 
     MVK_VERIFY( memory_type_index.value() );
 
-    auto staging_memory_allocate_info = [ &ctx, memory_type_index ]
-    {
-      auto info            = VkMemoryAllocateInfo();
-      info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-      info.allocationSize  = context::dynamic_buffer_count * ctx.staging_aligned_size;
-      info.memoryTypeIndex = memory_type_index.value();
-      return info;
-    }();
+    auto staging_memory_allocate_info            = VkMemoryAllocateInfo();
+    staging_memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    staging_memory_allocate_info.allocationSize  = context::dynamic_buffer_count * ctx.staging_aligned_size;
+    staging_memory_allocate_info.memoryTypeIndex = memory_type_index.value();
 
-    auto result = vkAllocateMemory( ctx.device, &staging_memory_allocate_info, nullptr, &ctx.staging_memory );
+    [[maybe_unused]] auto result =
+      vkAllocateMemory( ctx.device, &staging_memory_allocate_info, nullptr, &ctx.staging_memory );
     MVK_VERIFY( result == VK_SUCCESS );
 
     ctx.staging_data =
@@ -243,26 +222,18 @@ namespace mvk::engine
       ctx.vertex_offsets[ ctx.current_buffer_index ] = 0;
     }
 
-    auto const begin_info = []
-    {
-      auto info             = VkCommandBufferBeginInfo();
-      info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-      info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-      info.pInheritanceInfo = nullptr;
-      return info;
-    }();
+    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
+    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    command_buffer_begin_info.pInheritanceInfo = nullptr;
 
-    auto const copy_region = [ allocation, &ctx ]
-    {
-      auto region      = VkBufferCopy();
-      region.srcOffset = allocation.offset_;
-      region.dstOffset = ctx.vertex_offsets[ ctx.current_buffer_index ];
-      region.size      = allocation.size_;
-      return region;
-    }();
+    auto copy_region      = VkBufferCopy();
+    copy_region.srcOffset = allocation.offset_;
+    copy_region.dstOffset = ctx.vertex_offsets[ ctx.current_buffer_index ];
+    copy_region.size      = allocation.size_;
 
     auto const command_buffer = allocate_single_use_command_buffer( ctx );
-    vkBeginCommandBuffer( command_buffer, &begin_info );
+    vkBeginCommandBuffer( command_buffer, &command_buffer_begin_info );
 
     vkCmdCopyBuffer(
       command_buffer, allocation.buffer_, ctx.vertex_buffers[ ctx.current_buffer_index ], 1, &copy_region );
@@ -294,26 +265,18 @@ namespace mvk::engine
       ctx.index_offsets[ ctx.current_buffer_index ] = 0;
     }
 
-    auto const begin_info = []
-    {
-      auto info             = VkCommandBufferBeginInfo();
-      info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-      info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-      info.pInheritanceInfo = nullptr;
-      return info;
-    }();
+    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
+    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    command_buffer_begin_info.pInheritanceInfo = nullptr;
 
-    auto const copy_region = [ allocation, &ctx ]
-    {
-      auto region      = VkBufferCopy();
-      region.srcOffset = allocation.offset_;
-      region.dstOffset = ctx.index_offsets[ ctx.current_buffer_index ];
-      region.size      = allocation.size_;
-      return region;
-    }();
+    auto copy_region      = VkBufferCopy();
+    copy_region.srcOffset = allocation.offset_;
+    copy_region.dstOffset = ctx.index_offsets[ ctx.current_buffer_index ];
+    copy_region.size      = allocation.size_;
 
     auto const command_buffer = allocate_single_use_command_buffer( ctx );
-    vkBeginCommandBuffer( command_buffer, &begin_info );
+    vkBeginCommandBuffer( command_buffer, &command_buffer_begin_info );
 
     vkCmdCopyBuffer(
       command_buffer, allocation.buffer_, ctx.index_buffers[ ctx.current_buffer_index ], 1, &copy_region );
@@ -336,20 +299,16 @@ namespace mvk::engine
 
   void create_uniform_buffers_memories_and_sets( context & ctx, VkDeviceSize size ) noexcept
   {
-    auto const uniform_buffer_create_info = [ size ]
-    {
-      auto info        = VkBufferCreateInfo();
-      info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-      info.size        = size;
-      info.usage       = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-      info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-      return info;
-    }();
+    auto uniform_buffer_create_info        = VkBufferCreateInfo();
+    uniform_buffer_create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    uniform_buffer_create_info.size        = size;
+    uniform_buffer_create_info.usage       = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    uniform_buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     auto const create_buffer = [ &ctx, &uniform_buffer_create_info ]
     {
-      auto buffer = VkBuffer();
-      auto result = vkCreateBuffer( ctx.device, &uniform_buffer_create_info, nullptr, &buffer );
+      auto                  buffer = VkBuffer();
+      [[maybe_unused]] auto result = vkCreateBuffer( ctx.device, &uniform_buffer_create_info, nullptr, &buffer );
       MVK_VERIFY( result == VK_SUCCESS );
       return buffer;
     };
@@ -369,16 +328,13 @@ namespace mvk::engine
 
     MVK_VERIFY( memory_type_index.value() );
 
-    auto uniform_memory_allocate_info = [ &ctx, memory_type_index ]
-    {
-      auto info            = VkMemoryAllocateInfo();
-      info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-      info.allocationSize  = context::dynamic_buffer_count * ctx.uniform_aligned_size;
-      info.memoryTypeIndex = memory_type_index.value();
-      return info;
-    }();
+    auto uniform_memory_allocate_info            = VkMemoryAllocateInfo();
+    uniform_memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    uniform_memory_allocate_info.allocationSize  = context::dynamic_buffer_count * ctx.uniform_aligned_size;
+    uniform_memory_allocate_info.memoryTypeIndex = memory_type_index.value();
 
-    auto result = vkAllocateMemory( ctx.device, &uniform_memory_allocate_info, nullptr, &ctx.uniform_memory );
+    [[maybe_unused]] auto result =
+      vkAllocateMemory( ctx.device, &uniform_memory_allocate_info, nullptr, &ctx.uniform_memory );
     MVK_VERIFY( result == VK_SUCCESS );
 
     ctx.uniform_data =
@@ -391,31 +347,23 @@ namespace mvk::engine
     {
       vkBindBufferMemory( ctx.device, ctx.uniform_buffers[ i ], ctx.uniform_memory, i * ctx.uniform_aligned_size );
 
-      auto const uniform_descriptor_buffer_info = [ &ctx, i ]
-      {
-        auto info   = VkDescriptorBufferInfo();
-        info.buffer = ctx.uniform_buffers[ i ];
-        info.offset = 0;
-        info.range  = sizeof( pvm );
-        return info;
-      }();
+      auto uniform_descriptor_buffer_info   = VkDescriptorBufferInfo();
+      uniform_descriptor_buffer_info.buffer = ctx.uniform_buffers[ i ];
+      uniform_descriptor_buffer_info.offset = 0;
+      uniform_descriptor_buffer_info.range  = sizeof( pvm );
 
-      auto const uniform_write = [ &ctx, &uniform_descriptor_buffer_info, i ]
-      {
-        auto write             = VkWriteDescriptorSet();
-        write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet           = ctx.uniform_descriptor_sets[ i ];
-        write.dstBinding       = 0;
-        write.dstArrayElement  = 0;
-        write.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-        write.descriptorCount  = 1;
-        write.pBufferInfo      = &uniform_descriptor_buffer_info;
-        write.pImageInfo       = nullptr;
-        write.pTexelBufferView = nullptr;
-        return write;
-      }();
+      auto uniform_descriptor_write_set             = VkWriteDescriptorSet();
+      uniform_descriptor_write_set.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      uniform_descriptor_write_set.dstSet           = ctx.uniform_descriptor_sets[ i ];
+      uniform_descriptor_write_set.dstBinding       = 0;
+      uniform_descriptor_write_set.dstArrayElement  = 0;
+      uniform_descriptor_write_set.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+      uniform_descriptor_write_set.descriptorCount  = 1;
+      uniform_descriptor_write_set.pBufferInfo      = &uniform_descriptor_buffer_info;
+      uniform_descriptor_write_set.pImageInfo       = nullptr;
+      uniform_descriptor_write_set.pTexelBufferView = nullptr;
 
-      vkUpdateDescriptorSets( ctx.device, 1, &uniform_write, 0, nullptr );
+      vkUpdateDescriptorSets( ctx.device, 1, &uniform_descriptor_write_set, 0, nullptr );
     }
   }
 

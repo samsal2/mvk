@@ -70,18 +70,14 @@ namespace mvk::engine
       return std::make_tuple( barrier, source_stage, destination_stage );
     }();
 
-    auto const begin_info = []
-    {
-      auto info             = VkCommandBufferBeginInfo();
-      info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-      info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-      info.pInheritanceInfo = nullptr;
-      return info;
-    }();
+    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
+    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    command_buffer_begin_info.pInheritanceInfo = nullptr;
 
     auto const command_buffer = allocate_single_use_command_buffer( ctx );
 
-    vkBeginCommandBuffer( command_buffer, &begin_info );
+    vkBeginCommandBuffer( command_buffer, &command_buffer_begin_info );
     vkCmdPipelineBarrier(
       command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier );
 
@@ -105,17 +101,13 @@ namespace mvk::engine
       return;
     }
 
-    auto const begin_info = []
-    {
-      auto info             = VkCommandBufferBeginInfo();
-      info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-      info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-      info.pInheritanceInfo = nullptr;
-      return info;
-    }();
+    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
+    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    command_buffer_begin_info.pInheritanceInfo = nullptr;
 
     auto command_buffer = allocate_single_use_command_buffer( ctx );
-    vkBeginCommandBuffer( command_buffer, &begin_info );
+    vkBeginCommandBuffer( command_buffer, &command_buffer_begin_info );
 
     auto barrier                            = VkImageMemoryBarrier();
     barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -242,37 +234,29 @@ namespace mvk::engine
   void
     stage_image( context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, VkImage image ) noexcept
   {
-    auto const begin_info = []
-    {
-      auto info             = VkCommandBufferBeginInfo();
-      info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-      info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-      info.pInheritanceInfo = nullptr;
-      return info;
-    }();
+    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
+    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    command_buffer_begin_info.pInheritanceInfo = nullptr;
 
-    auto const copy_region = [ width, height, allocation ]
-    {
-      auto region                            = VkBufferImageCopy();
-      region.bufferOffset                    = allocation.offset_;
-      region.bufferRowLength                 = 0;
-      region.bufferImageHeight               = 0;
-      region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-      region.imageSubresource.mipLevel       = 0;
-      region.imageSubresource.baseArrayLayer = 0;
-      region.imageSubresource.layerCount     = 1;
-      region.imageOffset.x                   = 0;
-      region.imageOffset.y                   = 0;
-      region.imageOffset.z                   = 0;
-      region.imageExtent.width               = width;
-      region.imageExtent.height              = height;
-      region.imageExtent.depth               = 1;
-      return region;
-    }();
+    auto copy_region                            = VkBufferImageCopy();
+    copy_region.bufferOffset                    = allocation.offset_;
+    copy_region.bufferRowLength                 = 0;
+    copy_region.bufferImageHeight               = 0;
+    copy_region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    copy_region.imageSubresource.mipLevel       = 0;
+    copy_region.imageSubresource.baseArrayLayer = 0;
+    copy_region.imageSubresource.layerCount     = 1;
+    copy_region.imageOffset.x                   = 0;
+    copy_region.imageOffset.y                   = 0;
+    copy_region.imageOffset.z                   = 0;
+    copy_region.imageExtent.width               = width;
+    copy_region.imageExtent.height              = height;
+    copy_region.imageExtent.depth               = 1;
 
     auto const command_buffer = allocate_single_use_command_buffer( ctx );
 
-    vkBeginCommandBuffer( command_buffer, &begin_info );
+    vkBeginCommandBuffer( command_buffer, &command_buffer_begin_info );
 
     vkCmdCopyBufferToImage(
       command_buffer, allocation.buffer_, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region );

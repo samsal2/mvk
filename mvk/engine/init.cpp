@@ -126,16 +126,12 @@ namespace mvk::engine
       MVK_VERIFY( result );
     }
 
-    auto application_info = [ &name ]
-    {
-      auto info               = VkApplicationInfo();
-      info.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-      info.pApplicationName   = name;
-      info.applicationVersion = VK_MAKE_VERSION( 1, 0, 0 );
-      info.pEngineName        = "No Engine";
-      info.engineVersion      = VK_MAKE_VERSION( 1, 0, 0 );
-      return info;
-    }();
+    auto application_info               = VkApplicationInfo();
+    application_info.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    application_info.pApplicationName   = name;
+    application_info.applicationVersion = VK_MAKE_VERSION( 1, 0, 0 );
+    application_info.pEngineName        = "No Engine";
+    application_info.engineVersion      = VK_MAKE_VERSION( 1, 0, 0 );
 
     auto       count = uint32_t( 0 );
     auto const data  = glfwGetRequiredInstanceExtensions( &count );
@@ -149,39 +145,35 @@ namespace mvk::engine
                                   std::end( context::validation_instance_extensions ) );
     }
 
-    auto const instance_create_info = [ &required_extensions, &application_info ]
+    auto instance_create_info  = VkInstanceCreateInfo();
+    instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+
+    if constexpr ( context::use_validation )
     {
-      auto info  = VkInstanceCreateInfo();
-      info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+      instance_create_info.pNext = &debug_create_info;
+    }
+    else
+    {
+      instance_create_info.pNext = nullptr;
+    }
 
-      if constexpr ( context::use_validation )
-      {
-        info.pNext = &debug_create_info;
-      }
-      else
-      {
-        info.pNext = nullptr;
-      }
+    instance_create_info.pApplicationInfo = &application_info;
 
-      info.pApplicationInfo = &application_info;
+    if constexpr ( context::use_validation )
+    {
+      instance_create_info.enabledLayerCount   = static_cast< uint32_t >( std::size( context::validation_layers ) );
+      instance_create_info.ppEnabledLayerNames = std::data( context::validation_layers );
+    }
+    else
+    {
+      instance_create_info.enabledLayerCount       = 0;
+      instance_create_info.ppEnabledExtensionNames = nullptr;
+    }
 
-      if constexpr ( context::use_validation )
-      {
-        info.enabledLayerCount   = static_cast< uint32_t >( std::size( context::validation_layers ) );
-        info.ppEnabledLayerNames = std::data( context::validation_layers );
-      }
-      else
-      {
-        info.enabledLayerCount       = 0;
-        info.ppEnabledExtensionNames = nullptr;
-      }
+    instance_create_info.enabledExtensionCount   = static_cast< uint32_t >( std::size( required_extensions ) );
+    instance_create_info.ppEnabledExtensionNames = std::data( required_extensions );
 
-      info.enabledExtensionCount   = static_cast< uint32_t >( std::size( required_extensions ) );
-      info.ppEnabledExtensionNames = std::data( required_extensions );
-      return info;
-    }();
-
-    auto result = vkCreateInstance( &instance_create_info, nullptr, &ctx.instance );
+    [[maybe_unused]] auto result = vkCreateInstance( &instance_create_info, nullptr, &ctx.instance );
     MVK_VERIFY( result == VK_SUCCESS );
   }
 
@@ -288,54 +280,41 @@ namespace mvk::engine
 
     auto const queue_priority = 1.0F;
 
-    auto const graphics_queue_create_info = [ &queue_priority, &ctx ]
-    {
-      auto info             = VkDeviceQueueCreateInfo();
-      info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-      info.queueFamilyIndex = ctx.graphics_queue_index;
-      info.queueCount       = 1;
-      info.pQueuePriorities = &queue_priority;
-      return info;
-    }();
+    auto graphics_queue_create_info             = VkDeviceQueueCreateInfo();
+    graphics_queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    graphics_queue_create_info.queueFamilyIndex = ctx.graphics_queue_index;
+    graphics_queue_create_info.queueCount       = 1;
+    graphics_queue_create_info.pQueuePriorities = &queue_priority;
 
-    auto const present_queue_create_info = [ &queue_priority, &ctx ]
-    {
-      auto info             = VkDeviceQueueCreateInfo();
-      info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-      info.queueFamilyIndex = ctx.present_queue_index;
-      info.queueCount       = 1;
-      info.pQueuePriorities = &queue_priority;
-      return info;
-    }();
+    auto present_queue_create_info             = VkDeviceQueueCreateInfo();
+    present_queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    present_queue_create_info.queueFamilyIndex = ctx.present_queue_index;
+    present_queue_create_info.queueCount       = 1;
+    present_queue_create_info.pQueuePriorities = &queue_priority;
 
     auto const queue_create_info       = std::array{ graphics_queue_create_info, present_queue_create_info };
     auto const queue_create_info_count = static_cast< uint32_t >( queue_indices.first != queue_indices.second ? 2 : 1 );
 
-    auto const device_create_info = [ &queue_create_info, queue_create_info_count, &features ]
+    auto device_create_info                    = VkDeviceCreateInfo();
+    device_create_info.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    device_create_info.queueCreateInfoCount    = queue_create_info_count;
+    device_create_info.pQueueCreateInfos       = std::data( queue_create_info );
+    device_create_info.pEnabledFeatures        = &features;
+    device_create_info.enabledExtensionCount   = static_cast< uint32_t >( std::size( context::device_extensions ) );
+    device_create_info.ppEnabledExtensionNames = std::data( context::device_extensions );
+
+    if constexpr ( context::use_validation )
     {
-      auto info                    = VkDeviceCreateInfo();
-      info.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-      info.queueCreateInfoCount    = queue_create_info_count;
-      info.pQueueCreateInfos       = std::data( queue_create_info );
-      info.pEnabledFeatures        = &features;
-      info.enabledExtensionCount   = static_cast< uint32_t >( std::size( context::device_extensions ) );
-      info.ppEnabledExtensionNames = std::data( context::device_extensions );
+      device_create_info.enabledLayerCount   = static_cast< uint32_t >( std::size( context::validation_layers ) );
+      device_create_info.ppEnabledLayerNames = std::data( context::validation_layers );
+    }
+    else
+    {
+      device_create_info.enabledLayerCount   = 0;
+      device_create_info.ppEnabledLayerNames = nullptr;
+    }
 
-      if constexpr ( context::use_validation )
-      {
-        info.enabledLayerCount   = static_cast< uint32_t >( std::size( context::validation_layers ) );
-        info.ppEnabledLayerNames = std::data( context::validation_layers );
-      }
-      else
-      {
-        info.enabledLayerCount   = 0;
-        info.ppEnabledLayerNames = nullptr;
-      }
-
-      return info;
-    }();
-
-    auto result = vkCreateDevice( ctx.physical_device, &device_create_info, nullptr, &ctx.device );
+    [[maybe_unused]] auto result = vkCreateDevice( ctx.physical_device, &device_create_info, nullptr, &ctx.device );
     MVK_VERIFY( result == VK_SUCCESS );
 
     vkGetDeviceQueue( ctx.device, ctx.graphics_queue_index, 0, &ctx.graphics_queue );
@@ -349,77 +328,52 @@ namespace mvk::engine
 
   void init_layouts( context & ctx ) noexcept
   {
-    auto const uniform_layout = []
-    {
-      auto layout               = VkDescriptorSetLayoutBinding();
-      layout.binding            = 0;
-      layout.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-      layout.descriptorCount    = 1;
-      layout.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT;
-      layout.pImmutableSamplers = nullptr;
-      return layout;
-    }();
+    auto uniform_descriptor_set_layout_binding               = VkDescriptorSetLayoutBinding();
+    uniform_descriptor_set_layout_binding.binding            = 0;
+    uniform_descriptor_set_layout_binding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    uniform_descriptor_set_layout_binding.descriptorCount    = 1;
+    uniform_descriptor_set_layout_binding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT;
+    uniform_descriptor_set_layout_binding.pImmutableSamplers = nullptr;
 
-    auto const uniform_descriptor_set_bindings = std::array{ uniform_layout };
+    auto uniform_descriptor_set_layout_create_info         = VkDescriptorSetLayoutCreateInfo();
+    uniform_descriptor_set_layout_create_info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    uniform_descriptor_set_layout_create_info.bindingCount = 1;
+    uniform_descriptor_set_layout_create_info.pBindings    = &uniform_descriptor_set_layout_binding;
 
-    auto const uniform_descriptor_set_layout_create_info = [ &uniform_descriptor_set_bindings ]
-    {
-      auto info         = VkDescriptorSetLayoutCreateInfo();
-      info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-      info.bindingCount = static_cast< uint32_t >( std::size( uniform_descriptor_set_bindings ) );
-      info.pBindings    = std::data( uniform_descriptor_set_bindings );
-      return info;
-    }();
-
-    auto uniform_layout_result = vkCreateDescriptorSetLayout(
+    auto result = vkCreateDescriptorSetLayout(
       ctx.device, &uniform_descriptor_set_layout_create_info, nullptr, &ctx.uniform_descriptor_set_layout );
 
-    MVK_VERIFY( uniform_layout_result == VK_SUCCESS );
+    MVK_VERIFY( result == VK_SUCCESS );
 
-    auto const sampler_layout = []
-    {
-      auto layout               = VkDescriptorSetLayoutBinding();
-      layout.binding            = 0;
-      layout.descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      layout.descriptorCount    = 1;
-      layout.pImmutableSamplers = nullptr;
-      layout.stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
-      return layout;
-    }();
+    auto sampler_descriptor_set_layout_binding               = VkDescriptorSetLayoutBinding();
+    sampler_descriptor_set_layout_binding.binding            = 0;
+    sampler_descriptor_set_layout_binding.descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    sampler_descriptor_set_layout_binding.descriptorCount    = 1;
+    sampler_descriptor_set_layout_binding.pImmutableSamplers = nullptr;
+    sampler_descriptor_set_layout_binding.stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    auto const sampler_descriptor_set_bindings = std::array{ sampler_layout };
+    auto sampler_descriptor_set_layout_create_info         = VkDescriptorSetLayoutCreateInfo();
+    sampler_descriptor_set_layout_create_info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    sampler_descriptor_set_layout_create_info.bindingCount = 1;
+    sampler_descriptor_set_layout_create_info.pBindings    = &sampler_descriptor_set_layout_binding;
 
-    auto const sampler_descriptor_set_layout_create_info = [ &sampler_descriptor_set_bindings ]
-    {
-      auto info         = VkDescriptorSetLayoutCreateInfo();
-      info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-      info.bindingCount = static_cast< uint32_t >( std::size( sampler_descriptor_set_bindings ) );
-      info.pBindings    = std::data( sampler_descriptor_set_bindings );
-      return info;
-    }();
-
-    auto sampler_layout_result = vkCreateDescriptorSetLayout(
+    result = vkCreateDescriptorSetLayout(
       ctx.device, &sampler_descriptor_set_layout_create_info, nullptr, &ctx.texture_descriptor_set_layout );
 
-    MVK_VERIFY( sampler_layout_result == VK_SUCCESS );
+    MVK_VERIFY( result == VK_SUCCESS );
 
     auto descriptor_set_layouts = std::array{ ctx.uniform_descriptor_set_layout, ctx.texture_descriptor_set_layout };
 
-    auto const pipeline_layout_create_info = [ &descriptor_set_layouts ]
-    {
-      auto info                   = VkPipelineLayoutCreateInfo();
-      info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-      info.setLayoutCount         = static_cast< uint32_t >( std::size( descriptor_set_layouts ) );
-      info.pSetLayouts            = std::data( descriptor_set_layouts );
-      info.pushConstantRangeCount = 0;
-      info.pPushConstantRanges    = nullptr;
-      return info;
-    }();
+    auto pipeline_layout_create_info                   = VkPipelineLayoutCreateInfo();
+    pipeline_layout_create_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_create_info.setLayoutCount         = static_cast< uint32_t >( std::size( descriptor_set_layouts ) );
+    pipeline_layout_create_info.pSetLayouts            = std::data( descriptor_set_layouts );
+    pipeline_layout_create_info.pushConstantRangeCount = 0;
+    pipeline_layout_create_info.pPushConstantRanges    = nullptr;
 
-    auto pipeline_layout_result =
-      vkCreatePipelineLayout( ctx.device, &pipeline_layout_create_info, nullptr, &ctx.pipeline_layout );
+    result = vkCreatePipelineLayout( ctx.device, &pipeline_layout_create_info, nullptr, &ctx.pipeline_layout );
 
-    MVK_VERIFY( pipeline_layout_result == VK_SUCCESS );
+    MVK_VERIFY( result == VK_SUCCESS );
   }
 
   void destroy_layouts( context & ctx ) noexcept
@@ -431,46 +385,31 @@ namespace mvk::engine
 
   void init_pools( context & ctx ) noexcept
   {
-    auto const command_pool_create_info = [ &ctx ]
-    {
-      auto info             = VkCommandPoolCreateInfo();
-      info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-      info.queueFamilyIndex = ctx.graphics_queue_index;
-      info.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-      return info;
-    }();
+    auto command_pool_create_info             = VkCommandPoolCreateInfo();
+    command_pool_create_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    command_pool_create_info.queueFamilyIndex = ctx.graphics_queue_index;
+    command_pool_create_info.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    auto command_pool_result = vkCreateCommandPool( ctx.device, &command_pool_create_info, nullptr, &ctx.command_pool );
+    [[maybe_unused]] auto command_pool_result =
+      vkCreateCommandPool( ctx.device, &command_pool_create_info, nullptr, &ctx.command_pool );
     MVK_VERIFY( command_pool_result == VK_SUCCESS );
 
-    auto const uniform_pool_size = []
-    {
-      auto pool_size            = VkDescriptorPoolSize();
-      pool_size.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-      pool_size.descriptorCount = 32;
-      return pool_size;
-    }();
+    auto uniform_descriptor_pool_size            = VkDescriptorPoolSize();
+    uniform_descriptor_pool_size.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    uniform_descriptor_pool_size.descriptorCount = 32;
 
-    auto const sampler_pool_size = []
-    {
-      auto pool_size            = VkDescriptorPoolSize();
-      pool_size.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      pool_size.descriptorCount = 32;
-      return pool_size;
-    }();
+    auto sampler_descriptor_pool_size            = VkDescriptorPoolSize();
+    sampler_descriptor_pool_size.type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    sampler_descriptor_pool_size.descriptorCount = 32;
 
-    auto const descriptor_pool_sizes = std::array{ uniform_pool_size, sampler_pool_size };
+    auto const descriptor_pool_sizes = std::array{ uniform_descriptor_pool_size, sampler_descriptor_pool_size };
 
-    auto const descriptor_pool_create_info = [ &descriptor_pool_sizes ]
-    {
-      auto info          = VkDescriptorPoolCreateInfo();
-      info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-      info.poolSizeCount = static_cast< uint32_t >( std::size( descriptor_pool_sizes ) );
-      info.pPoolSizes    = std::data( descriptor_pool_sizes );
-      info.maxSets       = 128;
-      info.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-      return info;
-    }();
+    auto descriptor_pool_create_info          = VkDescriptorPoolCreateInfo();
+    descriptor_pool_create_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    descriptor_pool_create_info.poolSizeCount = static_cast< uint32_t >( std::size( descriptor_pool_sizes ) );
+    descriptor_pool_create_info.pPoolSizes    = std::data( descriptor_pool_sizes );
+    descriptor_pool_create_info.maxSets       = 128;
+    descriptor_pool_create_info.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
     vkCreateDescriptorPool( ctx.device, &descriptor_pool_create_info, nullptr, &ctx.descriptor_pool );
   }
@@ -483,90 +422,76 @@ namespace mvk::engine
 
   void init_swapchain( context & ctx ) noexcept
   {
-    auto const family_indices = std::array{ ctx.graphics_queue_index, ctx.present_queue_index };
+    auto const family_indices   = std::array{ ctx.graphics_queue_index, ctx.present_queue_index };
+    auto const framebuffer_size = query_framebuffer_size( ctx );
 
-    auto const swapchain_create_info = [ &ctx, &family_indices ]
+    auto capabilities = VkSurfaceCapabilitiesKHR();
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR( ctx.physical_device, ctx.surface, &capabilities );
+
+    auto const present_mode = detail::choose_present_mode( ctx.physical_device, ctx.surface );
+    ctx.swapchain_extent    = detail::choose_extent( capabilities, framebuffer_size );
+    auto const image_count  = detail::choose_image_count( capabilities );
+
+    auto swapchain_create_info             = VkSwapchainCreateInfoKHR();
+    swapchain_create_info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapchain_create_info.surface          = ctx.surface;
+    swapchain_create_info.minImageCount    = image_count;
+    swapchain_create_info.imageFormat      = ctx.surface_format.format;
+    swapchain_create_info.imageColorSpace  = ctx.surface_format.colorSpace;
+    swapchain_create_info.imageExtent      = ctx.swapchain_extent;
+    swapchain_create_info.imageArrayLayers = 1;
+    swapchain_create_info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    swapchain_create_info.preTransform     = capabilities.currentTransform;
+    swapchain_create_info.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    swapchain_create_info.presentMode      = present_mode;
+    swapchain_create_info.clipped          = VK_TRUE;
+    swapchain_create_info.oldSwapchain     = nullptr;
+
+    if ( family_indices[ 0 ] != family_indices[ 1 ] )
     {
-      auto const framebuffer_size = query_framebuffer_size( ctx );
+      swapchain_create_info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
+      swapchain_create_info.queueFamilyIndexCount = 2;
+      swapchain_create_info.pQueueFamilyIndices   = std::data( family_indices );
+    }
+    else
+    {
+      swapchain_create_info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+      swapchain_create_info.queueFamilyIndexCount = 0;
+      swapchain_create_info.pQueueFamilyIndices   = nullptr;
+    }
 
-      auto capabilities = VkSurfaceCapabilitiesKHR();
-      vkGetPhysicalDeviceSurfaceCapabilitiesKHR( ctx.physical_device, ctx.surface, &capabilities );
+    auto result = vkCreateSwapchainKHR( ctx.device, &swapchain_create_info, nullptr, &ctx.swapchain );
+    MVK_VERIFY( result == VK_SUCCESS );
 
-      auto const present_mode = detail::choose_present_mode( ctx.physical_device, ctx.surface );
-      ctx.swapchain_extent    = detail::choose_extent( capabilities, framebuffer_size );
-      auto const image_count  = detail::choose_image_count( capabilities );
-
-      auto info             = VkSwapchainCreateInfoKHR();
-      info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-      info.surface          = ctx.surface;
-      info.minImageCount    = image_count;
-      info.imageFormat      = ctx.surface_format.format;
-      info.imageColorSpace  = ctx.surface_format.colorSpace;
-      info.imageExtent      = ctx.swapchain_extent;
-      info.imageArrayLayers = 1;
-      info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-      info.preTransform     = capabilities.currentTransform;
-      info.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-      info.presentMode      = present_mode;
-      info.clipped          = VK_TRUE;
-      info.oldSwapchain     = nullptr;
-
-      if ( family_indices[ 0 ] != family_indices[ 1 ] )
-      {
-        info.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
-        info.queueFamilyIndexCount = 2;
-        info.pQueueFamilyIndices   = std::data( family_indices );
-      }
-      else
-      {
-        info.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
-        info.queueFamilyIndexCount = 0;
-        info.pQueueFamilyIndices   = nullptr;
-      }
-
-      return info;
-    }();
-
-    auto swapchain_result = vkCreateSwapchainKHR( ctx.device, &swapchain_create_info, nullptr, &ctx.swapchain );
-    MVK_VERIFY( swapchain_result == VK_SUCCESS );
-
-    vkGetSwapchainImagesKHR( ctx.device, ctx.swapchain, &ctx.swapchain_images_count, nullptr );
+    result = vkGetSwapchainImagesKHR( ctx.device, ctx.swapchain, &ctx.swapchain_images_count, nullptr );
+    MVK_VERIFY( result == VK_SUCCESS );
 
     auto swapchain_images = std::vector< VkImage >( ctx.swapchain_images_count );
     vkGetSwapchainImagesKHR( ctx.device, ctx.swapchain, &ctx.swapchain_images_count, std::data( swapchain_images ) );
 
     ctx.swapchain_image_views.reserve( ctx.swapchain_images_count );
 
-    auto const add_image_view = [ &ctx, &swapchain_create_info ]( auto const image )
+    for ( auto const image : swapchain_images )
     {
-      auto const image_view_create_info = [ image, &swapchain_create_info ]
-      {
-        auto view_info                            = VkImageViewCreateInfo();
-        view_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        view_info.image                           = image;
-        view_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-        view_info.format                          = swapchain_create_info.imageFormat;
-        view_info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-        view_info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-        view_info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-        view_info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-        view_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        view_info.subresourceRange.baseMipLevel   = 0;
-        view_info.subresourceRange.levelCount     = 1;
-        view_info.subresourceRange.baseArrayLayer = 0;
-        view_info.subresourceRange.layerCount     = 1;
-        return view_info;
-      }();
+      auto swapchain_image_view_create_info                            = VkImageViewCreateInfo();
+      swapchain_image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+      swapchain_image_view_create_info.image                           = image;
+      swapchain_image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+      swapchain_image_view_create_info.format                          = swapchain_create_info.imageFormat;
+      swapchain_image_view_create_info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+      swapchain_image_view_create_info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+      swapchain_image_view_create_info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+      swapchain_image_view_create_info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+      swapchain_image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+      swapchain_image_view_create_info.subresourceRange.baseMipLevel   = 0;
+      swapchain_image_view_create_info.subresourceRange.levelCount     = 1;
+      swapchain_image_view_create_info.subresourceRange.baseArrayLayer = 0;
+      swapchain_image_view_create_info.subresourceRange.layerCount     = 1;
 
       auto image_view = VkImageView();
-
-      auto result = vkCreateImageView( ctx.device, &image_view_create_info, nullptr, &image_view );
-      MVK_VERIFY( result == VK_SUCCESS );
-
+      result          = vkCreateImageView( ctx.device, &swapchain_image_view_create_info, nullptr, &image_view );
       ctx.swapchain_image_views.push_back( image_view );
-    };
-
-    std::for_each( std::begin( swapchain_images ), std::end( swapchain_images ), add_image_view );
+    }
   }
 
   void destroy_swapchain( context & ctx ) noexcept
@@ -581,28 +506,24 @@ namespace mvk::engine
 
   void init_depth_image( context & ctx ) noexcept
   {
-    auto const depth_image_create_info = [ &ctx ]
-    {
-      auto info          = VkImageCreateInfo();
-      info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-      info.imageType     = VK_IMAGE_TYPE_2D;
-      info.extent.width  = ctx.swapchain_extent.width;
-      info.extent.height = ctx.swapchain_extent.height;
-      info.extent.depth  = 1;
-      info.mipLevels     = 1;
-      info.arrayLayers   = 1;
-      info.format        = VK_FORMAT_D32_SFLOAT;
-      info.tiling        = VK_IMAGE_TILING_OPTIMAL;
-      info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-      info.usage         = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-      info.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-      info.samples       = VK_SAMPLE_COUNT_1_BIT;
-      info.flags         = 0;
-      return info;
-    }();
+    auto depth_image_create_info          = VkImageCreateInfo();
+    depth_image_create_info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    depth_image_create_info.imageType     = VK_IMAGE_TYPE_2D;
+    depth_image_create_info.extent.width  = ctx.swapchain_extent.width;
+    depth_image_create_info.extent.height = ctx.swapchain_extent.height;
+    depth_image_create_info.extent.depth  = 1;
+    depth_image_create_info.mipLevels     = 1;
+    depth_image_create_info.arrayLayers   = 1;
+    depth_image_create_info.format        = VK_FORMAT_D32_SFLOAT;
+    depth_image_create_info.tiling        = VK_IMAGE_TILING_OPTIMAL;
+    depth_image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depth_image_create_info.usage         = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    depth_image_create_info.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+    depth_image_create_info.samples       = VK_SAMPLE_COUNT_1_BIT;
+    depth_image_create_info.flags         = 0;
 
-    auto depth_image_result = vkCreateImage( ctx.device, &depth_image_create_info, nullptr, &ctx.depth_image );
-    MVK_VERIFY( depth_image_result == VK_SUCCESS );
+    auto result = vkCreateImage( ctx.device, &depth_image_create_info, nullptr, &ctx.depth_image );
+    MVK_VERIFY( result == VK_SUCCESS );
 
     auto depth_image_requirements = VkMemoryRequirements();
     vkGetImageMemoryRequirements( ctx.device, ctx.depth_image, &depth_image_requirements );
@@ -612,45 +533,35 @@ namespace mvk::engine
 
     MVK_VERIFY( memory_type_index.has_value() );
 
-    auto depth_image_memory_allocate_info = [ depth_image_requirements, memory_type_index ]
-    {
-      auto info            = VkMemoryAllocateInfo();
-      info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-      info.allocationSize  = depth_image_requirements.size;
-      info.memoryTypeIndex = memory_type_index.value();
-      return info;
-    }();
+    auto depth_image_memory_allocate_info            = VkMemoryAllocateInfo();
+    depth_image_memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    depth_image_memory_allocate_info.allocationSize  = depth_image_requirements.size;
+    depth_image_memory_allocate_info.memoryTypeIndex = memory_type_index.value();
 
-    auto depth_image_memory_result =
-      vkAllocateMemory( ctx.device, &depth_image_memory_allocate_info, nullptr, &ctx.depth_image_memory );
+    result = vkAllocateMemory( ctx.device, &depth_image_memory_allocate_info, nullptr, &ctx.depth_image_memory );
+    MVK_VERIFY( result == VK_SUCCESS );
 
-    MVK_VERIFY( depth_image_memory_result == VK_SUCCESS );
+    result = vkBindImageMemory( ctx.device, ctx.depth_image, ctx.depth_image_memory, 0 );
+    MVK_VERIFY( result == VK_SUCCESS );
 
-    vkBindImageMemory( ctx.device, ctx.depth_image, ctx.depth_image_memory, 0 );
+    auto depth_image_view_create_info                            = VkImageViewCreateInfo();
+    depth_image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    depth_image_view_create_info.image                           = ctx.depth_image;
+    depth_image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+    depth_image_view_create_info.format                          = VK_FORMAT_D32_SFLOAT;
+    depth_image_view_create_info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+    depth_image_view_create_info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+    depth_image_view_create_info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+    depth_image_view_create_info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+    depth_image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
+    depth_image_view_create_info.subresourceRange.baseMipLevel   = 0;
+    depth_image_view_create_info.subresourceRange.levelCount     = 1;
+    depth_image_view_create_info.subresourceRange.baseArrayLayer = 0;
+    depth_image_view_create_info.subresourceRange.layerCount     = 1;
 
-    auto const depth_image_view_create_info = [ &ctx ]
-    {
-      auto info                            = VkImageViewCreateInfo();
-      info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-      info.image                           = ctx.depth_image;
-      info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-      info.format                          = VK_FORMAT_D32_SFLOAT;
-      info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-      info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-      info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-      info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-      info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
-      info.subresourceRange.baseMipLevel   = 0;
-      info.subresourceRange.levelCount     = 1;
-      info.subresourceRange.baseArrayLayer = 0;
-      info.subresourceRange.layerCount     = 1;
-      return info;
-    }();
+    result = vkCreateImageView( ctx.device, &depth_image_view_create_info, nullptr, &ctx.depth_image_view );
 
-    auto depth_image_view_result =
-      vkCreateImageView( ctx.device, &depth_image_view_create_info, nullptr, &ctx.depth_image_view );
-
-    MVK_VERIFY( depth_image_view_result == VK_SUCCESS );
+    MVK_VERIFY( result == VK_SUCCESS );
 
     transition_layout(
       ctx, ctx.depth_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1 );
@@ -667,30 +578,25 @@ namespace mvk::engine
   {
     ctx.framebuffers.reserve( ctx.swapchain_images_count );
 
-    auto const add_framebuffer = [ &ctx ]( auto const & image_view )
+    for ( auto const image_view : ctx.swapchain_image_views )
     {
       auto const attachments = std::array{ image_view, ctx.depth_image_view };
 
-      auto const framebuffer_create_info = [ &ctx, &attachments ]
-      {
-        auto info            = VkFramebufferCreateInfo();
-        info.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        info.renderPass      = ctx.render_pass;
-        info.attachmentCount = static_cast< uint32_t >( std::size( attachments ) );
-        info.pAttachments    = std::data( attachments );
-        info.width           = ctx.swapchain_extent.width;
-        info.height          = ctx.swapchain_extent.height;
-        info.layers          = 1;
-        return info;
-      }();
+      auto framebuffer_create_info            = VkFramebufferCreateInfo();
+      framebuffer_create_info.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+      framebuffer_create_info.renderPass      = ctx.render_pass;
+      framebuffer_create_info.attachmentCount = static_cast< uint32_t >( std::size( attachments ) );
+      framebuffer_create_info.pAttachments    = std::data( attachments );
+      framebuffer_create_info.width           = ctx.swapchain_extent.width;
+      framebuffer_create_info.height          = ctx.swapchain_extent.height;
+      framebuffer_create_info.layers          = 1;
 
       auto framebuffer = VkFramebuffer();
-      auto result      = vkCreateFramebuffer( ctx.device, &framebuffer_create_info, nullptr, &framebuffer );
+
+      [[maybe_unused]] auto result = vkCreateFramebuffer( ctx.device, &framebuffer_create_info, nullptr, &framebuffer );
       ctx.framebuffers.push_back( framebuffer );
       MVK_VERIFY( result == VK_SUCCESS );
-    };
-
-    std::for_each( std::begin( ctx.swapchain_image_views ), std::end( ctx.swapchain_image_views ), add_framebuffer );
+    }
   }
 
   void destroy_framebuffers( context & ctx ) noexcept
@@ -703,88 +609,61 @@ namespace mvk::engine
 
   void init_render_pass( context & ctx ) noexcept
   {
-    auto const color_attachment = [ &ctx ]
-    {
-      auto attachment           = VkAttachmentDescription();
-      attachment.format         = ctx.surface_format.format;
-      attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
-      attachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-      attachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-      attachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-      attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-      attachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-      attachment.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-      return attachment;
-    }();
+    auto color_attachment_description           = VkAttachmentDescription();
+    color_attachment_description.format         = ctx.surface_format.format;
+    color_attachment_description.samples        = VK_SAMPLE_COUNT_1_BIT;
+    color_attachment_description.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    color_attachment_description.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+    color_attachment_description.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    color_attachment_description.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+    color_attachment_description.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-    auto const depth_attachment = []
-    {
-      auto attachment           = VkAttachmentDescription();
-      attachment.format         = VK_FORMAT_D32_SFLOAT;
-      attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
-      attachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-      attachment.storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-      attachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-      attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-      attachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-      attachment.finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-      return attachment;
-    }();
+    auto depth_attachment_description           = VkAttachmentDescription();
+    depth_attachment_description.format         = VK_FORMAT_D32_SFLOAT;
+    depth_attachment_description.samples        = VK_SAMPLE_COUNT_1_BIT;
+    depth_attachment_description.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depth_attachment_description.storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depth_attachment_description.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depth_attachment_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depth_attachment_description.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+    depth_attachment_description.finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    auto const color_attachment_reference = []
-    {
-      auto reference       = VkAttachmentReference();
-      reference.attachment = 0;
-      reference.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-      return reference;
-    }();
+    auto color_attachment_reference       = VkAttachmentReference();
+    color_attachment_reference.attachment = 0;
+    color_attachment_reference.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    auto const depth_attachment_reference = []
-    {
-      auto reference       = VkAttachmentReference();
-      reference.attachment = 1;
-      reference.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-      return reference;
-    }();
+    auto depth_attachment_reference       = VkAttachmentReference();
+    depth_attachment_reference.attachment = 1;
+    depth_attachment_reference.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    auto const subpass_description = [ &color_attachment_reference, &depth_attachment_reference ]
-    {
-      auto description                    = VkSubpassDescription();
-      description.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-      description.colorAttachmentCount    = 1;
-      description.pColorAttachments       = &color_attachment_reference;
-      description.pDepthStencilAttachment = &depth_attachment_reference;
-      return description;
-    }();
+    auto subpass_description                    = VkSubpassDescription();
+    subpass_description.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass_description.colorAttachmentCount    = 1;
+    subpass_description.pColorAttachments       = &color_attachment_reference;
+    subpass_description.pDepthStencilAttachment = &depth_attachment_reference;
 
-    auto subpass_dependency = []
-    {
-      auto dependency          = VkSubpassDependency();
-      dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
-      dependency.dstSubpass    = 0;
-      dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-      dependency.srcAccessMask = 0;
-      dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-      dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-      return dependency;
-    }();
+    auto subpass_dependency          = VkSubpassDependency();
+    subpass_dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
+    subpass_dependency.dstSubpass    = 0;
+    subpass_dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    subpass_dependency.srcAccessMask = 0;
+    subpass_dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-    auto const attachments = std::array{ color_attachment, depth_attachment };
+    auto const attachments = std::array{ color_attachment_description, depth_attachment_description };
 
-    auto const render_pass_create_info = [ &attachments, &subpass_description, &subpass_dependency ]
-    {
-      auto info            = VkRenderPassCreateInfo();
-      info.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-      info.attachmentCount = static_cast< uint32_t >( std::size( attachments ) );
-      info.pAttachments    = std::data( attachments );
-      info.subpassCount    = 1;
-      info.pSubpasses      = &subpass_description;
-      info.dependencyCount = 1;
-      info.pDependencies   = &subpass_dependency;
-      return info;
-    }();
+    auto render_pass_create_info            = VkRenderPassCreateInfo();
+    render_pass_create_info.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    render_pass_create_info.attachmentCount = static_cast< uint32_t >( std::size( attachments ) );
+    render_pass_create_info.pAttachments    = std::data( attachments );
+    render_pass_create_info.subpassCount    = 1;
+    render_pass_create_info.pSubpasses      = &subpass_description;
+    render_pass_create_info.dependencyCount = 1;
+    render_pass_create_info.pDependencies   = &subpass_dependency;
 
-    auto result = vkCreateRenderPass( ctx.device, &render_pass_create_info, nullptr, &ctx.render_pass );
+    [[maybe_unused]] auto result =
+      vkCreateRenderPass( ctx.device, &render_pass_create_info, nullptr, &ctx.render_pass );
     MVK_VERIFY( result == VK_SUCCESS );
   }
 
@@ -797,27 +676,22 @@ namespace mvk::engine
   {
     std::tie( ctx.texture_, ctx.width_, ctx.height_ ) = detail::load_texture( "../../assets/viking_room.png" );
 
-    auto const image_create_info = [ &ctx ]
-    {
-      auto usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-      auto info          = VkImageCreateInfo();
-      info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-      info.imageType     = VK_IMAGE_TYPE_2D;
-      info.extent.width  = ctx.width_;
-      info.extent.height = ctx.height_;
-      info.extent.depth  = 1;
-      info.mipLevels     = detail::calculate_mimap_levels( ctx.width_, ctx.height_ );
-      info.arrayLayers   = 1;
-      info.format        = VK_FORMAT_R8G8B8A8_SRGB;
-      info.tiling        = VK_IMAGE_TILING_OPTIMAL;
-      info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-      info.usage         = static_cast< VkFlags >( usage );
-      info.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-      info.samples       = VK_SAMPLE_COUNT_1_BIT;
-      info.flags         = 0;
-      return info;
-    }();
+    auto image_create_info          = VkImageCreateInfo();
+    image_create_info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_create_info.imageType     = VK_IMAGE_TYPE_2D;
+    image_create_info.extent.width  = ctx.width_;
+    image_create_info.extent.height = ctx.height_;
+    image_create_info.extent.depth  = 1;
+    image_create_info.mipLevels     = detail::calculate_mimap_levels( ctx.width_, ctx.height_ );
+    image_create_info.arrayLayers   = 1;
+    image_create_info.format        = VK_FORMAT_R8G8B8A8_SRGB;
+    image_create_info.tiling        = VK_IMAGE_TILING_OPTIMAL;
+    image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_create_info.usage =
+      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_create_info.samples     = VK_SAMPLE_COUNT_1_BIT;
+    image_create_info.flags       = 0;
 
     auto result = vkCreateImage( ctx.device, &image_create_info, nullptr, &ctx.image_ );
     MVK_VERIFY( result == VK_SUCCESS );
@@ -830,14 +704,10 @@ namespace mvk::engine
 
     MVK_VERIFY( memory_type_index.has_value() );
 
-    auto image_memory_allocate_info = [ image_requirements, memory_type_index ]
-    {
-      auto info            = VkMemoryAllocateInfo();
-      info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-      info.allocationSize  = image_requirements.size;
-      info.memoryTypeIndex = memory_type_index.value();
-      return info;
-    }();
+    auto image_memory_allocate_info            = VkMemoryAllocateInfo();
+    image_memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    image_memory_allocate_info.allocationSize  = image_requirements.size;
+    image_memory_allocate_info.memoryTypeIndex = memory_type_index.value();
 
     result = vkAllocateMemory( ctx.device, &image_memory_allocate_info, nullptr, &ctx.image_memory_ );
     MVK_VERIFY( result == VK_SUCCESS );
@@ -851,24 +721,20 @@ namespace mvk::engine
     stage_image( ctx, staged_texture, ctx.width_, ctx.height_, ctx.image_ );
     generate_mipmaps( ctx, ctx.image_, ctx.width_, ctx.height_, image_create_info.mipLevels );
 
-    auto const image_view_create_info = [ &ctx, &image_create_info ]
-    {
-      auto info                            = VkImageViewCreateInfo();
-      info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-      info.image                           = ctx.image_;
-      info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-      info.format                          = VK_FORMAT_R8G8B8A8_SRGB;
-      info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-      info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-      info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-      info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-      info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-      info.subresourceRange.baseMipLevel   = 0;
-      info.subresourceRange.levelCount     = image_create_info.mipLevels;
-      info.subresourceRange.baseArrayLayer = 0;
-      info.subresourceRange.layerCount     = 1;
-      return info;
-    }();
+    auto image_view_create_info                            = VkImageViewCreateInfo();
+    image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    image_view_create_info.image                           = ctx.image_;
+    image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_create_info.format                          = VK_FORMAT_R8G8B8A8_SRGB;
+    image_view_create_info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_create_info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_create_info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_create_info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_create_info.subresourceRange.baseMipLevel   = 0;
+    image_view_create_info.subresourceRange.levelCount     = image_create_info.mipLevels;
+    image_view_create_info.subresourceRange.baseArrayLayer = 0;
+    image_view_create_info.subresourceRange.layerCount     = 1;
 
     result = vkCreateImageView( ctx.device, &image_view_create_info, nullptr, &ctx.image_view_ );
     MVK_VERIFY( result == VK_SUCCESS );
@@ -877,31 +743,23 @@ namespace mvk::engine
 
     ctx.image_descriptor_set_ = allocate_descriptor_sets< 1 >( ctx, ctx.texture_descriptor_set_layout )[ 0 ];
 
-    auto const image_descriptor_image_info = [ &ctx ]
-    {
-      auto info        = VkDescriptorImageInfo();
-      info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      info.imageView   = ctx.image_view_;
-      info.sampler     = ctx.texture_sampler;
-      return info;
-    }();
+    auto image_descriptor_image_info        = VkDescriptorImageInfo();
+    image_descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    image_descriptor_image_info.imageView   = ctx.image_view_;
+    image_descriptor_image_info.sampler     = ctx.texture_sampler;
 
-    auto const image_write = [ &ctx, &image_descriptor_image_info ]
-    {
-      auto write             = VkWriteDescriptorSet();
-      write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      write.dstSet           = ctx.image_descriptor_set_;
-      write.dstBinding       = 0;
-      write.dstArrayElement  = 0;
-      write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      write.descriptorCount  = 1;
-      write.pBufferInfo      = nullptr;
-      write.pImageInfo       = &image_descriptor_image_info;
-      write.pTexelBufferView = nullptr;
-      return write;
-    }();
+    auto image_write_descriptor_set             = VkWriteDescriptorSet();
+    image_write_descriptor_set.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    image_write_descriptor_set.dstSet           = ctx.image_descriptor_set_;
+    image_write_descriptor_set.dstBinding       = 0;
+    image_write_descriptor_set.dstArrayElement  = 0;
+    image_write_descriptor_set.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    image_write_descriptor_set.descriptorCount  = 1;
+    image_write_descriptor_set.pBufferInfo      = nullptr;
+    image_write_descriptor_set.pImageInfo       = &image_descriptor_image_info;
+    image_write_descriptor_set.pTexelBufferView = nullptr;
 
-    vkUpdateDescriptorSets( ctx.device, 1, &image_write, 0, nullptr );
+    vkUpdateDescriptorSets( ctx.device, 1, &image_write_descriptor_set, 0, nullptr );
   }
 
   void destroy_doesnt_beling_here( context & ctx ) noexcept
@@ -930,30 +788,22 @@ namespace mvk::engine
   {
     auto const vertex_code = detail::read_file( "../../shaders/vert.spv" );
 
-    auto const vertex_shader_create_info = [ &vertex_code ]
-    {
-      auto info     = VkShaderModuleCreateInfo();
-      info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-      info.codeSize = static_cast< uint32_t >( std::size( vertex_code ) );
-      info.pCode    = reinterpret_cast< uint32_t const * >( std::data( vertex_code ) );
-      return info;
-    }();
+    auto vertex_shader_module_create_info     = VkShaderModuleCreateInfo();
+    vertex_shader_module_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    vertex_shader_module_create_info.codeSize = static_cast< uint32_t >( std::size( vertex_code ) );
+    vertex_shader_module_create_info.pCode    = reinterpret_cast< uint32_t const * >( std::data( vertex_code ) );
 
-    auto result = vkCreateShaderModule( ctx.device, &vertex_shader_create_info, nullptr, &ctx.vertex_shader );
+    auto result = vkCreateShaderModule( ctx.device, &vertex_shader_module_create_info, nullptr, &ctx.vertex_shader );
     MVK_VERIFY( result == VK_SUCCESS );
 
     auto const fragment_code = detail::read_file( "../../shaders/frag.spv" );
 
-    auto const fragment_shader_create_info = [ &fragment_code ]
-    {
-      auto info     = VkShaderModuleCreateInfo();
-      info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-      info.codeSize = static_cast< uint32_t >( std::size( fragment_code ) );
-      info.pCode    = reinterpret_cast< uint32_t const * >( std::data( fragment_code ) );
-      return info;
-    }();
+    auto fragment_shader_module_create_info     = VkShaderModuleCreateInfo();
+    fragment_shader_module_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    fragment_shader_module_create_info.codeSize = static_cast< uint32_t >( std::size( fragment_code ) );
+    fragment_shader_module_create_info.pCode    = reinterpret_cast< uint32_t const * >( std::data( fragment_code ) );
 
-    result = vkCreateShaderModule( ctx.device, &fragment_shader_create_info, nullptr, &ctx.fragment_shader );
+    result = vkCreateShaderModule( ctx.device, &fragment_shader_module_create_info, nullptr, &ctx.fragment_shader );
     MVK_VERIFY( result == VK_SUCCESS );
   }
 
@@ -965,30 +815,26 @@ namespace mvk::engine
 
   void init_samplers( context & ctx ) noexcept
   {
-    auto const sampler_create_info = []
-    {
-      auto info                    = VkSamplerCreateInfo();
-      info.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-      info.magFilter               = VK_FILTER_LINEAR;
-      info.minFilter               = VK_FILTER_LINEAR;
-      info.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      info.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      info.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      info.anisotropyEnable        = VK_TRUE;
-      info.anisotropyEnable        = VK_TRUE;
-      info.maxAnisotropy           = 16;
-      info.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-      info.unnormalizedCoordinates = VK_FALSE;
-      info.compareEnable           = VK_FALSE;
-      info.compareOp               = VK_COMPARE_OP_ALWAYS;
-      info.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-      info.mipLodBias              = 0.0F;
-      info.minLod                  = 0.0F;
-      info.maxLod                  = std::numeric_limits< float >::max();
-      return info;
-    }();
+    auto sampler_create_info                    = VkSamplerCreateInfo();
+    sampler_create_info.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_create_info.magFilter               = VK_FILTER_LINEAR;
+    sampler_create_info.minFilter               = VK_FILTER_LINEAR;
+    sampler_create_info.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_create_info.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_create_info.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_create_info.anisotropyEnable        = VK_TRUE;
+    sampler_create_info.anisotropyEnable        = VK_TRUE;
+    sampler_create_info.maxAnisotropy           = 16;
+    sampler_create_info.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_create_info.unnormalizedCoordinates = VK_FALSE;
+    sampler_create_info.compareEnable           = VK_FALSE;
+    sampler_create_info.compareOp               = VK_COMPARE_OP_ALWAYS;
+    sampler_create_info.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_create_info.mipLodBias              = 0.0F;
+    sampler_create_info.minLod                  = 0.0F;
+    sampler_create_info.maxLod                  = std::numeric_limits< float >::max();
 
-    auto result = vkCreateSampler( ctx.device, &sampler_create_info, nullptr, &ctx.texture_sampler );
+    [[maybe_unused]] auto result = vkCreateSampler( ctx.device, &sampler_create_info, nullptr, &ctx.texture_sampler );
     MVK_VERIFY( result == VK_SUCCESS );
   }
 
@@ -999,218 +845,154 @@ namespace mvk::engine
 
   void init_pipeline( context & ctx ) noexcept
   {
-    auto const vertex_input_binding_description = []
-    {
-      auto description      = VkVertexInputBindingDescription();
-      description.binding   = 0;
-      description.stride    = sizeof( vertex );
-      description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-      return description;
-    }();
+    auto vertex_input_binding_description      = VkVertexInputBindingDescription();
+    vertex_input_binding_description.binding   = 0;
+    vertex_input_binding_description.stride    = sizeof( vertex );
+    vertex_input_binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    auto const position_attribute = []
-    {
-      auto attribute     = VkVertexInputAttributeDescription();
-      attribute.binding  = 0;
-      attribute.location = 0;
-      attribute.format   = VK_FORMAT_R32G32B32_SFLOAT;
-      attribute.offset   = offsetof( vertex, pos );
-      return attribute;
-    }();
+    auto position_vertex_input_attribute_description     = VkVertexInputAttributeDescription();
+    position_vertex_input_attribute_description.binding  = 0;
+    position_vertex_input_attribute_description.location = 0;
+    position_vertex_input_attribute_description.format   = VK_FORMAT_R32G32B32_SFLOAT;
+    position_vertex_input_attribute_description.offset   = offsetof( vertex, pos );
 
-    auto const color_attribute = []
-    {
-      auto attribute     = VkVertexInputAttributeDescription();
-      attribute.binding  = 0;
-      attribute.location = 1;
-      attribute.format   = VK_FORMAT_R32G32B32_SFLOAT;
-      attribute.offset   = offsetof( vertex, color );
-      return attribute;
-    }();
+    auto color_vertex_input_attribute_description     = VkVertexInputAttributeDescription();
+    color_vertex_input_attribute_description.binding  = 0;
+    color_vertex_input_attribute_description.location = 1;
+    color_vertex_input_attribute_description.format   = VK_FORMAT_R32G32B32_SFLOAT;
+    color_vertex_input_attribute_description.offset   = offsetof( vertex, color );
 
-    auto const texture_coordinate_attribute = []
-    {
-      auto attribute     = VkVertexInputAttributeDescription();
-      attribute.binding  = 0;
-      attribute.location = 2;
-      attribute.format   = VK_FORMAT_R32G32_SFLOAT;
-      attribute.offset   = offsetof( vertex, texture_coord );
-      return attribute;
-    }();
+    auto texture_coordinate_vertex_input_attribute_description     = VkVertexInputAttributeDescription();
+    texture_coordinate_vertex_input_attribute_description.binding  = 0;
+    texture_coordinate_vertex_input_attribute_description.location = 2;
+    texture_coordinate_vertex_input_attribute_description.format   = VK_FORMAT_R32G32_SFLOAT;
+    texture_coordinate_vertex_input_attribute_description.offset   = offsetof( vertex, texture_coord );
 
-    auto const vertex_attributes = std::array{ position_attribute, color_attribute, texture_coordinate_attribute };
+    auto const vertex_attributes = std::array{ position_vertex_input_attribute_description,
+                                               color_vertex_input_attribute_description,
+                                               texture_coordinate_vertex_input_attribute_description };
 
-    auto const vertex_input_create_info = [ &vertex_input_binding_description, &vertex_attributes ]
-    {
-      auto info                            = VkPipelineVertexInputStateCreateInfo();
-      info.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-      info.vertexBindingDescriptionCount   = 1;
-      info.pVertexBindingDescriptions      = &vertex_input_binding_description;
-      info.vertexAttributeDescriptionCount = static_cast< uint32_t >( std::size( vertex_attributes ) );
-      info.pVertexAttributeDescriptions    = std::data( vertex_attributes );
-      return info;
-    }();
+    auto pipeline_vertex_input_state_create_info  = VkPipelineVertexInputStateCreateInfo();
+    pipeline_vertex_input_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    pipeline_vertex_input_state_create_info.vertexBindingDescriptionCount = 1;
+    pipeline_vertex_input_state_create_info.pVertexBindingDescriptions    = &vertex_input_binding_description;
+    pipeline_vertex_input_state_create_info.vertexAttributeDescriptionCount =
+      static_cast< uint32_t >( std::size( vertex_attributes ) );
+    pipeline_vertex_input_state_create_info.pVertexAttributeDescriptions = std::data( vertex_attributes );
 
-    auto const input_assembly_create_info = []
-    {
-      auto info                   = VkPipelineInputAssemblyStateCreateInfo();
-      info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-      info.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-      info.primitiveRestartEnable = VK_FALSE;
-      return info;
-    }();
+    auto pipeline_input_assembly_state_create_info     = VkPipelineInputAssemblyStateCreateInfo();
+    pipeline_input_assembly_state_create_info.sType    = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    pipeline_input_assembly_state_create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    pipeline_input_assembly_state_create_info.primitiveRestartEnable = VK_FALSE;
 
-    auto const viewport = [ &ctx ]
-    {
-      auto tmp     = VkViewport();
-      tmp.x        = 0.0F;
-      tmp.y        = 0.0F;
-      tmp.width    = static_cast< float >( ctx.swapchain_extent.width );
-      tmp.height   = static_cast< float >( ctx.swapchain_extent.height );
-      tmp.minDepth = 0.0F;
-      tmp.maxDepth = 1.0F;
-      return tmp;
-    }();
+    auto viewport     = VkViewport();
+    viewport.x        = 0.0F;
+    viewport.y        = 0.0F;
+    viewport.width    = static_cast< float >( ctx.swapchain_extent.width );
+    viewport.height   = static_cast< float >( ctx.swapchain_extent.height );
+    viewport.minDepth = 0.0F;
+    viewport.maxDepth = 1.0F;
 
-    auto const scissor = [ &ctx ]
-    {
-      auto tmp     = VkRect2D();
-      tmp.offset.x = 0;
-      tmp.offset.y = 0;
-      tmp.extent   = ctx.swapchain_extent;
-      return tmp;
-    }();
+    auto scissor     = VkRect2D();
+    scissor.offset.x = 0;
+    scissor.offset.y = 0;
+    scissor.extent   = ctx.swapchain_extent;
 
-    auto const viewport_state_create_info = [ &viewport, &scissor ]
-    {
-      auto info          = VkPipelineViewportStateCreateInfo();
-      info.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-      info.viewportCount = 1;
-      info.pViewports    = &viewport;
-      info.scissorCount  = 1;
-      info.pScissors     = &scissor;
-      return info;
-    }();
+    auto pipeline_viewport_state_create_info          = VkPipelineViewportStateCreateInfo();
+    pipeline_viewport_state_create_info.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    pipeline_viewport_state_create_info.viewportCount = 1;
+    pipeline_viewport_state_create_info.pViewports    = &viewport;
+    pipeline_viewport_state_create_info.scissorCount  = 1;
+    pipeline_viewport_state_create_info.pScissors     = &scissor;
 
-    auto const rasterizer_create_info = []
-    {
-      auto info                    = VkPipelineRasterizationStateCreateInfo();
-      info.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-      info.depthClampEnable        = VK_FALSE;
-      info.rasterizerDiscardEnable = VK_FALSE;
-      info.polygonMode             = VK_POLYGON_MODE_FILL;
-      info.lineWidth               = 1.0F;
-      info.cullMode                = VK_CULL_MODE_BACK_BIT;
-      info.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-      info.depthBiasEnable         = VK_FALSE;
-      info.depthBiasConstantFactor = 0.0F;
-      info.depthBiasClamp          = 0.0F;
-      info.depthBiasSlopeFactor    = 0.0F;
-      return info;
-    }();
+    auto pipeline_rasterization_state_create_info  = VkPipelineRasterizationStateCreateInfo();
+    pipeline_rasterization_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    pipeline_rasterization_state_create_info.depthClampEnable        = VK_FALSE;
+    pipeline_rasterization_state_create_info.rasterizerDiscardEnable = VK_FALSE;
+    pipeline_rasterization_state_create_info.polygonMode             = VK_POLYGON_MODE_FILL;
+    pipeline_rasterization_state_create_info.lineWidth               = 1.0F;
+    pipeline_rasterization_state_create_info.cullMode                = VK_CULL_MODE_BACK_BIT;
+    pipeline_rasterization_state_create_info.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    pipeline_rasterization_state_create_info.depthBiasEnable         = VK_FALSE;
+    pipeline_rasterization_state_create_info.depthBiasConstantFactor = 0.0F;
+    pipeline_rasterization_state_create_info.depthBiasClamp          = 0.0F;
+    pipeline_rasterization_state_create_info.depthBiasSlopeFactor    = 0.0F;
 
-    auto const multisampling_create_info = []
-    {
-      auto info                  = VkPipelineMultisampleStateCreateInfo();
-      info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-      info.sampleShadingEnable   = VK_FALSE;
-      info.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
-      info.minSampleShading      = 1.0F;
-      info.pSampleMask           = nullptr;
-      info.alphaToCoverageEnable = VK_FALSE;
-      info.alphaToOneEnable      = VK_FALSE;
-      return info;
-    }();
+    auto pipeline_multisample_state_create_info  = VkPipelineMultisampleStateCreateInfo();
+    pipeline_multisample_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    pipeline_multisample_state_create_info.sampleShadingEnable   = VK_FALSE;
+    pipeline_multisample_state_create_info.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
+    pipeline_multisample_state_create_info.minSampleShading      = 1.0F;
+    pipeline_multisample_state_create_info.pSampleMask           = nullptr;
+    pipeline_multisample_state_create_info.alphaToCoverageEnable = VK_FALSE;
+    pipeline_multisample_state_create_info.alphaToOneEnable      = VK_FALSE;
 
-    auto const color_blend_attachment = []
-    {
-      auto attachment = VkPipelineColorBlendAttachmentState();
-      attachment.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-      attachment.blendEnable         = VK_FALSE;
-      attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-      attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-      attachment.colorBlendOp        = VK_BLEND_OP_ADD;
-      attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-      attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-      attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
-      return attachment;
-    }();
+    auto pipeline_color_blend_attachment = VkPipelineColorBlendAttachmentState();
+    pipeline_color_blend_attachment.colorWriteMask =
+      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    pipeline_color_blend_attachment.blendEnable         = VK_FALSE;
+    pipeline_color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    pipeline_color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    pipeline_color_blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
+    pipeline_color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    pipeline_color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    pipeline_color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
 
-    auto const color_blend_create_info = [ &color_blend_attachment ]
-    {
-      auto info                = VkPipelineColorBlendStateCreateInfo();
-      info.sType               = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-      info.logicOpEnable       = VK_FALSE;
-      info.logicOp             = VK_LOGIC_OP_COPY;
-      info.attachmentCount     = 1;
-      info.pAttachments        = &color_blend_attachment;
-      info.blendConstants[ 0 ] = 0.0F;
-      info.blendConstants[ 1 ] = 0.0F;
-      info.blendConstants[ 2 ] = 0.0F;
-      info.blendConstants[ 3 ] = 0.0F;
-      return info;
-    }();
+    auto pipeline_color_blend_state_create_info            = VkPipelineColorBlendStateCreateInfo();
+    pipeline_color_blend_state_create_info.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    pipeline_color_blend_state_create_info.logicOpEnable   = VK_FALSE;
+    pipeline_color_blend_state_create_info.logicOp         = VK_LOGIC_OP_COPY;
+    pipeline_color_blend_state_create_info.attachmentCount = 1;
+    pipeline_color_blend_state_create_info.pAttachments    = &pipeline_color_blend_attachment;
+    pipeline_color_blend_state_create_info.blendConstants[ 0 ] = 0.0F;
+    pipeline_color_blend_state_create_info.blendConstants[ 1 ] = 0.0F;
+    pipeline_color_blend_state_create_info.blendConstants[ 2 ] = 0.0F;
+    pipeline_color_blend_state_create_info.blendConstants[ 3 ] = 0.0F;
 
-    auto const depth_stencil_state_create_info = []
-    {
-      auto info                  = VkPipelineDepthStencilStateCreateInfo();
-      info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-      info.depthTestEnable       = VK_TRUE;
-      info.depthWriteEnable      = VK_TRUE;
-      info.depthCompareOp        = VK_COMPARE_OP_LESS;
-      info.depthBoundsTestEnable = VK_FALSE;
-      info.minDepthBounds        = 0.0F;
-      info.maxDepthBounds        = 1.0F;
-      info.stencilTestEnable     = VK_FALSE;
-      return info;
-    }();
+    auto pipeline_depth_stencil_state_create_info  = VkPipelineDepthStencilStateCreateInfo();
+    pipeline_depth_stencil_state_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    pipeline_depth_stencil_state_create_info.depthTestEnable       = VK_TRUE;
+    pipeline_depth_stencil_state_create_info.depthWriteEnable      = VK_TRUE;
+    pipeline_depth_stencil_state_create_info.depthCompareOp        = VK_COMPARE_OP_LESS;
+    pipeline_depth_stencil_state_create_info.depthBoundsTestEnable = VK_FALSE;
+    pipeline_depth_stencil_state_create_info.minDepthBounds        = 0.0F;
+    pipeline_depth_stencil_state_create_info.maxDepthBounds        = 1.0F;
+    pipeline_depth_stencil_state_create_info.stencilTestEnable     = VK_FALSE;
 
-    auto const vertex_shader_stage = [ &ctx ]
-    {
-      auto info   = VkPipelineShaderStageCreateInfo();
-      info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-      info.stage  = VK_SHADER_STAGE_VERTEX_BIT;
-      info.module = ctx.vertex_shader;
-      info.pName  = "main";
-      return info;
-    }();
+    auto vertex_pipeline_shader_stage_create_info   = VkPipelineShaderStageCreateInfo();
+    vertex_pipeline_shader_stage_create_info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertex_pipeline_shader_stage_create_info.stage  = VK_SHADER_STAGE_VERTEX_BIT;
+    vertex_pipeline_shader_stage_create_info.module = ctx.vertex_shader;
+    vertex_pipeline_shader_stage_create_info.pName  = "main";
 
-    auto const fragment_shader_stage = [ &ctx ]
-    {
-      auto info   = VkPipelineShaderStageCreateInfo();
-      info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-      info.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-      info.module = ctx.fragment_shader;
-      info.pName  = "main";
-      return info;
-    }();
+    auto fragment_pipeline_shader_stage_create_info   = VkPipelineShaderStageCreateInfo();
+    fragment_pipeline_shader_stage_create_info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragment_pipeline_shader_stage_create_info.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragment_pipeline_shader_stage_create_info.module = ctx.fragment_shader;
+    fragment_pipeline_shader_stage_create_info.pName  = "main";
 
-    auto const shader_stages = std::array{ vertex_shader_stage, fragment_shader_stage };
+    auto const shader_stages =
+      std::array{ vertex_pipeline_shader_stage_create_info, fragment_pipeline_shader_stage_create_info };
 
-    auto const pipeline_create_info = [ & ]
-    {
-      auto info                = VkGraphicsPipelineCreateInfo();
-      info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-      info.stageCount          = static_cast< uint32_t >( std::size( shader_stages ) );
-      info.pStages             = std::data( shader_stages );
-      info.pVertexInputState   = &vertex_input_create_info;
-      info.pInputAssemblyState = &input_assembly_create_info;
-      info.pViewportState      = &viewport_state_create_info;
-      info.pRasterizationState = &rasterizer_create_info;
-      info.pMultisampleState   = &multisampling_create_info;
-      info.pDepthStencilState  = &depth_stencil_state_create_info;
-      info.pColorBlendState    = &color_blend_create_info;
-      info.pDynamicState       = nullptr;
-      info.layout              = ctx.pipeline_layout;
-      info.renderPass          = ctx.render_pass;
-      info.subpass             = 0;
-      info.basePipelineHandle  = nullptr;
-      info.basePipelineIndex   = -1;
-      return info;
-    }();
+    auto pipeline_create_info                = VkGraphicsPipelineCreateInfo();
+    pipeline_create_info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline_create_info.stageCount          = static_cast< uint32_t >( std::size( shader_stages ) );
+    pipeline_create_info.pStages             = std::data( shader_stages );
+    pipeline_create_info.pVertexInputState   = &pipeline_vertex_input_state_create_info;
+    pipeline_create_info.pInputAssemblyState = &pipeline_input_assembly_state_create_info;
+    pipeline_create_info.pViewportState      = &pipeline_viewport_state_create_info;
+    pipeline_create_info.pRasterizationState = &pipeline_rasterization_state_create_info;
+    pipeline_create_info.pMultisampleState   = &pipeline_multisample_state_create_info;
+    pipeline_create_info.pDepthStencilState  = &pipeline_depth_stencil_state_create_info;
+    pipeline_create_info.pColorBlendState    = &pipeline_color_blend_state_create_info;
+    pipeline_create_info.pDynamicState       = nullptr;
+    pipeline_create_info.layout              = ctx.pipeline_layout;
+    pipeline_create_info.renderPass          = ctx.render_pass;
+    pipeline_create_info.subpass             = 0;
+    pipeline_create_info.basePipelineHandle  = nullptr;
+    pipeline_create_info.basePipelineIndex   = -1;
 
-    auto result =
+    [[maybe_unused]] auto result =
       vkCreateGraphicsPipelines( ctx.device, VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &ctx.pipeline );
     MVK_VERIFY( result == VK_SUCCESS );
   }
@@ -1222,20 +1004,12 @@ namespace mvk::engine
 
   void init_sync( context & ctx ) noexcept
   {
-    auto const semaphore_create_info = []
-    {
-      auto info  = VkSemaphoreCreateInfo();
-      info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-      return info;
-    }();
+    auto semaphore_create_info  = VkSemaphoreCreateInfo();
+    semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    auto const fence_create_info = []
-    {
-      auto info  = VkFenceCreateInfo();
-      info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-      info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-      return info;
-    }();
+    auto fence_create_info  = VkFenceCreateInfo();
+    fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     for ( auto i = size_t( 0 ); i < context::max_frames_in_flight; ++i )
     {

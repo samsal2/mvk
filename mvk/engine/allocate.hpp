@@ -85,8 +85,8 @@ namespace mvk::engine
       return info;
     }();
 
-    auto descriptor_sets = std::array< VkDescriptorSet, Size >();
-    auto result          = vkAllocateDescriptorSets( ctx.device, &allocate_info, std::data( descriptor_sets ) );
+    auto                  descriptor_sets = std::array< VkDescriptorSet, Size >();
+    [[maybe_unused]] auto result = vkAllocateDescriptorSets( ctx.device, &allocate_info, std::data( descriptor_sets ) );
     MVK_VERIFY( result == VK_SUCCESS );
     return descriptor_sets;
   }
@@ -105,8 +105,8 @@ namespace mvk::engine
       return info;
     }();
 
-    auto command_buffers = std::array< VkCommandBuffer, Size >();
-    auto result          = vkAllocateCommandBuffers( ctx.device, &allocate_info, std::data( command_buffers ) );
+    auto                  command_buffers = std::array< VkCommandBuffer, Size >();
+    [[maybe_unused]] auto result = vkAllocateCommandBuffers( ctx.device, &allocate_info, std::data( command_buffers ) );
     MVK_VERIFY( result == VK_SUCCESS );
     return command_buffers;
   }

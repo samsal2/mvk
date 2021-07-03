@@ -68,14 +68,10 @@ namespace mvk::engine
       return info;
     }();
 
-    auto const command_buffer_begin_info = []
-    {
-      auto info             = VkCommandBufferBeginInfo();
-      info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-      info.flags            = 0;
-      info.pInheritanceInfo = nullptr;
-      return info;
-    }();
+    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
+    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags            = 0;
+    command_buffer_begin_info.pInheritanceInfo = nullptr;
 
     ctx.current_command_buffer = ctx.command_buffers[ ctx.current_buffer_index ];
 
