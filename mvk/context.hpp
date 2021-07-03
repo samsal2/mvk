@@ -315,7 +315,9 @@ namespace mvk
     }();
 
     auto handles = std::array<VkDescriptorSet, Size>();
-    auto result  = vkAllocateDescriptorSets( types::get( ctx.device_ ), &allocate_info, std::data( handles ) );
+
+    [[maybe_unused]] auto result =
+      vkAllocateDescriptorSets( types::get( ctx.device_ ), &allocate_info, std::data( handles ) );
 
     MVK_VERIFY( result == VK_SUCCESS );
 

@@ -56,15 +56,13 @@ namespace mvk
       vkEnumerateInstanceLayerProperties( &validation_layer_properties_count,
                                           std::data( validation_layer_properties ) );
 
-      auto const is_layer_present =
-        []( VkLayerProperties const layer, utility::slice<char const * const> const layers ) noexcept
+      auto const is_layer_present = []( auto const layer, utility::slice<char const * const> const layers ) noexcept
       {
         auto const matches = [&layer]( auto const & current_layer )
         {
           auto const layer_name_data = std::data( layer.layerName );
           return std::strcmp( current_layer, layer_name_data ) == 0;
         };
-
         return std::any_of( std::begin( layers ), std::end( layers ), matches );
       };
 
@@ -73,7 +71,7 @@ namespace mvk
         return is_layer_present( available_layer, context::validation_layers );
       };
 
-      auto result =
+      [[maybe_unused]] auto result =
         std::any_of( std::begin( validation_layer_properties ), std::end( validation_layer_properties ), exists );
       MVK_VERIFY( result );
     }
