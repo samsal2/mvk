@@ -30,7 +30,7 @@ namespace mvk
     init_framebuffers( ctx );
     init_samplers( ctx );
     init_doesnt_belong_here( ctx );
-    allocate_command_buffers( ctx );
+    init_command_buffers( ctx );
     init_shaders( ctx );
     init_pipeline( ctx );
     init_sync( ctx );
@@ -339,7 +339,7 @@ namespace mvk
       auto info             = VkCommandPoolCreateInfo();
       info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
       info.queueFamilyIndex = ctx.graphics_queue_index_;
-      info.flags            = 0;
+      info.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
       return info;
     }();
 
@@ -779,15 +779,10 @@ namespace mvk
                             nullptr );
   }
 
-  void allocate_command_buffers( context & ctx ) noexcept
+  void init_command_buffers( context & ctx ) noexcept
   {
-    auto info               = VkCommandBufferAllocateInfo();
-    info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    info.commandPool        = types::get( ctx.command_pool_ );
-    info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    info.commandBufferCount = ctx.swapchain_images_count_;
-
-    ctx.command_buffers_ = types::allocate_unique_command_buffers( types::decay( ctx.device_ ), info );
+    ctx.command_buffers_ =
+      allocate_command_buffers<context::dynamic_buffer_count>( ctx, VK_COMMAND_BUFFER_LEVEL_PRIMARY );
   }
 
   void init_shaders( context & ctx ) noexcept
@@ -1101,9 +1096,7 @@ namespace mvk
     init_main_render_pass( ctx );
 
     ctx.framebuffers_.clear();
-
     init_framebuffers( ctx );
-    allocate_command_buffers( ctx );
 
     init_pipeline( ctx );
     ctx.image_in_flight_fences_.clear();
@@ -1176,10 +1169,7 @@ namespace mvk
       return info;
     }();
 
-    // Recreate command buffer
-    allocate_command_buffers( ctx );
-
-    ctx.current_command_buffer_ = types::decay( ctx.command_buffers_[ctx.current_image_index_] );
+    ctx.current_command_buffer_ = types::decay( ctx.command_buffers_[ctx.current_buffer_index_] );
 
     vkBeginCommandBuffer( types::get( ctx.current_command_buffer_ ), &command_buffer_begin_info );
     vkCmdBeginRenderPass(
@@ -2077,6 +2067,7 @@ namespace mvk
     ctx.staging_offsets_[ctx.current_buffer_index_] = 0;
     ctx.vertex_offsets_[ctx.current_buffer_index_]  = 0;
     ctx.index_offsets_[ctx.current_buffer_index_]   = 0;
+    ctx.uniform_offsets_[ctx.current_buffer_index_] = 0;
   }
 
 }  // namespace mvk

@@ -125,7 +125,7 @@ namespace mvk
     // ================================================================================================================
 
     // allocate_commands
-    std::vector<types::unique_command_buffer> command_buffers_;
+    std::array<types::unique_command_buffer, dynamic_buffer_count> command_buffers_;
 
     // shaders
     types::unique_shader_module vertex_shader_;
@@ -223,7 +223,7 @@ namespace mvk
   void init_framebuffers( context & ctx ) noexcept;
   void init_main_render_pass( context & ctx ) noexcept;
   void init_doesnt_belong_here( context & ctx ) noexcept;
-  void allocate_command_buffers( context & ctx ) noexcept;
+  void init_command_buffers( context & ctx ) noexcept;
   void init_shaders( context & ctx ) noexcept;
   void init_samplers( context & ctx ) noexcept;
   void init_pipeline( context & ctx ) noexcept;
@@ -291,6 +291,10 @@ namespace mvk
   [[nodiscard]] std::array<types::unique_descriptor_set, Size>
     allocate_descriptor_sets( context const & ctx, types::descriptor_set_layout layout ) noexcept;
 
+  template <size_t Size>
+  [[nodiscard]] std::array<types::unique_command_buffer, Size>
+    allocate_command_buffers( context const & ctx, VkCommandBufferLevel level ) noexcept;
+
   void next_buffer( context & ctx ) noexcept;
 
 }  // namespace mvk
@@ -330,6 +334,38 @@ namespace mvk
     }
 
     return descriptor_sets;
+  }
+
+  template <size_t Size>
+  [[nodiscard]] std::array<types::unique_command_buffer, Size>
+    allocate_command_buffers( context const & ctx, VkCommandBufferLevel level ) noexcept
+  {
+    auto const allocate_info = [&ctx, level]
+    {
+      auto info               = VkCommandBufferAllocateInfo();
+      info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+      info.commandPool        = types::get( ctx.command_pool_ );
+      info.level              = level;
+      info.commandBufferCount = Size;
+      return info;
+    }();
+
+    auto handles = std::array<VkCommandBuffer, Size>();
+
+    [[maybe_unused]] auto result =
+      vkAllocateCommandBuffers( types::get( ctx.device_ ), &allocate_info, std::data( handles ) );
+
+    MVK_VERIFY( result == VK_SUCCESS );
+
+    auto command_buffers = std::array<types::unique_command_buffer, Size>();
+
+    for ( auto i = size_t( 0 ); i < Size; ++i )
+    {
+      command_buffers[i] =
+        types::unique_command_buffer( handles[i], types::get( ctx.device_ ), types::get( ctx.command_pool_ ) );
+    }
+
+    return command_buffers;
   }
 
 }  // namespace mvk
