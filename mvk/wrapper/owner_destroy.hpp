@@ -13,18 +13,6 @@ namespace mvk::wrapper
   }  // namespace deleter
 
   template <auto Call>
-  class owner_destroy;
-
-  template <typename... Args>
-  constexpr auto deleter_selector( [[maybe_unused]] deleter::owner_destroy option ) noexcept
-  {
-    constexpr auto deleter_call = select<options::deleter_call>( Args{}... );
-    static_assert( !utility::is_none( deleter_call ), "Expected deleter_call option" );
-
-    return detail::select<owner_destroy<deleter_call>>{};
-  }
-
-  template <auto Call>
   class owner_destroy
   {
     static constexpr auto deleter_call = Call;
@@ -38,6 +26,15 @@ namespace mvk::wrapper
       deleter_call( handle, nullptr );
     }
   };
+
+  template <typename... Args>
+  constexpr auto deleter_selector( [[maybe_unused]] deleter::owner_destroy option ) noexcept
+  {
+    constexpr auto deleter_call = select<options::deleter_call>( Args{}... );
+    static_assert( !utility::is_none( deleter_call ), "Expected deleter_call option" );
+
+    return selected<owner_destroy<deleter_call>>{};
+  }
 
 }  // namespace mvk::wrapper
 

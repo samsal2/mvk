@@ -17,21 +17,6 @@ namespace mvk::wrapper
   }  // namespace deleter
 
   template <auto Call, typename Parent>
-  class object_destroy;
-
-  template <typename... Args>
-  constexpr auto deleter_selector( [[maybe_unused]] deleter::object_destroy option ) noexcept
-  {
-    using parent = decltype( select<options::parent>( Args{}... ) );
-    static_assert( !utility::is_none( parent{} ), "Expected parent option" );
-
-    constexpr auto deleter_call = select<options::deleter_call>( Args{}... );
-    static_assert( !utility::is_none( deleter_call ), "Expected deleter_call option" );
-
-    return detail::select<object_destroy<deleter_call, parent>>{};
-  }
-
-  template <auto Call, typename Parent>
   class object_destroy
   {
     using parent_type                  = Parent;
@@ -61,6 +46,18 @@ namespace mvk::wrapper
   private:
     parent_type parent_;
   };
+
+  template <typename... Args>
+  constexpr auto deleter_selector( [[maybe_unused]] deleter::object_destroy option ) noexcept
+  {
+    using parent = decltype( select<options::parent>( Args{}... ) );
+    static_assert( !utility::is_none( parent{} ), "Expected parent option" );
+
+    constexpr auto deleter_call = select<options::deleter_call>( Args{}... );
+    static_assert( !utility::is_none( deleter_call ), "Expected deleter_call option" );
+
+    return selected<object_destroy<deleter_call, parent>>{};
+  }
 
 };  // namespace mvk::wrapper
 

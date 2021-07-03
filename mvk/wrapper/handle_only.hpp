@@ -14,18 +14,6 @@ namespace mvk::wrapper
   }  // namespace storage
 
   template <typename Handle>
-  class handle_only;
-
-  template <typename... Args>
-  constexpr auto storage_selector( [[maybe_unused]] storage::handle_only option ) noexcept
-  {
-    using handle = decltype( select<options::handle>( Args{}... ) );
-    static_assert( !utility::is_none( handle{} ), "Expected handle option" );
-
-    return detail::select<handle_only<handle>>{};
-  }
-
-  template <typename Handle>
   class handle_only
   {
   public:
@@ -50,6 +38,15 @@ namespace mvk::wrapper
   private:
     handle_type handle_;
   };
+
+  template <typename... Args>
+  constexpr auto storage_selector( [[maybe_unused]] storage::handle_only option ) noexcept
+  {
+    using handle = decltype( select<options::handle>( Args{}... ) );
+    static_assert( !utility::is_none( handle{} ), "Expected handle option" );
+
+    return selected<handle_only<handle>>{};
+  }
 
 }  // namespace mvk::wrapper
 

@@ -16,24 +16,6 @@ namespace mvk::wrapper
   }  // namespace deleter
 
   template <auto Call, typename Parent, typename Pool>
-  class object_free;
-
-  template <typename... Args>
-  constexpr auto deleter_selector( [[maybe_unused]] deleter::object_free option ) noexcept
-  {
-    using parent = decltype( select<options::parent>( Args{}... ) );
-    static_assert( !utility::is_none( parent{} ), "Expected a parent option" );
-
-    using pool = decltype( select<options::pool>( Args{}... ) );
-    static_assert( !utility::is_none( pool{} ), "Expected a pool option" );
-
-    constexpr auto deleter_call = select<options::deleter_call>( Args{}... );
-    static_assert( !utility::is_none( deleter_call ), "Expected a deleter_call option" );
-
-    return detail::select<object_free<deleter_call, parent, pool>>{};
-  }
-
-  template <auto Call, typename Parent, typename Pool>
   class object_free
   {
     using parent_type                  = Parent;
@@ -61,6 +43,21 @@ namespace mvk::wrapper
     parent_type parent_;
     pool_type   pool_;
   };
+
+  template <typename... Args>
+  constexpr auto deleter_selector( [[maybe_unused]] deleter::object_free option ) noexcept
+  {
+    using parent = decltype( select<options::parent>( Args{}... ) );
+    static_assert( !utility::is_none( parent{} ), "Expected a parent option" );
+
+    using pool = decltype( select<options::pool>( Args{}... ) );
+    static_assert( !utility::is_none( pool{} ), "Expected a pool option" );
+
+    constexpr auto deleter_call = select<options::deleter_call>( Args{}... );
+    static_assert( !utility::is_none( deleter_call ), "Expected a deleter_call option" );
+
+    return selected<object_free<deleter_call, parent, pool>>{};
+  }
 
 };  // namespace mvk::wrapper
 

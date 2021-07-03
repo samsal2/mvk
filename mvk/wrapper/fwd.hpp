@@ -2,6 +2,7 @@
 #define MVK_WRAPPER_FWD_HPP_INCLUDED
 
 #include "utility/pack.hpp"
+#include "utility/types.hpp"
 
 #include <type_traits>
 #include <vulkan/vulkan.h>
@@ -11,47 +12,14 @@ namespace mvk::wrapper
   template <typename... Args>
   class any_wrapper;
 
-  namespace detail
+  template <typename Found>
+  struct selected
   {
-    constexpr uint32_t size_from_info( VkCommandBufferAllocateInfo const & info )
-    {
-      return info.commandBufferCount;
-    }
-    constexpr VkCommandPool pool_from_info( VkCommandBufferAllocateInfo const & info )
-    {
-      return info.commandPool;
-    }
+    using type = Found;
+  };
 
-    constexpr uint32_t size_from_info( VkDescriptorSetAllocateInfo const & info )
-    {
-      return info.descriptorSetCount;
-    }
-
-    constexpr VkDescriptorPool pool_from_info( VkDescriptorSetAllocateInfo const & info )
-    {
-      return info.descriptorPool;
-    }
-
-    template <typename Found>
-    struct select
-    {};
-
-    template <typename Found>
-    struct selected
-    {
-      static_assert( !std::is_same_v<Found, Found>, "type is not a found type" );
-    };
-
-    template <typename Found>
-    struct selected<select<Found>>
-    {
-      using type = Found;
-    };
-
-    template <typename Selected>
-    using selected_t = typename selected<Selected>::type;
-
-  };  // namespace detail
+  template <typename Selected>
+  using selected_t = typename Selected::type;
 
   namespace options
   {
@@ -92,25 +60,13 @@ namespace mvk::wrapper
   template <typename T, typename... Args>
   constexpr auto storage_selector( [[maybe_unused]] T t ) noexcept
   {
-    static_assert( !std::is_same_v<T, T>, "invalid storage option" );
+    static_assert( utility::always_false<T>, "invalid storage option" );
   }
 
   template <typename T, typename... Args>
   constexpr auto deleter_selector( [[maybe_unused]] T t ) noexcept
   {
-    static_assert( !std::is_same_v<T, T>, "invalid deleter option" );
-  }
-
-  template <typename T, typename... Args>
-  constexpr auto creator_selector( [[maybe_unused]] T t ) noexcept
-  {
-    static_assert( !std::is_same_v<T, T>, "invalid deleter option" );
-  }
-
-  template <typename... Args>
-  constexpr auto creator_selector( [[maybe_unused]] utility::none t ) noexcept
-  {
-    return detail::select<utility::none>{};
+    static_assert( utility::always_false<T>, "invalid deleter option" );
   }
 
   template <template <typename> typename Tag, typename... Args>

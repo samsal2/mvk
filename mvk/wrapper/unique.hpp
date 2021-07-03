@@ -25,12 +25,12 @@ namespace mvk::wrapper
     static_assert( !utility::is_none( arg ), "Expected a deleter option" );
 
     auto found    = deleter_selector<Args...>( arg );
-    using deleter = detail::selected_t<decltype( found )>;
+    using deleter = selected_t<decltype( found )>;
 
     using handle = decltype( select<options::handle>( Args{}... ) );
     static_assert( !utility::is_none( handle{} ), "Expected a handle option" );
 
-    return detail::select<unique<handle, deleter>>{};
+    return selected<unique<handle, deleter>>{};
   }
 
   template <typename Handle, typename Deleter>

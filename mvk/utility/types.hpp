@@ -84,6 +84,9 @@ namespace mvk::utility
   template <typename T>
   using uncvref_t = std::remove_cvref_t<T>;
 
+  template <typename T>
+  static constexpr inline auto always_false = false;
+
 }  // namespace mvk::utility
 
 #endif
