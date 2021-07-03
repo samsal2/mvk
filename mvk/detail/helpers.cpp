@@ -7,28 +7,28 @@
 
 namespace mvk::detail
 {
-  [[nodiscard]] bool is_extension_present( std::string const &                               extension_name,
-                                           utility::slice<VkExtensionProperties const> const extensions ) noexcept
+  [[nodiscard]] bool is_extension_present( std::string const &                                 extension_name,
+                                           utility::slice< VkExtensionProperties const > const extensions ) noexcept
   {
-    auto const matches = [&extension_name]( auto const & extension )
+    auto const matches = [ &extension_name ]( auto const & extension )
     {
-      auto const name = static_cast<char const *>( extension.extensionName );
+      auto const name = static_cast< char const * >( extension.extensionName );
       return std::strcmp( extension_name.c_str(), name ) == 0;
     };
     return std::any_of( std::begin( extensions ), std::end( extensions ), matches );
   }
 
-  [[nodiscard]] bool check_extension_support( types::physical_device             physical_device,
-                                              utility::slice<char const * const> device_extensions ) noexcept
+  [[nodiscard]] bool check_extension_support( types::physical_device               physical_device,
+                                              utility::slice< char const * const > device_extensions ) noexcept
   {
     auto extensions_count = uint32_t( 0 );
     vkEnumerateDeviceExtensionProperties( types::get( physical_device ), nullptr, &extensions_count, nullptr );
 
-    auto extensions = std::vector<VkExtensionProperties>( extensions_count );
+    auto extensions = std::vector< VkExtensionProperties >( extensions_count );
     vkEnumerateDeviceExtensionProperties(
       types::get( physical_device ), nullptr, &extensions_count, std::data( extensions ) );
 
-    auto is_present = [&extensions]( auto const & extension )
+    auto is_present = [ &extensions ]( auto const & extension )
     {
       return is_extension_present( extension, extensions );
     };
@@ -65,20 +65,20 @@ namespace mvk::detail
     return supported != 0U;
   }
 
-  [[nodiscard]] std::optional<std::pair<types::queue_index, types::queue_index>>
+  [[nodiscard]] std::optional< std::pair< types::queue_index, types::queue_index > >
     query_family_indices( types::physical_device const physical_device, types::surface const surface )
   {
     auto queue_families_count = uint32_t( 0 );
     vkGetPhysicalDeviceQueueFamilyProperties( types::get( physical_device ), &queue_families_count, nullptr );
 
-    auto queue_families = std::vector<VkQueueFamilyProperties>( queue_families_count );
+    auto queue_families = std::vector< VkQueueFamilyProperties >( queue_families_count );
     vkGetPhysicalDeviceQueueFamilyProperties(
       types::get( physical_device ), &queue_families_count, std::data( queue_families ) );
 
-    auto graphics_family = std::optional<uint32_t>();
-    auto present_family  = std::optional<uint32_t>();
+    auto graphics_family = std::optional< uint32_t >();
+    auto present_family  = std::optional< uint32_t >();
 
-    auto const is_complete = [&, i = 0U]( auto const & queue_family ) mutable
+    auto const is_complete = [ &, i = 0U ]( auto const & queue_family ) mutable
     {
       if ( queue_family.queueCount == 0 )
       {
@@ -133,7 +133,7 @@ namespace mvk::detail
     vkGetPhysicalDeviceSurfacePresentModesKHR(
       types::get( physical_device ), types::get( surface ), &modes_count, nullptr );
 
-    auto modes = std::vector<VkPresentModeKHR>( modes_count );
+    auto modes = std::vector< VkPresentModeKHR >( modes_count );
     vkGetPhysicalDeviceSurfacePresentModesKHR(
       types::get( physical_device ), types::get( surface ), &modes_count, std::data( modes ) );
 
@@ -150,7 +150,7 @@ namespace mvk::detail
   [[nodiscard]] VkExtent2D choose_extent( VkSurfaceCapabilitiesKHR const & capabilities,
                                           VkExtent2D const &               extent ) noexcept
   {
-    if ( capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max() )
+    if ( capabilities.currentExtent.width != std::numeric_limits< uint32_t >::max() )
     {
       return capabilities.currentExtent;
     }

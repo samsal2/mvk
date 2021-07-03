@@ -1,9 +1,9 @@
 ﻿---
 AccessModifierOffset : -2
 AlignAfterOpenBracket : Align
-AlignConsecutiveAssignments : true
-AlignConsecutiveDeclarations : true
-AlignConsecutiveMacros : true
+AlignConsecutiveAssignments : AcrossComments
+AlignConsecutiveDeclarations : AcrossComments
+AlignConsecutiveMacros : AcrossComments
 AlignEscapedNewlines : Left
 AlignOperands : true
 AlignTrailingComments : true
@@ -77,12 +77,12 @@ SpaceBeforeSquareBrackets : false
 SpaceInEmptyBlock : false
 SpaceInEmptyParentheses : false
 SpacesBeforeTrailingComments : 2
-SpacesInAngles : false
+SpacesInAngles : true
 SpacesInCStyleCastParentheses : false
 SpacesInConditionalStatement : true
 SpacesInContainerLiterals : true
 SpacesInParentheses : true
-SpacesInSquareBrackets : false
+SpacesInSquareBrackets : true
 Standard : Latest
 UseCRLF : true
 UseTab : Never

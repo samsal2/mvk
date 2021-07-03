@@ -1,0 +1,300 @@
+#include "engine/image.hpp"
+
+namespace mvk::engine
+{
+  void transition_layout( context const & ctx,
+                          types::image    image,
+                          VkImageLayout   old_layout,
+                          VkImageLayout   new_layout,
+                          uint32_t        mipmap_levels ) noexcept
+  {
+    auto const [ image_memory_barrier, source_stage, destination_stage ] =
+      [ old_layout, new_layout, &image, mipmap_levels ]
+    {
+      auto barrier                = VkImageMemoryBarrier();
+      barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+      barrier.oldLayout           = old_layout;
+      barrier.newLayout           = new_layout;
+      barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+      barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+      barrier.image               = types::get( image );
+
+      if ( new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
+      {
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+      }
+      else
+      {
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+      }
+
+      barrier.subresourceRange.baseMipLevel   = 0;
+      barrier.subresourceRange.levelCount     = mipmap_levels;
+      barrier.subresourceRange.baseArrayLayer = 0;
+      barrier.subresourceRange.layerCount     = 1;
+
+      auto source_stage      = VkPipelineStageFlags();
+      auto destination_stage = VkPipelineStageFlags();
+
+      if ( old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL )
+      {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+        source_stage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+      }
+      else if ( old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+                new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL )
+      {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        source_stage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+      }
+      else if ( old_layout == VK_IMAGE_LAYOUT_UNDEFINED &&
+                new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
+      {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask =
+          VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        source_stage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destination_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+      }
+      else
+      {
+        MVK_VERIFY_NOT_REACHED();
+      }
+
+      return std::make_tuple( barrier, source_stage, destination_stage );
+    }();
+
+    auto const begin_info = []
+    {
+      auto info             = VkCommandBufferBeginInfo();
+      info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+      info.pInheritanceInfo = nullptr;
+      return info;
+    }();
+
+    auto const command_buffer = allocate_single_use_command_buffer( ctx );
+
+    vkBeginCommandBuffer( types::get( command_buffer ), &begin_info );
+    vkCmdPipelineBarrier( types::get( command_buffer ),
+                          source_stage,
+                          destination_stage,
+                          0,
+                          0,
+                          nullptr,
+                          0,
+                          nullptr,
+                          1,
+                          &image_memory_barrier );
+    vkEndCommandBuffer( types::get( command_buffer ) );
+
+    auto submit_info               = VkSubmitInfo();
+    submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers    = &types::get( command_buffer );
+
+    vkQueueSubmit( types::get( ctx.graphics_queue_ ), 1, &submit_info, nullptr );
+    vkQueueWaitIdle( types::get( ctx.graphics_queue_ ) );
+  }
+
+  void generate_mipmaps(
+    context const & ctx, types::image image, uint32_t width, uint32_t height, uint32_t mipmap_levels ) noexcept
+  {
+    if ( mipmap_levels == 1 || mipmap_levels == 0 )
+    {
+      return;
+    }
+
+    auto const begin_info = []
+    {
+      auto info             = VkCommandBufferBeginInfo();
+      info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+      info.pInheritanceInfo = nullptr;
+      return info;
+    }();
+
+    auto command_buffer = allocate_single_use_command_buffer( ctx );
+    vkBeginCommandBuffer( types::get( command_buffer ), &begin_info );
+
+    auto barrier                            = VkImageMemoryBarrier();
+    barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image                           = types::get( image );
+    barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount     = 1;
+    barrier.subresourceRange.levelCount     = 1;
+
+    auto mipmap_width  = static_cast< int32_t >( width );
+    auto mipmap_height = static_cast< int32_t >( height );
+
+    auto const half = []( auto & num )
+    {
+      if ( num > 1 )
+      {
+        num /= 2;
+        return num;
+      }
+
+      return 1;
+    };
+
+    for ( auto i = uint32_t( 0 ); i < ( mipmap_levels - 1 ); ++i )
+    {
+      barrier.subresourceRange.baseMipLevel = i;
+      barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+      barrier.newLayout                     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+      barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
+      barrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
+
+      vkCmdPipelineBarrier( types::get( command_buffer ),
+                            VK_PIPELINE_STAGE_TRANSFER_BIT,
+                            VK_PIPELINE_STAGE_TRANSFER_BIT,
+                            0,
+                            0,
+                            nullptr,
+                            0,
+                            nullptr,
+                            1,
+                            &barrier );
+
+      auto blit                          = VkImageBlit();
+      blit.srcOffsets[ 0 ].x             = 0;
+      blit.srcOffsets[ 0 ].y             = 0;
+      blit.srcOffsets[ 0 ].z             = 0;
+      blit.srcOffsets[ 1 ].x             = mipmap_width;
+      blit.srcOffsets[ 1 ].y             = mipmap_height;
+      blit.srcOffsets[ 1 ].z             = 1;
+      blit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+      blit.srcSubresource.mipLevel       = i;
+      blit.srcSubresource.baseArrayLayer = 0;
+      blit.srcSubresource.layerCount     = 1;
+      blit.dstOffsets[ 0 ].x             = 0;
+      blit.dstOffsets[ 0 ].y             = 0;
+      blit.dstOffsets[ 0 ].z             = 0;
+      blit.dstOffsets[ 1 ].x             = half( mipmap_width );
+      blit.dstOffsets[ 1 ].y             = half( mipmap_height );
+      blit.dstOffsets[ 1 ].z             = 1;
+      blit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+      blit.dstSubresource.mipLevel       = i + 1;
+      blit.dstSubresource.baseArrayLayer = 0;
+      blit.dstSubresource.layerCount     = 1;
+
+      vkCmdBlitImage( types::get( command_buffer ),
+                      types::get( image ),
+                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                      types::get( image ),
+                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                      1,
+                      &blit,
+                      VK_FILTER_LINEAR );
+
+      barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+      barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+      barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+      vkCmdPipelineBarrier( types::get( command_buffer ),
+                            VK_PIPELINE_STAGE_TRANSFER_BIT,
+                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                            0,
+                            0,
+                            nullptr,
+                            0,
+                            nullptr,
+                            1,
+                            &barrier );
+    }
+
+    barrier.subresourceRange.baseMipLevel = mipmap_levels - 1;
+    barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout                     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask                 = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier( types::get( command_buffer ),
+                          VK_PIPELINE_STAGE_TRANSFER_BIT,
+                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                          0,
+                          0,
+                          nullptr,
+                          0,
+                          nullptr,
+                          1,
+                          &barrier );
+
+    vkEndCommandBuffer( types::get( command_buffer ) );
+
+    auto submit_info               = VkSubmitInfo();
+    submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers    = &types::get( command_buffer );
+
+    vkQueueSubmit( types::get( ctx.graphics_queue_ ), 1, &submit_info, nullptr );
+    vkQueueWaitIdle( types::get( ctx.graphics_queue_ ) );
+  }
+
+  // buffers
+
+  void stage_image(
+    context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, types::image image ) noexcept
+  {
+    auto const begin_info = []
+    {
+      auto info             = VkCommandBufferBeginInfo();
+      info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+      info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+      info.pInheritanceInfo = nullptr;
+      return info;
+    }();
+
+    auto const copy_region = [ width, height, allocation ]
+    {
+      auto region                            = VkBufferImageCopy();
+      region.bufferOffset                    = allocation.offset_;
+      region.bufferRowLength                 = 0;
+      region.bufferImageHeight               = 0;
+      region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+      region.imageSubresource.mipLevel       = 0;
+      region.imageSubresource.baseArrayLayer = 0;
+      region.imageSubresource.layerCount     = 1;
+      region.imageOffset.x                   = 0;
+      region.imageOffset.y                   = 0;
+      region.imageOffset.z                   = 0;
+      region.imageExtent.width               = width;
+      region.imageExtent.height              = height;
+      region.imageExtent.depth               = 1;
+      return region;
+    }();
+
+    auto const command_buffer = allocate_single_use_command_buffer( ctx );
+
+    vkBeginCommandBuffer( types::get( command_buffer ), &begin_info );
+
+    vkCmdCopyBufferToImage( types::get( command_buffer ),
+                            types::get( allocation.buffer_ ),
+                            types::get( image ),
+                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                            1,
+                            &copy_region );
+
+    vkEndCommandBuffer( types::get( command_buffer ) );
+
+    auto submit_info               = VkSubmitInfo();
+    submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers    = &types::get( command_buffer );
+
+    vkQueueSubmit( types::get( ctx.graphics_queue_ ), 1, &submit_info, nullptr );
+    vkQueueWaitIdle( types::get( ctx.graphics_queue_ ) );
+  }
+
+}  // namespace mvk::engine

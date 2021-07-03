@@ -29,7 +29,7 @@ namespace mvk::types
 
     [[nodiscard]] constexpr bool framebuffer_resized() const noexcept;
 
-    [[nodiscard]] std::vector<char const *> required_extensions() const noexcept;
+    [[nodiscard]] std::vector< char const * > required_extensions() const noexcept;
 
     [[nodiscard]] extent query_framebuffer_size() const noexcept;
 
@@ -41,8 +41,8 @@ namespace mvk::types
       void operator()( GLFWwindow * window ) const noexcept;
     };
 
-    std::unique_ptr<GLFWwindow, deleter> instance_;
-    bool                                 framebuffer_resized_ = false;
+    std::unique_ptr< GLFWwindow, deleter > instance_;
+    bool                                   framebuffer_resized_ = false;
   };
 
   [[nodiscard]] constexpr GLFWwindow * window::get() const noexcept

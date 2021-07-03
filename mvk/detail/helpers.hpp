@@ -8,11 +8,11 @@
 
 namespace mvk::detail
 {
-  [[nodiscard]] bool is_extension_present( std::string const &                         extension_name,
-                                           utility::slice<VkExtensionProperties const> extensions ) noexcept;
+  [[nodiscard]] bool is_extension_present( std::string const &                           extension_name,
+                                           utility::slice< VkExtensionProperties const > extensions ) noexcept;
 
-  [[nodiscard]] bool check_extension_support( types::physical_device             physical_device,
-                                              utility::slice<char const * const> device_extensions ) noexcept;
+  [[nodiscard]] bool check_extension_support( types::physical_device               physical_device,
+                                              utility::slice< char const * const > device_extensions ) noexcept;
 
   [[nodiscard]] bool check_graphic_requirements( VkQueueFamilyProperties const & queue_family ) noexcept;
 
@@ -22,7 +22,7 @@ namespace mvk::detail
   [[nodiscard]] bool
     check_surface_support( types::physical_device physical_device, types::surface surface, uint32_t index ) noexcept;
 
-  [[nodiscard]] std::optional<std::pair<types::queue_index, types::queue_index>>
+  [[nodiscard]] std::optional< std::pair< types::queue_index, types::queue_index > >
     query_family_indices( types::physical_device physical_device, types::surface surface );
 
   [[nodiscard]] uint32_t choose_image_count( VkSurfaceCapabilitiesKHR const & capabilities ) noexcept;

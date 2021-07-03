@@ -16,14 +16,14 @@ namespace mvk::types
                               [[maybe_unused]] int const callback_height )
     {
       auto const user_ptr = glfwGetWindowUserPointer( window_ptr );
-      auto const ctx      = reinterpret_cast<window *>( user_ptr );
+      auto const ctx      = reinterpret_cast< window * >( user_ptr );
       ctx->set_framebuffer_resized( true );
     };
 
-    auto const [width, height] = extent;
+    auto const [ width, height ] = extent;
 
     auto ptr  = glfwCreateWindow( width, height, "stan loona", nullptr, nullptr );
-    instance_ = std::unique_ptr<GLFWwindow, deleter>( ptr );
+    instance_ = std::unique_ptr< GLFWwindow, deleter >( ptr );
 
     glfwSetWindowUserPointer( get(), this );
     glfwSetFramebufferSizeCallback( get(), callback );
@@ -43,11 +43,11 @@ namespace mvk::types
     framebuffer_resized_ = resized;
   }
 
-  [[nodiscard]] std::vector<char const *> window::required_extensions() const noexcept
+  [[nodiscard]] std::vector< char const * > window::required_extensions() const noexcept
   {
     auto       count = uint32_t( 0 );
     auto const data  = glfwGetRequiredInstanceExtensions( &count );
-    return std::vector<char const *>( data, std::next( data, count ) );
+    return std::vector< char const * >( data, std::next( data, count ) );
   }
 
   [[nodiscard]] window::extent window::query_framebuffer_size() const noexcept

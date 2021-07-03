@@ -15,7 +15,7 @@ namespace mvk::wrapper
 
   };  // namespace storage
 
-  template <typename Handle, typename Deleter>
+  template < typename Handle, typename Deleter >
   class unique
   {
   public:
@@ -24,10 +24,11 @@ namespace mvk::wrapper
 
     constexpr unique() noexcept = default;
 
-    template <typename HandleArg, typename... DeleterArgs>
-    requires utility::not_this<HandleArg, unique>
+    template < typename HandleArg, typename... DeleterArgs >
+    requires utility::not_this< HandleArg, unique >
     constexpr explicit unique( HandleArg && handle, DeleterArgs &&... deleter_args ) noexcept
-      : container_( std::forward<HandleArg>( handle ), deleter_type( std::forward<DeleterArgs>( deleter_args )... ) )
+      : container_( std::forward< HandleArg >( handle ),
+                    deleter_type( std::forward< DeleterArgs >( deleter_args )... ) )
     {}
 
     unique( unique const & other ) noexcept = delete;
@@ -75,22 +76,22 @@ namespace mvk::wrapper
       std::swap( deleter(), other.deleter() );
     }
 
-    utility::compressed_pair<handle_type, deleter_type> container_ = {};
+    utility::compressed_pair< handle_type, deleter_type > container_ = {};
   };
 
-  template <typename... Args>
+  template < typename... Args >
   constexpr auto storage_selector( [[maybe_unused]] storage::unique option ) noexcept
   {
-    auto arg = select<options::deleter>( Args{}... );
+    auto arg = select< options::deleter >( Args{}... );
     static_assert( !utility::is_none( arg ), "Expected a deleter option" );
 
-    auto found    = deleter_selector<Args...>( arg );
-    using deleter = selected_t<decltype( found )>;
+    auto found    = deleter_selector< Args... >( arg );
+    using deleter = selected_t< decltype( found ) >;
 
-    using handle = decltype( select<options::handle>( Args{}... ) );
+    using handle = decltype( select< options::handle >( Args{}... ) );
     static_assert( !utility::is_none( handle{} ), "Expected a handle option" );
 
-    return selected<unique<handle, deleter>>{};
+    return selected< unique< handle, deleter > >{};
   }
 
 }  // namespace mvk::wrapper

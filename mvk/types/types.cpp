@@ -31,17 +31,17 @@ namespace mvk::types
     return types::unique_pipeline_layout( types::get( handle ), types::get( device ) );
   }
 
-  [[nodiscard]] std::vector<unique_command_buffer>
+  [[nodiscard]] std::vector< unique_command_buffer >
     allocate_unique_command_buffers( device const device, VkCommandBufferAllocateInfo const & info ) noexcept
   {
     auto const size    = info.commandBufferCount;
-    auto       handles = std::vector<typename command_buffer::handle_type>( size );
+    auto       handles = std::vector< typename command_buffer::handle_type >( size );
 
     [[maybe_unused]] auto result = vkAllocateCommandBuffers( types::get( device ), &info, std::data( handles ) );
 
     MVK_VERIFY( result == VK_SUCCESS );
 
-    auto command_buffers = std::vector<unique_command_buffer>();
+    auto command_buffers = std::vector< unique_command_buffer >();
     command_buffers.reserve( size );
 
     for ( auto const handle : handles )
@@ -53,17 +53,17 @@ namespace mvk::types
     return command_buffers;
   }
 
-  [[nodiscard]] std::vector<unique_descriptor_set>
+  [[nodiscard]] std::vector< unique_descriptor_set >
     allocate_unique_descriptor_sets( device const device, VkDescriptorSetAllocateInfo const & info ) noexcept
   {
     auto const size    = info.descriptorSetCount;
-    auto       handles = std::vector<typename descriptor_set::handle_type>( size );
+    auto       handles = std::vector< typename descriptor_set::handle_type >( size );
 
     [[maybe_unused]] auto result = vkAllocateDescriptorSets( types::get( device ), &info, std::data( handles ) );
 
     MVK_VERIFY( result == VK_SUCCESS );
 
-    auto descriptor_sets = std::vector<unique_descriptor_set>();
+    auto descriptor_sets = std::vector< unique_descriptor_set >();
     descriptor_sets.reserve( size );
 
     for ( auto const handle : handles )
