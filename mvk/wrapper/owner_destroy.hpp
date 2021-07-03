@@ -12,7 +12,7 @@ namespace mvk::wrapper
 
   }  // namespace deleter
 
-  template < auto Call >
+  template< auto Call >
   class owner_destroy
   {
     static constexpr auto deleter_call = Call;
@@ -20,14 +20,14 @@ namespace mvk::wrapper
   public:
     constexpr owner_destroy() noexcept = default;
 
-    template < typename Handle >
+    template< typename Handle >
     constexpr void destroy( Handle handle )
     {
       deleter_call( handle, nullptr );
     }
   };
 
-  template < typename... Args >
+  template< typename... Args >
   constexpr auto deleter_selector( [[maybe_unused]] deleter::owner_destroy option ) noexcept
   {
     constexpr auto deleter_call = select< options::deleter_call >( Args{}... );

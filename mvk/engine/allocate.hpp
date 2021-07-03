@@ -44,11 +44,11 @@ namespace mvk::engine
   [[nodiscard]] index_allocation   index_allocate( context & ctx, staging_allocation allocation ) noexcept;
   [[nodiscard]] uniform_allocation uniform_allocate( context & ctx, utility::slice< std::byte const > src ) noexcept;
 
-  template < size_t Size >
+  template< size_t Size >
   [[nodiscard]] std::array< types::unique_descriptor_set, Size >
     allocate_descriptor_sets( context const & ctx, types::descriptor_set_layout layout ) noexcept;
 
-  template < size_t Size >
+  template< size_t Size >
   [[nodiscard]] std::array< types::unique_command_buffer, Size >
     allocate_command_buffers( context const & ctx, VkCommandBufferLevel level ) noexcept;
 
@@ -60,7 +60,7 @@ namespace mvk::engine
 
 namespace mvk::engine
 {
-  template < size_t Size >
+  template< size_t Size >
   [[nodiscard]] std::array< types::unique_descriptor_set, Size >
     allocate_descriptor_sets( context const & ctx, types::descriptor_set_layout layout ) noexcept
   {
@@ -95,7 +95,7 @@ namespace mvk::engine
     return descriptor_sets;
   }
 
-  template < size_t Size >
+  template< size_t Size >
   [[nodiscard]] std::array< types::unique_command_buffer, Size >
     allocate_command_buffers( context const & ctx, VkCommandBufferLevel level ) noexcept
   {

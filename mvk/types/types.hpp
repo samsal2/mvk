@@ -28,31 +28,31 @@ namespace mvk::types
   using queue_index = uint32_t;
   using flags       = VkFlags;
 
-  template < typename Wrapper >
+  template< typename Wrapper >
   constexpr decltype( auto ) get( Wrapper const & wrapper ) noexcept
   {
     return wrapper.get();
   }
 
-  template < typename Wrapper >
+  template< typename Wrapper >
   constexpr decltype( auto ) get( Wrapper & wrapper ) noexcept
   {
     return wrapper.get();
   }
 
-  template < typename Wrapper >
+  template< typename Wrapper >
   constexpr decltype( auto ) parent( Wrapper const & wrapper ) noexcept
   {
     return wrapper.deleter().parent();
   }
 
-  template < typename Wrapper >
+  template< typename Wrapper >
   constexpr decltype( auto ) pool( Wrapper const & wrapper ) noexcept
   {
     return wrapper.deleter().parent();
   }
 
-  template < typename... Args >
+  template< typename... Args >
   constexpr auto decay( wrapper::any_wrapper< Args... > const & wrapper ) noexcept
   {
     using handle = decltype( wrapper::select< wrapper::options::handle >( Args{}... ) );

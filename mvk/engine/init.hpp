@@ -26,7 +26,6 @@ namespace mvk::engine
   void init_samplers( context & ctx ) noexcept;
   void init_pipeline( context & ctx ) noexcept;
   void init_sync( context & ctx ) noexcept;
-
 }  // namespace mvk::engine
 
 #endif

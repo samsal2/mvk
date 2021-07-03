@@ -15,7 +15,7 @@ namespace mvk::wrapper
 
   };  // namespace storage
 
-  template < typename Handle, typename Deleter >
+  template< typename Handle, typename Deleter >
   class unique
   {
   public:
@@ -24,7 +24,7 @@ namespace mvk::wrapper
 
     constexpr unique() noexcept = default;
 
-    template < typename HandleArg, typename... DeleterArgs >
+    template< typename HandleArg, typename... DeleterArgs >
     requires utility::not_this< HandleArg, unique >
     constexpr explicit unique( HandleArg && handle, DeleterArgs &&... deleter_args ) noexcept
       : container_( std::forward< HandleArg >( handle ),
@@ -79,7 +79,7 @@ namespace mvk::wrapper
     utility::compressed_pair< handle_type, deleter_type > container_ = {};
   };
 
-  template < typename... Args >
+  template< typename... Args >
   constexpr auto storage_selector( [[maybe_unused]] storage::unique option ) noexcept
   {
     auto arg = select< options::deleter >( Args{}... );

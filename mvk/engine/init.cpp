@@ -6,6 +6,7 @@
 #include "engine/allocate.hpp"
 #include "engine/debug.hpp"
 #include "engine/image.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace mvk::engine
 {

@@ -15,7 +15,7 @@ namespace mvk::wrapper
 
   }  // namespace deleter
 
-  template < auto Call, typename Parent, typename Pool >
+  template< auto Call, typename Parent, typename Pool >
   class object_free
   {
     using parent_type                  = Parent;
@@ -25,12 +25,12 @@ namespace mvk::wrapper
   public:
     constexpr object_free() noexcept = default;
 
-    template < typename ParentArg, typename PoolArg >
+    template< typename ParentArg, typename PoolArg >
     constexpr object_free( ParentArg && parent, PoolArg && pool ) noexcept
       : parent_( std::forward< ParentArg >( parent ) ), pool_( std::forward< PoolArg >( pool ) )
     {}
 
-    template < typename Handle >
+    template< typename Handle >
     constexpr void destroy( Handle handle )
     {
       if ( parent_ != VK_NULL_HANDLE && pool_ != VK_NULL_HANDLE )
@@ -44,7 +44,7 @@ namespace mvk::wrapper
     pool_type   pool_;
   };
 
-  template < typename... Args >
+  template< typename... Args >
   constexpr auto deleter_selector( [[maybe_unused]] deleter::object_free option ) noexcept
   {
     using parent = decltype( select< options::parent >( Args{}... ) );

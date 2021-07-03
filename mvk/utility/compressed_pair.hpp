@@ -8,7 +8,7 @@
 
 namespace mvk::utility
 {
-  template < size_t Idx, typename T, bool IsEmpty = std::is_empty_v< T > >
+  template< size_t Idx, typename T, bool IsEmpty = std::is_empty_v< T > >
   class compressed_pair_leaf : public T
   {
   public:
@@ -19,7 +19,7 @@ namespace mvk::utility
 
     constexpr compressed_pair_leaf() noexcept = default;
 
-    template < typename U >
+    template< typename U >
     requires utility::not_this< U, compressed_pair_leaf >
     constexpr explicit compressed_pair_leaf( U && value ) noexcept : base( std::forward< U >( value ) ) {}
 
@@ -34,7 +34,7 @@ namespace mvk::utility
     }
   };
 
-  template < size_t Idx, typename T >
+  template< size_t Idx, typename T >
   class compressed_pair_leaf< Idx, T, false >
   {
   public:
@@ -44,7 +44,7 @@ namespace mvk::utility
 
     constexpr compressed_pair_leaf() noexcept = default;
 
-    template < typename U >
+    template< typename U >
     requires utility::not_this< U, compressed_pair_leaf >
     constexpr explicit compressed_pair_leaf( U && value ) noexcept : value_( std::forward< U >( value ) ) {}
 
@@ -62,7 +62,7 @@ namespace mvk::utility
     value_type value_ = {};
   };
 
-  template < typename T1, typename T2 >
+  template< typename T1, typename T2 >
   class compressed_pair
     : protected compressed_pair_leaf< 0, T1 >
     , protected compressed_pair_leaf< 1, T2 >
@@ -75,7 +75,7 @@ namespace mvk::utility
   public:
     constexpr compressed_pair() noexcept = default;
 
-    template < typename U1, typename U2 >
+    template< typename U1, typename U2 >
     constexpr compressed_pair( U1 && value1, U2 && value2 ) noexcept
       : leaf1( std::forward< U1 >( value1 ) ), leaf2( std::forward< U2 >( value2 ) )
     {}
