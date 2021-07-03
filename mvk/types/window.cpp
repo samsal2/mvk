@@ -1,7 +1,8 @@
 #include "types/window.hpp"
 
 #include "utility/slice.hpp"
-#include "validation/validation.hpp"
+
+#include <vector>
 
 namespace mvk::types
 {
@@ -44,22 +45,9 @@ namespace mvk::types
 
   [[nodiscard]] std::vector<char const *> window::required_extensions() const noexcept
   {
-    auto const glfw_extensions = []
-    {
-      auto       count = uint32_t( 0 );
-      auto const data  = glfwGetRequiredInstanceExtensions( &count );
-      return utility::slice( data, count );
-    }();
-
-    auto instance_extensions = validation::required_instance_extensions();
-
-    auto extensions = std::vector<char const *>();
-
-    extensions.insert( std::end( extensions ), std::begin( instance_extensions ), std::end( instance_extensions ) );
-
-    extensions.insert( std::end( extensions ), std::begin( glfw_extensions ), std::end( glfw_extensions ) );
-
-    return extensions;
+    auto       count = uint32_t( 0 );
+    auto const data  = glfwGetRequiredInstanceExtensions( &count );
+    return std::vector<char const *>( data, std::next( data, count ) );
   }
 
   [[nodiscard]] window::extent window::query_framebuffer_size() const noexcept

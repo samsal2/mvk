@@ -2,10 +2,25 @@
 #define MVK_TYPES_TYPES_HPP_INCLUDED
 
 #include "types/window.hpp"
-#include "validation/validation.hpp"
+#include "utility/verify.hpp"
 #include "wrapper/any_wrapper.hpp"
 
 #include <vulkan/vulkan.h>
+
+namespace mvk::validation
+{
+  static void destroy_debug_messenger( VkInstance const               instance,
+                                       VkDebugUtilsMessengerEXT const messenger,
+                                       VkAllocationCallbacks const *  callback )
+  {
+    auto const destroy_debug_utils_messenger = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+      vkGetInstanceProcAddr( instance, "vkDestroyDebugUtilsMessengerEXT" ) );
+
+    MVK_VERIFY( destroy_debug_utils_messenger );
+
+    destroy_debug_utils_messenger( instance, messenger, callback );
+  }
+}  // namespace mvk::validation
 
 namespace mvk::types
 {
@@ -265,7 +280,8 @@ namespace mvk::types
   [[nodiscard]] types::unique_command_pool create_unique_command_pool( types::device                   device,
                                                                        VkCommandPoolCreateInfo const & info ) noexcept;
 
-  [[nodiscard]] types::unique_debug_messenger create_unique_debug_messenger( types::instance instance ) noexcept;
+  [[nodiscard]] types::unique_debug_messenger
+    create_unique_debug_messenger( instance const instance, VkDebugUtilsMessengerCreateInfoEXT const & info ) noexcept;
 
   [[nodiscard]] types::unique_descriptor_pool
     create_unique_descriptor_pool( types::device device, VkDescriptorPoolCreateInfo const & info ) noexcept;
@@ -316,12 +332,18 @@ namespace mvk::types
   [[nodiscard]] types::unique_swapchain create_unique_swapchain( types::device                    device,
                                                                  VkSwapchainCreateInfoKHR const & info ) noexcept;
 
-  [[nodiscard]] types::unique_debug_messenger create_unique_debug_messenger( instance const instance ) noexcept
+  [[nodiscard]] types::unique_debug_messenger
+    create_unique_debug_messenger( instance const instance, VkDebugUtilsMessengerCreateInfoEXT const & info ) noexcept
   {
-    return types::unique_debug_messenger( validation::setup_debug_messenger( types::get( instance ) ),
-                                          types::get( instance ) );
-  }
+    auto const create_debug_utils_messenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+      vkGetInstanceProcAddr( types::get( instance ), "vkCreateDebugUtilsMessengerEXT" ) );
 
+    MVK_VERIFY( create_debug_utils_messenger );
+
+    auto handle = VkDebugUtilsMessengerEXT();
+    create_debug_utils_messenger( types::get( instance ), &info, nullptr, &handle );
+    return types::unique_debug_messenger( handle, types::get( instance ) );
+  }
 }  // namespace mvk::types
 
 #endif

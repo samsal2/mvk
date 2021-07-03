@@ -6,6 +6,7 @@
 #include "tiny_obj_loader.h"
 #pragma clang diagnostic pop
 
+#include "utility/verify.hpp"
 namespace mvk::detail
 {
   [[nodiscard]] std::pair<std::vector<vertex>, std::vector<uint32_t>>

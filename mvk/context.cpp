@@ -6,7 +6,6 @@
 #include "types/types.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
-#include "vulkan/vulkan_core.h"
 
 #include <limits>
 
@@ -29,6 +28,7 @@ namespace mvk
     init_depth_image( ctx );
     init_main_render_pass( ctx );
     init_framebuffers( ctx );
+    init_samplers( ctx );
     init_doesnt_belong_here( ctx );
     allocate_command_buffers( ctx );
     init_shaders( ctx );
@@ -89,7 +89,15 @@ namespace mvk
       return info;
     }();
 
-    auto const required_extensions  = ctx.window_.required_extensions();
+    auto required_extensions = ctx.window_.required_extensions();
+
+    if constexpr ( context::use_validation )
+    {
+      required_extensions.insert( std::begin( required_extensions ),
+                                  std::begin( context::validation_instance_extensions ),
+                                  std::end( context::validation_instance_extensions ) );
+    }
+
     auto const instance_create_info = [&required_extensions, &application_info]
     {
       auto info  = VkInstanceCreateInfo();
@@ -127,7 +135,8 @@ namespace mvk
 
   void init_debug_messenger( context & ctx ) noexcept
   {
-    ctx.debug_messenger_ = types::create_unique_debug_messenger( types::get( ctx.instance_ ) );
+    ctx.debug_messenger_ =
+      types::create_unique_debug_messenger( types::get( ctx.instance_ ), detail::debug_create_info );
   }
 
   void init_surface( context & ctx ) noexcept
@@ -734,31 +743,6 @@ namespace mvk
 
     ctx.image_view_ = types::create_unique_image_view( types::decay( ctx.device_ ), image_view_create_info );
 
-    auto const sampler_create_info = []
-    {
-      auto info                    = VkSamplerCreateInfo();
-      info.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-      info.magFilter               = VK_FILTER_LINEAR;
-      info.minFilter               = VK_FILTER_LINEAR;
-      info.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      info.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      info.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-      info.anisotropyEnable        = VK_TRUE;
-      info.anisotropyEnable        = VK_TRUE;
-      info.maxAnisotropy           = 16;
-      info.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-      info.unnormalizedCoordinates = VK_FALSE;
-      info.compareEnable           = VK_FALSE;
-      info.compareOp               = VK_COMPARE_OP_ALWAYS;
-      info.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-      info.mipLodBias              = 0.0F;
-      info.minLod                  = 0.0F;
-      info.maxLod                  = std::numeric_limits<float>::max();
-      return info;
-    }();
-
-    ctx.sampler_ = types::create_unique_sampler( types::get( ctx.device_ ), sampler_create_info );
-
     std::tie( ctx.vertices_, ctx.indices_ ) = detail::read_object( "../../assets/viking_room.obj" );
 
     ctx.image_descriptor_set_ =
@@ -769,7 +753,7 @@ namespace mvk
       auto info        = VkDescriptorImageInfo();
       info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
       info.imageView   = types::get( ctx.image_view_ );
-      info.sampler     = types::get( ctx.sampler_ );
+      info.sampler     = types::get( ctx.texture_sampler_ );
       return info;
     }();
 
@@ -835,6 +819,34 @@ namespace mvk
     }();
 
     ctx.fragment_shader_ = types::create_unique_shader_module( types::get( ctx.device_ ), fragment_shader_create_info );
+  }
+
+  void init_samplers( context & ctx ) noexcept
+  {
+    auto const sampler_create_info = []
+    {
+      auto info                    = VkSamplerCreateInfo();
+      info.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+      info.magFilter               = VK_FILTER_LINEAR;
+      info.minFilter               = VK_FILTER_LINEAR;
+      info.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+      info.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+      info.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+      info.anisotropyEnable        = VK_TRUE;
+      info.anisotropyEnable        = VK_TRUE;
+      info.maxAnisotropy           = 16;
+      info.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+      info.unnormalizedCoordinates = VK_FALSE;
+      info.compareEnable           = VK_FALSE;
+      info.compareOp               = VK_COMPARE_OP_ALWAYS;
+      info.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+      info.mipLodBias              = 0.0F;
+      info.minLod                  = 0.0F;
+      info.maxLod                  = std::numeric_limits<float>::max();
+      return info;
+    }();
+
+    ctx.texture_sampler_ = types::create_unique_sampler( types::get( ctx.device_ ), sampler_create_info );
   }
 
   void init_pipeline( context & ctx ) noexcept
@@ -1732,8 +1744,7 @@ namespace mvk
     }
   }
 
-  void move_to_garbage_buffers( context &                                                           ctx,
-                                utility::slice<types::unique_buffer, context::dynamic_buffer_count> buffers ) noexcept
+  void move_to_garbage_buffers( context & ctx, utility::slice<types::unique_buffer> buffers ) noexcept
   {
     auto & garbage_buffers = ctx.garbage_buffers_[ctx.current_garbage_index_];
     garbage_buffers.reserve( std::size( garbage_buffers ) + std::size( buffers ) );
@@ -1744,8 +1755,7 @@ namespace mvk
     }
   }
 
-  void move_to_garbage_descriptor_sets(
-    context & ctx, utility::slice<types::unique_descriptor_set, context::dynamic_buffer_count> sets ) noexcept
+  void move_to_garbage_descriptor_sets( context & ctx, utility::slice<types::unique_descriptor_set> sets ) noexcept
   {
     auto & garbage_descriptor_sets = ctx.garbage_descriptor_sets_[ctx.current_garbage_index_];
     garbage_descriptor_sets.reserve( std::size( garbage_descriptor_sets ) + std::size( sets ) );

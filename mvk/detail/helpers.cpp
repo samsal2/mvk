@@ -3,6 +3,7 @@
 #include "detail/misc.hpp"
 
 #include <algorithm>
+#include <vector>
 
 namespace mvk::detail
 {

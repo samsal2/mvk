@@ -7,5 +7,4 @@ target_sources(${PROJECT_NAME} PRIVATE context.hpp
 add_subdirectory(types)
 add_subdirectory(utility)
 add_subdirectory(detail)
-add_subdirectory(validation)
 add_subdirectory(wrapper)

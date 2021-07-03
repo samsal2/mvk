@@ -4,7 +4,10 @@
 #include "detail/helpers.hpp"
 #include "shader_types.hpp"
 #include "types/types.hpp"
-#include "vulkan/vulkan_core.h"
+
+#include <array>
+#include <iostream>
+#include <vector>
 
 namespace mvk::detail
 {
@@ -129,7 +132,7 @@ namespace mvk
     types::unique_shader_module fragment_shader_;
 
     // samplers
-    types::unique_sampler sampler_;
+    types::unique_sampler texture_sampler_;
 
     // init_pipeline
     types::unique_pipeline pipeline_;
@@ -222,6 +225,7 @@ namespace mvk
   void init_doesnt_belong_here( context & ctx ) noexcept;
   void allocate_command_buffers( context & ctx ) noexcept;
   void init_shaders( context & ctx ) noexcept;
+  void init_samplers( context & ctx ) noexcept;
   void init_pipeline( context & ctx ) noexcept;
   void init_sync( context & ctx ) noexcept;
 
@@ -243,12 +247,8 @@ namespace mvk
   void create_staging_buffers_and_memories( context & ctx, types::device_size size ) noexcept;
   void create_uniform_buffers_memories_and_sets( context & ctx, types::device_size size ) noexcept;
 
-  void move_to_garbage_buffers( context &                                                           ctx,
-                                utility::slice<types::unique_buffer, context::dynamic_buffer_count> buffers ) noexcept;
-
-  void move_to_garbage_descriptor_sets(
-    context & ctx, utility::slice<types::unique_descriptor_set, context::dynamic_buffer_count> sets ) noexcept;
-
+  void move_to_garbage_buffers( context & ctx, utility::slice<types::unique_buffer> buffers ) noexcept;
+  void move_to_garbage_descriptor_sets( context & ctx, utility::slice<types::unique_descriptor_set> sets ) noexcept;
   void move_to_garbage_memories( context & ctx, types::unique_device_memory memory ) noexcept;
 
   struct staging_allocation

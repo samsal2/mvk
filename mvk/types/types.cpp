@@ -1,8 +1,8 @@
 #include "types/types.hpp"
 
 #include "utility/verify.hpp"
-#include "validation/validation.hpp"
-#include "vulkan/vulkan_core.h"
+
+#include <vector>
 
 namespace mvk::types
 {

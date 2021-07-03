@@ -10,6 +10,7 @@
 #include <cmath>
 #include <optional>
 #include <utility>
+#include <vector>
 
 namespace mvk::detail
 {
