@@ -31,13 +31,12 @@ namespace mvk
     init_framebuffers( ctx );
     init_doesnt_belong_here( ctx );
     allocate_command_buffers( ctx );
-    allocate_descriptors( ctx );
-    init_ubos( ctx );
     init_shaders( ctx );
     init_pipeline( ctx );
     init_sync( ctx );
     create_vertex_buffers_and_memories( ctx, 1024 * 1024 );
     create_index_buffers_and_memories( ctx, 1024 * 1024 );
+    create_uniform_buffers_memories_and_sets( ctx, 1024 * 1024 );
     return ctx;
   }
 
@@ -258,21 +257,35 @@ namespace mvk
 
   void init_layouts( context & ctx ) noexcept
   {
-    auto const ubo_layout = []
+    auto const uniform_layout = []
     {
       auto layout               = VkDescriptorSetLayoutBinding();
       layout.binding            = 0;
-      layout.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      layout.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
       layout.descriptorCount    = 1;
       layout.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT;
       layout.pImmutableSamplers = nullptr;
       return layout;
     }();
 
+    auto const uniform_descriptor_set_bindings = std::array{ uniform_layout };
+
+    auto const uniform_descriptor_set_layout_create_info = [&uniform_descriptor_set_bindings]
+    {
+      auto info         = VkDescriptorSetLayoutCreateInfo();
+      info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+      info.bindingCount = static_cast<uint32_t>( std::size( uniform_descriptor_set_bindings ) );
+      info.pBindings    = std::data( uniform_descriptor_set_bindings );
+      return info;
+    }();
+
+    ctx.uniform_descriptor_set_layout_ = types::create_unique_descriptor_set_layout(
+      types::get( ctx.device_ ), uniform_descriptor_set_layout_create_info );
+
     auto const sampler_layout = []
     {
       auto layout               = VkDescriptorSetLayoutBinding();
-      layout.binding            = 1;
+      layout.binding            = 0;
       layout.descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       layout.descriptorCount    = 1;
       layout.pImmutableSamplers = nullptr;
@@ -280,26 +293,29 @@ namespace mvk
       return layout;
     }();
 
-    auto const descriptor_set_bindings = std::array{ ubo_layout, sampler_layout };
+    auto const sampler_descriptor_set_bindings = std::array{ sampler_layout };
 
-    auto const descriptor_set_layout_create_info = [&descriptor_set_bindings]
+    auto const sampler_descriptor_set_layout_create_info = [&sampler_descriptor_set_bindings]
     {
       auto info         = VkDescriptorSetLayoutCreateInfo();
       info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-      info.bindingCount = static_cast<uint32_t>( std::size( descriptor_set_bindings ) );
-      info.pBindings    = std::data( descriptor_set_bindings );
+      info.bindingCount = static_cast<uint32_t>( std::size( sampler_descriptor_set_bindings ) );
+      info.pBindings    = std::data( sampler_descriptor_set_bindings );
       return info;
     }();
 
-    ctx.main_descriptor_set_layout_ =
-      types::create_unique_descriptor_set_layout( types::get( ctx.device_ ), descriptor_set_layout_create_info );
+    ctx.texture_descriptor_set_layout_ = types::create_unique_descriptor_set_layout(
+      types::get( ctx.device_ ), sampler_descriptor_set_layout_create_info );
 
-    auto const pipeline_layout_create_info = [&ctx]
+    auto descriptor_set_layouts =
+      std::array{ types::get( ctx.uniform_descriptor_set_layout_ ), types::get( ctx.texture_descriptor_set_layout_ ) };
+
+    auto const pipeline_layout_create_info = [&descriptor_set_layouts]
     {
       auto info                   = VkPipelineLayoutCreateInfo();
       info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-      info.setLayoutCount         = 1;
-      info.pSetLayouts            = &types::get( ctx.main_descriptor_set_layout_ );
+      info.setLayoutCount         = static_cast<uint32_t>( std::size( descriptor_set_layouts ) );
+      info.pSetLayouts            = std::data( descriptor_set_layouts );
       info.pushConstantRangeCount = 0;
       info.pPushConstantRanges    = nullptr;
       return info;
@@ -325,7 +341,7 @@ namespace mvk
     auto const uniform_pool_size = []
     {
       auto pool_size            = VkDescriptorPoolSize();
-      pool_size.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      pool_size.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
       pool_size.descriptorCount = 32;
       return pool_size;
     }();
@@ -744,6 +760,41 @@ namespace mvk
     ctx.sampler_ = types::create_unique_sampler( types::get( ctx.device_ ), sampler_create_info );
 
     std::tie( ctx.vertices_, ctx.indices_ ) = detail::read_object( "../../assets/viking_room.obj" );
+
+    ctx.image_descriptor_set_ =
+      std::move( allocate_descriptor_sets<1>( ctx, types::decay( ctx.texture_descriptor_set_layout_ ) )[0] );
+
+    auto const image_descriptor_image_info = [&ctx]
+    {
+      auto info        = VkDescriptorImageInfo();
+      info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      info.imageView   = types::get( ctx.image_view_ );
+      info.sampler     = types::get( ctx.sampler_ );
+      return info;
+    }();
+
+    auto const image_write = [&ctx, &image_descriptor_image_info]
+    {
+      auto write             = VkWriteDescriptorSet();
+      write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+      write.dstSet           = types::get( ctx.image_descriptor_set_ );
+      write.dstBinding       = 0;
+      write.dstArrayElement  = 0;
+      write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      write.descriptorCount  = 1;
+      write.pBufferInfo      = nullptr;
+      write.pImageInfo       = &image_descriptor_image_info;
+      write.pTexelBufferView = nullptr;
+      return write;
+    }();
+
+    auto const descriptor_writes = std::array{ image_write };
+
+    vkUpdateDescriptorSets( types::get( ctx.device_ ),
+                            static_cast<uint32_t>( std::size( descriptor_writes ) ),
+                            std::data( descriptor_writes ),
+                            0,
+                            nullptr );
   }
 
   void allocate_command_buffers( context & ctx ) noexcept
@@ -755,135 +806,6 @@ namespace mvk
     info.commandBufferCount = ctx.swapchain_images_count_;
 
     ctx.command_buffers_ = types::allocate_unique_command_buffers( types::decay( ctx.device_ ), info );
-  }
-
-  void allocate_descriptors( context & ctx ) noexcept
-  {
-    auto descriptor_set_layouts =
-      std::vector( ctx.swapchain_images_count_, types::get( ctx.main_descriptor_set_layout_ ) );
-
-    auto const descriptor_sets_allocate_info = [&ctx, &descriptor_set_layouts]
-    {
-      auto info               = VkDescriptorSetAllocateInfo();
-      info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-      info.descriptorPool     = types::get( ctx.descriptor_pool_ );
-      info.descriptorSetCount = static_cast<uint32_t>( std::size( descriptor_set_layouts ) );
-      info.pSetLayouts        = std::data( descriptor_set_layouts );
-      return info;
-    }();
-
-    ctx.descriptor_sets_ =
-      types::allocate_unique_descriptor_sets( types::get( ctx.device_ ), descriptor_sets_allocate_info );
-  }
-
-  void init_ubos( context & ctx ) noexcept
-  {
-    ctx.uniform_buffers_.reserve( ctx.swapchain_images_count_ );
-    ctx.uniform_buffers_memory_.reserve( ctx.swapchain_images_count_ );
-
-    for ( auto i = size_t( 0 ); i < ctx.swapchain_images_count_; ++i )
-    {
-      auto const uniform_buffer_create_info = []
-      {
-        auto info        = VkBufferCreateInfo();
-        info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        info.size        = sizeof( pvm );
-        info.usage       = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        return info;
-      }();
-
-      ctx.uniform_buffers_.push_back(
-        types::create_unique_buffer( types::get( ctx.device_ ), uniform_buffer_create_info ) );
-
-      auto uniform_memory_requirements = VkMemoryRequirements();
-      vkGetBufferMemoryRequirements(
-        types::get( ctx.device_ ), types::get( ctx.uniform_buffers_.back() ), &uniform_memory_requirements );
-
-      auto memory_type_index =
-        detail::find_memory_type( types::get( ctx.physical_device_ ),
-                                  uniform_memory_requirements.memoryTypeBits,
-                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
-
-      MVK_VERIFY( memory_type_index.has_value() );
-
-      auto const uniform_memory_allocate_info = [&uniform_memory_requirements, memory_type_index]
-      {
-        auto info            = VkMemoryAllocateInfo();
-        info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        info.allocationSize  = uniform_memory_requirements.size;
-        info.memoryTypeIndex = memory_type_index.value();
-        return info;
-      }();
-
-      auto uniform_buffer_memory =
-        types::create_unique_device_memory( types::decay( ctx.device_ ), uniform_memory_allocate_info );
-
-      vkBindBufferMemory(
-        types::get( ctx.device_ ), types::get( ctx.uniform_buffers_.back() ), types::get( uniform_buffer_memory ), 0 );
-
-      ctx.mapped_datas_.push_back(
-        detail::map_memory( types::decay( ctx.device_ ), types::decay( uniform_buffer_memory ), sizeof( pvm ) ) );
-
-      ctx.uniform_buffers_memory_.push_back( std::move( uniform_buffer_memory ) );
-    }
-
-    for ( auto i = size_t( 0 ); i < ctx.swapchain_images_count_; ++i )
-    {
-      auto const descriptor_buffer_info = [&ctx, i]
-      {
-        auto info   = VkDescriptorBufferInfo();
-        info.buffer = types::get( ctx.uniform_buffers_[i] );
-        info.offset = 0;
-        info.range  = sizeof( pvm );
-        return info;
-      }();
-
-      auto const descriptor_image_info = [&ctx]
-      {
-        auto info        = VkDescriptorImageInfo();
-        info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        info.imageView   = types::get( ctx.image_view_ );
-        info.sampler     = types::get( ctx.sampler_ );
-        return info;
-      }();
-
-      auto const ubo_write = [&ctx, &descriptor_buffer_info, i]
-      {
-        auto write             = VkWriteDescriptorSet();
-        write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet           = types::get( ctx.descriptor_sets_[i] );
-        write.dstBinding       = 0;
-        write.dstArrayElement  = 0;
-        write.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write.descriptorCount  = 1;
-        write.pBufferInfo      = &descriptor_buffer_info;
-        write.pImageInfo       = nullptr;
-        write.pTexelBufferView = nullptr;
-        return write;
-      }();
-
-      auto const image_write = [&ctx, &descriptor_image_info, i]
-      {
-        auto image            = VkWriteDescriptorSet();
-        image.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        image.dstSet          = types::get( ctx.descriptor_sets_[i] );
-        image.dstBinding      = 1;
-        image.dstArrayElement = 0;
-        image.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        image.descriptorCount = 1;
-        image.pImageInfo      = &descriptor_image_info;
-        return image;
-      }();
-
-      auto const descriptor_writes = std::array{ ubo_write, image_write };
-
-      vkUpdateDescriptorSets( types::get( ctx.device_ ),
-                              static_cast<uint32_t>( std::size( descriptor_writes ) ),
-                              std::data( descriptor_writes ),
-                              0,
-                              nullptr );
-    }
   }
 
   void init_shaders( context & ctx ) noexcept
@@ -917,20 +839,6 @@ namespace mvk
 
   void init_pipeline( context & ctx ) noexcept
   {
-    auto const pipeline_layout_create_info = [&ctx]
-    {
-      auto info                   = VkPipelineLayoutCreateInfo();
-      info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-      info.setLayoutCount         = 1;
-      info.pSetLayouts            = &types::get( ctx.main_descriptor_set_layout_ );
-      info.pushConstantRangeCount = 0;
-      info.pPushConstantRanges    = nullptr;
-      return info;
-    }();
-
-    ctx.pipeline_layout_ =
-      types::create_unique_pipeline_layout( types::get( ctx.device_ ), pipeline_layout_create_info );
-
     auto const vertex_input_binding_description = []
     {
       auto description      = VkVertexInputBindingDescription();
@@ -1187,12 +1095,6 @@ namespace mvk
     init_framebuffers( ctx );
     allocate_command_buffers( ctx );
 
-    ctx.uniform_buffers_.clear();
-    ctx.uniform_buffers_memory_.clear();
-    ctx.descriptor_sets_.clear();
-
-    allocate_descriptors( ctx );
-    init_ubos( ctx );
     init_pipeline( ctx );
     ctx.image_in_flight_fences_.clear();
     init_sync( ctx );
@@ -1285,10 +1187,9 @@ namespace mvk
     auto index_stage                  = staging_allocate( ctx, indices );
     auto [index_buffer, index_offset] = index_allocate( ctx, index_stage );
 
-    auto data      = ctx.mapped_datas_[ctx.current_image_index_];
-    auto pvm_bytes = utility::as_bytes( pvm );
+    auto [uniform_set, uniform_offset] = uniform_allocate( ctx, utility::as_bytes( pvm ) );
 
-    std::copy( std::begin( pvm_bytes ), std::end( pvm_bytes ), std::begin( data ) );
+    auto descriptor_sets = std::array{ types::get( uniform_set ), types::get( ctx.image_descriptor_set_ ) };
 
     vkCmdBindPipeline(
       types::get( ctx.current_command_buffer_ ), VK_PIPELINE_BIND_POINT_GRAPHICS, types::get( ctx.pipeline_ ) );
@@ -1300,10 +1201,10 @@ namespace mvk
                              VK_PIPELINE_BIND_POINT_GRAPHICS,
                              types::get( ctx.pipeline_layout_ ),
                              0,
+                             static_cast<uint32_t>( std::size( descriptor_sets ) ),
+                             std::data( descriptor_sets ),
                              1,
-                             &types::get( ctx.descriptor_sets_[ctx.current_image_index_] ),
-                             0,
-                             nullptr );
+                             &uniform_offset );
     vkCmdDrawIndexed(
       types::get( ctx.current_command_buffer_ ), static_cast<uint32_t>( std::size( ctx.indices_ ) ), 1, 0, 0, 0 );
   }
@@ -1843,6 +1744,18 @@ namespace mvk
     }
   }
 
+  void move_to_garbage_descriptor_sets(
+    context & ctx, utility::slice<types::unique_descriptor_set, context::dynamic_buffer_count> sets ) noexcept
+  {
+    auto & garbage_descriptor_sets = ctx.garbage_descriptor_sets_[ctx.current_garbage_index_];
+    garbage_descriptor_sets.reserve( std::size( garbage_descriptor_sets ) + std::size( sets ) );
+
+    for ( auto & set : sets )
+    {
+      ctx.garbage_descriptor_sets_[ctx.current_garbage_index_].push_back( std::move( set ) );
+    }
+  }
+
   void move_to_garbage_memories( context & ctx, types::unique_device_memory memory ) noexcept
   {
     ctx.garbage_memories_[ctx.current_garbage_index_].push_back( std::move( memory ) );
@@ -2031,6 +1944,122 @@ namespace mvk
     return { types::decay( ctx.index_buffers_[ctx.current_buffer_index_] ),
              std::exchange( ctx.index_offsets_[ctx.current_buffer_index_],
                             ctx.index_offsets_[ctx.current_buffer_index_] + allocation.size_ ) };
+  }
+
+  void create_uniform_buffers_memories_and_sets( context & ctx, types::device_size size ) noexcept
+  {
+    auto const uniform_buffer_create_info = [size]
+    {
+      auto info        = VkBufferCreateInfo();
+      info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+      info.size        = size;
+      info.usage       = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+      info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+      return info;
+    }();
+
+    auto const create_buffer = [&ctx, &uniform_buffer_create_info]
+    {
+      return types::create_unique_buffer( types::get( ctx.device_ ), uniform_buffer_create_info );
+    };
+
+    std::generate( std::begin( ctx.uniform_buffers_ ), std::end( ctx.uniform_buffers_ ), create_buffer );
+
+    vkGetBufferMemoryRequirements( types::get( ctx.device_ ),
+                                   types::get( ctx.uniform_buffers_[ctx.current_buffer_index_] ),
+                                   &ctx.uniform_memory_requirements_ );
+
+    ctx.uniform_aligned_size_ =
+      detail::aligned_size( ctx.uniform_memory_requirements_.size, ctx.uniform_memory_requirements_.alignment );
+
+    auto const memory_type_index =
+      detail::find_memory_type( types::get( ctx.physical_device_ ),
+                                ctx.uniform_memory_requirements_.memoryTypeBits,
+                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+
+    MVK_VERIFY( memory_type_index.value() );
+
+    auto uniform_memory_allocate_info = [&ctx, memory_type_index]
+    {
+      auto info            = VkMemoryAllocateInfo();
+      info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+      info.allocationSize  = context::dynamic_buffer_count * ctx.uniform_aligned_size_;
+      info.memoryTypeIndex = memory_type_index.value();
+      return info;
+    }();
+
+    ctx.uniform_memory_ = types::create_unique_device_memory( types::get( ctx.device_ ), uniform_memory_allocate_info );
+    ctx.uniform_data_   = detail::map_memory( types::decay( ctx.device_ ), types::decay( ctx.uniform_memory_ ) );
+    ctx.uniform_descriptor_sets_ = allocate_descriptor_sets<context::dynamic_buffer_count>(
+      ctx, types::decay( ctx.uniform_descriptor_set_layout_ ) );
+
+    for ( size_t i = 0; i < context::dynamic_buffer_count; ++i )
+    {
+      vkBindBufferMemory( types::parent( ctx.uniform_buffers_[i] ),
+                          types::get( ctx.uniform_buffers_[i] ),
+                          types::get( ctx.uniform_memory_ ),
+                          i * ctx.uniform_aligned_size_ );
+
+      auto const uniform_descriptor_buffer_info = [&ctx, i]
+      {
+        auto info   = VkDescriptorBufferInfo();
+        info.buffer = types::get( ctx.uniform_buffers_[i] );
+        info.offset = 0;
+        info.range  = sizeof( pvm );
+        return info;
+      }();
+
+      auto const uniform_write = [&ctx, &uniform_descriptor_buffer_info, i]
+      {
+        auto write             = VkWriteDescriptorSet();
+        write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet           = types::get( ctx.uniform_descriptor_sets_[i] );
+        write.dstBinding       = 0;
+        write.dstArrayElement  = 0;
+        write.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        write.descriptorCount  = 1;
+        write.pBufferInfo      = &uniform_descriptor_buffer_info;
+        write.pImageInfo       = nullptr;
+        write.pTexelBufferView = nullptr;
+        return write;
+      }();
+
+      auto const descriptor_writes = std::array{ uniform_write };
+
+      vkUpdateDescriptorSets( types::get( ctx.device_ ),
+                              static_cast<uint32_t>( std::size( descriptor_writes ) ),
+                              std::data( descriptor_writes ),
+                              0,
+                              nullptr );
+    }
+  }
+
+  [[nodiscard]] uniform_allocation uniform_allocate( context & ctx, utility::slice<std::byte const> src ) noexcept
+  {
+    ctx.uniform_offsets_[ctx.current_buffer_index_] =
+      detail::aligned_size( ctx.uniform_offsets_[ctx.current_buffer_index_],
+                            static_cast<uint32_t>( ctx.uniform_memory_requirements_.alignment ) );
+
+    if ( auto required_size = ctx.uniform_offsets_[ctx.current_buffer_index_] + std::size( src );
+         required_size > ctx.uniform_aligned_size_ )
+    {
+      // TODO(samuel): should require a move
+      move_to_garbage_buffers( ctx, ctx.uniform_buffers_ );
+      move_to_garbage_descriptor_sets( ctx, ctx.uniform_descriptor_sets_ );
+
+      move_to_garbage_memories( ctx, std::move( ctx.uniform_memory_ ) );
+      create_uniform_buffers_memories_and_sets( ctx, required_size * 2 );
+      ctx.uniform_offsets_[ctx.current_buffer_index_] = 0;
+    }
+
+    auto const memory_offset =
+      ctx.current_buffer_index_ * ctx.uniform_aligned_size_ + ctx.uniform_offsets_[ctx.current_buffer_index_];
+    auto data = ctx.uniform_data_.subslice( memory_offset, std::size( src ) );
+    std::copy( std::begin( src ), std::end( src ), std::begin( data ) );
+
+    return { types::decay( ctx.uniform_descriptor_sets_[ctx.current_buffer_index_] ),
+             std::exchange( ctx.uniform_offsets_[ctx.current_buffer_index_],
+                            ctx.uniform_offsets_[ctx.current_buffer_index_] + std::size( src ) ) };
   }
 
   void next_buffer( context & ctx ) noexcept

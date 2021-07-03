@@ -49,10 +49,6 @@ namespace mvk
 {
   struct context
   {
-    void basic_draw( utility::slice<std::byte const> vertices,
-                     utility::slice<std::byte const> indices,
-                     utility::slice<std::byte const> pvm );
-
     static constexpr auto use_validation                 = true;
     static constexpr auto validation_layers              = std::array{ "VK_LAYER_KHRONOS_validation" };
     static constexpr auto validation_instance_extensions = std::array{ VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
@@ -85,8 +81,11 @@ namespace mvk
     types::queue           present_queue_;
 
     // init_layouts
-    types::unique_descriptor_set_layout main_descriptor_set_layout_;
-    types::unique_pipeline_layout       pipeline_layout_;
+    types::unique_descriptor_set_layout uniform_descriptor_set_layout_;
+    types::unique_descriptor_set_layout texture_descriptor_set_layout_;
+
+    // pipeline_layouts
+    types::unique_pipeline_layout pipeline_layout_;
 
     // init_pools
     types::unique_command_pool    command_pool_;
@@ -111,31 +110,26 @@ namespace mvk
 
     // doesnt belong here
     // ================================================================================================================
-    std::vector<unsigned char>  texture_;
-    uint32_t                    width_;
-    uint32_t                    height_;
-    types::unique_image         image_;
-    types::unique_device_memory image_memory_;
-    types::unique_image_view    image_view_;
-    types::unique_sampler       sampler_;
-    std::vector<vertex>         vertices_;
-    std::vector<uint32_t>       indices_;
+    std::vector<unsigned char>   texture_;
+    uint32_t                     width_;
+    uint32_t                     height_;
+    types::unique_image          image_;
+    types::unique_device_memory  image_memory_;
+    types::unique_image_view     image_view_;
+    types::unique_descriptor_set image_descriptor_set_;
+    std::vector<vertex>          vertices_;
+    std::vector<uint32_t>        indices_;
     // ================================================================================================================
 
     // allocate_commands
     std::vector<types::unique_command_buffer> command_buffers_;
 
-    // init_descriptors
-    std::vector<types::unique_descriptor_set> descriptor_sets_;
-
-    // init_ubos
-    std::vector<types::unique_buffer>        uniform_buffers_;
-    std::vector<types::unique_device_memory> uniform_buffers_memory_;
-    std::vector<utility::slice<std::byte>>   mapped_datas_;
-
     // shaders
     types::unique_shader_module vertex_shader_;
     types::unique_shader_module fragment_shader_;
+
+    // samplers
+    types::unique_sampler sampler_;
 
     // init_pipeline
     types::unique_pipeline pipeline_;
@@ -169,9 +163,19 @@ namespace mvk
     types::unique_device_memory                            staging_memory_;
     utility::slice<std::byte>                              staging_data_;
 
+    // ubo
+    VkMemoryRequirements                                           uniform_memory_requirements_;
+    types::device_size                                             uniform_aligned_size_;
+    std::array<types::unique_buffer, dynamic_buffer_count>         uniform_buffers_;
+    std::array<uint32_t, dynamic_buffer_count>                     uniform_offsets_;
+    std::array<types::unique_descriptor_set, dynamic_buffer_count> uniform_descriptor_sets_;
+    types::unique_device_memory                                    uniform_memory_;
+    utility::slice<std::byte>                                      uniform_data_;
+
     // garbage
-    std::array<std::vector<types::unique_buffer>, garbage_buffer_count>        garbage_buffers_;
-    std::array<std::vector<types::unique_device_memory>, garbage_buffer_count> garbage_memories_;
+    std::array<std::vector<types::unique_buffer>, garbage_buffer_count>         garbage_buffers_;
+    std::array<std::vector<types::unique_device_memory>, garbage_buffer_count>  garbage_memories_;
+    std::array<std::vector<types::unique_descriptor_set>, garbage_buffer_count> garbage_descriptor_sets_;
 
     // rendering counters
     size_t                current_frame_index_    = 0;
@@ -217,8 +221,6 @@ namespace mvk
   void init_main_render_pass( context & ctx ) noexcept;
   void init_doesnt_belong_here( context & ctx ) noexcept;
   void allocate_command_buffers( context & ctx ) noexcept;
-  void allocate_descriptors( context & ctx ) noexcept;
-  void init_ubos( context & ctx ) noexcept;
   void init_shaders( context & ctx ) noexcept;
   void init_pipeline( context & ctx ) noexcept;
   void init_sync( context & ctx ) noexcept;
@@ -239,9 +241,13 @@ namespace mvk
   void create_vertex_buffers_and_memories( context & ctx, types::device_size size ) noexcept;
   void create_index_buffers_and_memories( context & ctx, types::device_size size ) noexcept;
   void create_staging_buffers_and_memories( context & ctx, types::device_size size ) noexcept;
+  void create_uniform_buffers_memories_and_sets( context & ctx, types::device_size size ) noexcept;
 
   void move_to_garbage_buffers( context &                                                           ctx,
                                 utility::slice<types::unique_buffer, context::dynamic_buffer_count> buffers ) noexcept;
+
+  void move_to_garbage_descriptor_sets(
+    context & ctx, utility::slice<types::unique_descriptor_set, context::dynamic_buffer_count> sets ) noexcept;
 
   void move_to_garbage_memories( context & ctx, types::unique_device_memory memory ) noexcept;
 
@@ -253,8 +259,9 @@ namespace mvk
   };
 
   [[nodiscard]] staging_allocation staging_allocate( context & ctx, utility::slice<std::byte const> src ) noexcept;
-  void                             stage_image(
-                                context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, types::image image ) noexcept;
+
+  void stage_image(
+    context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, types::image image ) noexcept;
 
   struct vertex_allocation
   {
@@ -272,7 +279,56 @@ namespace mvk
 
   [[nodiscard]] index_allocation index_allocate( context & ctx, staging_allocation allocation ) noexcept;
 
+  struct uniform_allocation
+  {
+    types::descriptor_set descriptor_set_;
+    uint32_t              offset_;
+  };
+
+  [[nodiscard]] uniform_allocation uniform_allocate( context & ctx, utility::slice<std::byte const> src ) noexcept;
+
+  template <size_t Size>
+  [[nodiscard]] std::array<types::unique_descriptor_set, Size>
+    allocate_descriptor_sets( context const & ctx, types::descriptor_set_layout layout ) noexcept;
+
   void next_buffer( context & ctx ) noexcept;
+
+}  // namespace mvk
+
+namespace mvk
+{
+  template <size_t Size>
+  [[nodiscard]] std::array<types::unique_descriptor_set, Size>
+    allocate_descriptor_sets( context const & ctx, types::descriptor_set_layout layout ) noexcept
+  {
+    auto descriptor_set_layouts = std::array<VkDescriptorSetLayout, Size>();
+    std::fill( std::begin( descriptor_set_layouts ), std::end( descriptor_set_layouts ), types::get( layout ) );
+
+    auto const allocate_info = [&ctx, &descriptor_set_layouts]
+    {
+      auto info               = VkDescriptorSetAllocateInfo();
+      info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+      info.descriptorPool     = types::get( ctx.descriptor_pool_ );
+      info.descriptorSetCount = static_cast<uint32_t>( std::size( descriptor_set_layouts ) );
+      info.pSetLayouts        = std::data( descriptor_set_layouts );
+      return info;
+    }();
+
+    auto handles = std::array<VkDescriptorSet, Size>();
+    auto result  = vkAllocateDescriptorSets( types::get( ctx.device_ ), &allocate_info, std::data( handles ) );
+
+    MVK_VERIFY( result == VK_SUCCESS );
+
+    auto descriptor_sets = std::array<types::unique_descriptor_set, Size>();
+
+    for ( auto i = size_t( 0 ); i < Size; ++i )
+    {
+      descriptor_sets[i] =
+        types::unique_descriptor_set( handles[i], types::get( ctx.device_ ), types::get( ctx.descriptor_pool_ ) );
+    }
+
+    return descriptor_sets;
+  }
 
 }  // namespace mvk
 
