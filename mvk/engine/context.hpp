@@ -1,12 +1,14 @@
 #ifndef MVK_ENGINE_CONTEXT_HPP_INCLUDED
 #define MVK_ENGINE_CONTEXT_HPP_INCLUDED
 
+#define GLFW_INCLUDE_VULKAN
+#include "GLFW/glfw3.h"
 #include "shader_types.hpp"
-#include "types/types.hpp"
 #include "utility/slice.hpp"
 
 #include <array>
 #include <vector>
+#include <vulkan/vulkan.h>
 
 namespace mvk::engine
 {
@@ -22,140 +24,143 @@ namespace mvk::engine
     static constexpr auto validation_instance_extensions = std::array{ VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
     static constexpr auto device_extensions              = std::array{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-    static constexpr auto                                                           max_frames_in_flight = 2;
-    static constexpr size_t                                                         dynamic_buffer_count = 2;
-    static constexpr size_t                                                         garbage_buffer_count = 2;
+    static constexpr auto                                              max_frames_in_flight = 2;
+    static constexpr size_t                                            dynamic_buffer_count = 2;
+    static constexpr size_t                                            garbage_buffer_count = 2;
     //
     // init_window
-    types::window                                                                   window_;
+    GLFWwindow *                                                       window;
+    bool                                                               framebuffer_resized;
     //
     // init_instance
-    types::unique_instance                                                          instance_;
+    VkInstance                                                         instance;
     //
     // init_surface
-    types::unique_surface                                                           surface_;
-    VkSurfaceFormatKHR                                                              surface_format_;
+    VkSurfaceKHR                                                       surface;
+    VkSurfaceFormatKHR                                                 surface_format;
     //
     // init_debug_messenger
-    types::unique_debug_messenger                                                   debug_messenger_;
+    VkDebugUtilsMessengerEXT                                           debug_messenger;
     //
     // init_device
-    types::physical_device                                                          physical_device_;
-    types::unique_device                                                            device_;
-    uint32_t                                                                        graphics_queue_index_;
-    uint32_t                                                                        present_queue_index_;
-    types::queue                                                                    graphics_queue_;
-    types::queue                                                                    present_queue_;
+    VkPhysicalDevice                                                   physical_device;
+    VkDevice                                                           device;
+    uint32_t                                                           graphics_queue_index;
+    uint32_t                                                           present_queue_index;
+    VkQueue                                                            graphics_queue;
+    VkQueue                                                            present_queue;
     //
     // init_layouts
-    types::unique_descriptor_set_layout                                             uniform_descriptor_set_layout_;
-    types::unique_descriptor_set_layout                                             texture_descriptor_set_layout_;
+    VkDescriptorSetLayout                                              uniform_descriptor_set_layout;
+    VkDescriptorSetLayout                                              texture_descriptor_set_layout;
     //
     // pipeline_layouts
-    types::unique_pipeline_layout                                                   pipeline_layout_;
+    VkPipelineLayout                                                   pipeline_layout;
     //
     // init_pools
-    types::unique_command_pool                                                      command_pool_;
-    types::unique_descriptor_pool                                                   descriptor_pool_;
+    VkCommandPool                                                      command_pool;
+    VkDescriptorPool                                                   descriptor_pool;
     //
     // init_swapchain
-    uint32_t                                                                        swapchain_images_count_;
-    types::unique_swapchain                                                         swapchain_;
-    std::vector< types::unique_image_view >                                         swapchain_image_views_;
-    VkExtent2D                                                                      swapchain_extent_;
+    uint32_t                                                           swapchain_images_count;
+    VkSwapchainKHR                                                     swapchain;
+    std::vector< VkImageView >                                         swapchain_image_views;
+    VkExtent2D                                                         swapchain_extent;
     //
     // init_depth_image
-    types::unique_image                                                             depth_image_;
-    types::unique_device_memory                                                     depth_image_memory_;
-    types::unique_image_view                                                        depth_image_view_;
+    VkImage                                                            depth_image;
+    VkDeviceMemory                                                     depth_image_memory;
+    VkImageView                                                        depth_image_view;
     //
     // init_framebuffers
-    std::vector< types::unique_framebuffer >                                        framebuffers_;
+    std::vector< VkFramebuffer >                                       framebuffers;
     //
     // init_main_renderpass
-    types::unique_render_pass                                                       render_pass_;
+    VkRenderPass                                                       render_pass;
     //
     // doesnt belong here
     // ================================================================================================================
-    std::vector< unsigned char >                                                    texture_;
-    uint32_t                                                                        width_;
-    uint32_t                                                                        height_;
-    types::unique_image                                                             image_;
-    types::unique_device_memory                                                     image_memory_;
-    types::unique_image_view                                                        image_view_;
-    types::unique_descriptor_set                                                    image_descriptor_set_;
-    std::vector< vertex >                                                           vertices_;
-    std::vector< uint32_t >                                                         indices_;
+    std::vector< unsigned char >                                       texture_;
+    uint32_t                                                           width_;
+    uint32_t                                                           height_;
+    VkImage                                                            image_;
+    VkDeviceMemory                                                     image_memory_;
+    VkImageView                                                        image_view_;
+    VkDescriptorSet                                                    image_descriptor_set_;
+    std::vector< vertex >                                              vertices_;
+    std::vector< uint32_t >                                            indices_;
     // ================================================================================================================
     //
     // allocate_commands
-    std::array< types::unique_command_buffer, dynamic_buffer_count >                command_buffers_;
+    std::array< VkCommandBuffer, dynamic_buffer_count >                command_buffers;
     //
     // shaders
-    types::unique_shader_module                                                     vertex_shader_;
-    types::unique_shader_module                                                     fragment_shader_;
+    VkShaderModule                                                     vertex_shader;
+    VkShaderModule                                                     fragment_shader;
     //
     // samplers
-    types::unique_sampler                                                           texture_sampler_;
+    VkSampler                                                          texture_sampler;
     //
     // init_pipeline
-    types::unique_pipeline                                                          pipeline_;
+    VkPipeline                                                         pipeline;
     //
     // init_sync
-    std::array< types::unique_semaphore, max_frames_in_flight >                     image_available_semaphores_;
-    std::array< types::unique_semaphore, max_frames_in_flight >                     render_finished_semaphores_;
-    std::array< types::unique_fence, max_frames_in_flight >                         frame_in_flight_fences_;
-    std::vector< types::unique_fence * >                                            image_in_flight_fences_;
+    std::array< VkSemaphore, max_frames_in_flight >                    image_available_semaphores;
+    std::array< VkSemaphore, max_frames_in_flight >                    render_finished_semaphores;
+    std::array< VkFence, max_frames_in_flight >                        frame_in_flight_fences;
+    std::vector< VkFence * >                                           image_in_flight_fences;
     //
     // buffers
     // vertex
-    VkMemoryRequirements                                                            vertex_memory_requirements_;
-    types::device_size                                                              vertex_aligned_size_;
-    std::array< types::unique_buffer, dynamic_buffer_count >                        vertex_buffers_;
-    std::array< types::device_size, dynamic_buffer_count >                          vertex_offsets_;
-    types::unique_device_memory                                                     vertex_memory_;
+    VkMemoryRequirements                                               vertex_memory_requirements;
+    VkDeviceSize                                                       vertex_aligned_size;
+    std::array< VkBuffer, dynamic_buffer_count >                       vertex_buffers;
+    std::array< VkDeviceSize, dynamic_buffer_count >                   vertex_offsets;
+    VkDeviceMemory                                                     vertex_memory;
     //
     // index
-    VkMemoryRequirements                                                            index_memory_requirements_;
-    types::device_size                                                              index_aligned_size_;
-    std::array< types::unique_buffer, dynamic_buffer_count >                        index_buffers_;
-    std::array< types::device_size, dynamic_buffer_count >                          index_offsets_;
-    types::unique_device_memory                                                     index_memory_;
+    VkMemoryRequirements                                               index_memory_requirements;
+    VkDeviceSize                                                       index_aligned_size;
+    std::array< VkBuffer, dynamic_buffer_count >                       index_buffers;
+    std::array< VkDeviceSize, dynamic_buffer_count >                   index_offsets;
+    VkDeviceMemory                                                     index_memory;
     //
     // staging
-    VkMemoryRequirements                                                            staging_memory_requirements_;
-    types::device_size                                                              staging_aligned_size_;
-    std::array< types::unique_buffer, dynamic_buffer_count >                        staging_buffers_;
-    std::array< types::device_size, dynamic_buffer_count >                          staging_offsets_;
-    types::unique_device_memory                                                     staging_memory_;
-    utility::slice< std::byte >                                                     staging_data_;
+    VkMemoryRequirements                                               staging_memory_requirements;
+    VkDeviceSize                                                       staging_aligned_size;
+    std::array< VkBuffer, dynamic_buffer_count >                       staging_buffers;
+    std::array< VkDeviceSize, dynamic_buffer_count >                   staging_offsets;
+    VkDeviceMemory                                                     staging_memory;
+    utility::slice< std::byte >                                        staging_data;
     //
     // ubo
-    VkMemoryRequirements                                                            uniform_memory_requirements_;
-    types::device_size                                                              uniform_aligned_size_;
-    std::array< types::unique_buffer, dynamic_buffer_count >                        uniform_buffers_;
-    std::array< uint32_t, dynamic_buffer_count >                                    uniform_offsets_;
-    std::array< types::unique_descriptor_set, dynamic_buffer_count >                uniform_descriptor_sets_;
-    types::unique_device_memory                                                     uniform_memory_;
-    utility::slice< std::byte >                                                     uniform_data_;
+    VkMemoryRequirements                                               uniform_memory_requirements;
+    VkDeviceSize                                                       uniform_aligned_size;
+    std::array< VkBuffer, dynamic_buffer_count >                       uniform_buffers;
+    std::array< uint32_t, dynamic_buffer_count >                       uniform_offsets;
+    std::array< VkDescriptorSet, dynamic_buffer_count >                uniform_descriptor_sets;
+    VkDeviceMemory                                                     uniform_memory;
+    utility::slice< std::byte >                                        uniform_data;
     //
     // garbage
-    std::array< std::vector< types::unique_buffer >, garbage_buffer_count >         garbage_buffers_;
-    std::array< std::vector< types::unique_device_memory >, garbage_buffer_count >  garbage_memories_;
-    std::array< std::vector< types::unique_descriptor_set >, garbage_buffer_count > garbage_descriptor_sets_;
+    std::array< std::vector< VkBuffer >, garbage_buffer_count >        garbage_buffers;
+    std::array< std::vector< VkDeviceMemory >, garbage_buffer_count >  garbage_memories;
+    std::array< std::vector< VkDescriptorSet >, garbage_buffer_count > garbage_descriptor_sets;
     //
     // rendering counters
-    size_t                                                                          current_frame_index_   = 0;
-    size_t                                                                          current_buffer_index_  = 0;
-    size_t                                                                          current_garbage_index_ = 0;
-    uint32_t                                                                        current_image_index_   = 0;
-    types::command_buffer                                         current_command_buffer_ = VK_NULL_HANDLE;
+    size_t                                                             current_frame_index    = 0;
+    size_t                                                             current_buffer_index   = 0;
+    size_t                                                             current_garbage_index  = 0;
+    uint32_t                                                           current_image_index    = 0;
+    VkCommandBuffer                                                    current_command_buffer = VK_NULL_HANDLE;
     //
-    std::chrono::time_point< std::chrono::high_resolution_clock > start_time =
+    std::chrono::time_point< std::chrono::high_resolution_clock >      start_time =
       std::chrono::high_resolution_clock::now();
   };
 
   [[nodiscard]] float current_time( context const & ctx ) noexcept;
+
+  [[nodiscard]] VkExtent2D query_framebuffer_size( context const & ctx ) noexcept;
 
 }  // namespace mvk::engine
 

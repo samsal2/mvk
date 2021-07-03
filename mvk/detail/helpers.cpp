@@ -7,26 +7,25 @@
 
 namespace mvk::detail
 {
-  [[nodiscard]] bool is_extension_present( std::string const &                                 extension_name,
+  [[nodiscard]] bool is_extension_present( char const *                                        extension_name,
                                            utility::slice< VkExtensionProperties const > const extensions ) noexcept
   {
     auto const matches = [ &extension_name ]( auto const & extension )
     {
       auto const name = static_cast< char const * >( extension.extensionName );
-      return std::strcmp( extension_name.c_str(), name ) == 0;
+      return std::strcmp( extension_name, name ) == 0;
     };
     return std::any_of( std::begin( extensions ), std::end( extensions ), matches );
   }
 
-  [[nodiscard]] bool check_extension_support( types::physical_device               physical_device,
+  [[nodiscard]] bool check_extension_support( VkPhysicalDevice                     physical_device,
                                               utility::slice< char const * const > device_extensions ) noexcept
   {
     auto extensions_count = uint32_t( 0 );
-    vkEnumerateDeviceExtensionProperties( types::get( physical_device ), nullptr, &extensions_count, nullptr );
+    vkEnumerateDeviceExtensionProperties( physical_device, nullptr, &extensions_count, nullptr );
 
     auto extensions = std::vector< VkExtensionProperties >( extensions_count );
-    vkEnumerateDeviceExtensionProperties(
-      types::get( physical_device ), nullptr, &extensions_count, std::data( extensions ) );
+    vkEnumerateDeviceExtensionProperties( physical_device, nullptr, &extensions_count, std::data( extensions ) );
 
     auto is_present = [ &extensions ]( auto const & extension )
     {
@@ -41,39 +40,35 @@ namespace mvk::detail
     return ( queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0U;
   }
 
-  [[nodiscard]] bool check_format_and_present_mode_availability( types::physical_device physical_device,
-                                                                 types::surface const   surface ) noexcept
+  [[nodiscard]] bool check_format_and_present_mode_availability( VkPhysicalDevice physical_device,
+                                                                 VkSurfaceKHR     surface ) noexcept
   {
     auto format_count = uint32_t( 0 );
-    vkGetPhysicalDeviceSurfaceFormatsKHR(
-      types::get( physical_device ), types::get( surface ), &format_count, nullptr );
+    vkGetPhysicalDeviceSurfaceFormatsKHR( physical_device, surface, &format_count, nullptr );
 
     auto present_mode_count = uint32_t( 0 );
-    vkGetPhysicalDeviceSurfacePresentModesKHR(
-      types::get( physical_device ), types::get( surface ), &present_mode_count, nullptr );
+    vkGetPhysicalDeviceSurfacePresentModesKHR( physical_device, surface, &present_mode_count, nullptr );
 
     return format_count != 0 && present_mode_count != 0;
   }
 
-  [[nodiscard]] bool check_surface_support( types::physical_device const physical_device,
-                                            types::surface const         surface,
-                                            uint32_t                     index ) noexcept
+  [[nodiscard]] bool
+    check_surface_support( VkPhysicalDevice physical_device, VkSurfaceKHR surface, uint32_t index ) noexcept
   {
     auto supported = VkBool32( false );
-    vkGetPhysicalDeviceSurfaceSupportKHR( types::get( physical_device ), index, types::get( surface ), &supported );
+    vkGetPhysicalDeviceSurfaceSupportKHR( physical_device, index, surface, &supported );
 
     return supported != 0U;
   }
 
-  [[nodiscard]] std::optional< std::pair< types::queue_index, types::queue_index > >
-    query_family_indices( types::physical_device const physical_device, types::surface const surface )
+  [[nodiscard]] std::optional< std::pair< uint32_t, uint32_t > >
+    query_family_indices( VkPhysicalDevice const physical_device, VkSurfaceKHR const surface )
   {
     auto queue_families_count = uint32_t( 0 );
-    vkGetPhysicalDeviceQueueFamilyProperties( types::get( physical_device ), &queue_families_count, nullptr );
+    vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &queue_families_count, nullptr );
 
     auto queue_families = std::vector< VkQueueFamilyProperties >( queue_families_count );
-    vkGetPhysicalDeviceQueueFamilyProperties(
-      types::get( physical_device ), &queue_families_count, std::data( queue_families ) );
+    vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &queue_families_count, std::data( queue_families ) );
 
     auto graphics_family = std::optional< uint32_t >();
     auto present_family  = std::optional< uint32_t >();
@@ -126,16 +121,13 @@ namespace mvk::detail
     return candidate;
   }
 
-  [[nodiscard]] VkPresentModeKHR choose_present_mode( types::physical_device const physical_device,
-                                                      types::surface const         surface ) noexcept
+  [[nodiscard]] VkPresentModeKHR choose_present_mode( VkPhysicalDevice physical_device, VkSurfaceKHR surface ) noexcept
   {
     auto modes_count = uint32_t( 0 );
-    vkGetPhysicalDeviceSurfacePresentModesKHR(
-      types::get( physical_device ), types::get( surface ), &modes_count, nullptr );
+    vkGetPhysicalDeviceSurfacePresentModesKHR( physical_device, surface, &modes_count, nullptr );
 
     auto modes = std::vector< VkPresentModeKHR >( modes_count );
-    vkGetPhysicalDeviceSurfacePresentModesKHR(
-      types::get( physical_device ), types::get( surface ), &modes_count, std::data( modes ) );
+    vkGetPhysicalDeviceSurfacePresentModesKHR( physical_device, surface, &modes_count, std::data( modes ) );
 
     auto const it = std::find( std::begin( modes ), std::end( modes ), VK_PRESENT_MODE_MAILBOX_KHR );
 

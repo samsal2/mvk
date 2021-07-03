@@ -7,37 +7,45 @@ namespace mvk::engine
 {
   struct staging_allocation
   {
-    types::buffer      buffer_;
-    types::device_size offset_;
-    types::device_size size_;
+    VkBuffer     buffer_;
+    VkDeviceSize offset_;
+    VkDeviceSize size_;
   };
 
   struct vertex_allocation
   {
-    types::buffer      buffer_;
-    types::device_size offset_;
+    VkBuffer     buffer_;
+    VkDeviceSize offset_;
   };
 
   struct index_allocation
   {
-    types::buffer      buffer_;
-    types::device_size offset_;
+    VkBuffer     buffer_;
+    VkDeviceSize offset_;
   };
 
   struct uniform_allocation
   {
-    types::descriptor_set descriptor_set_;
-    uint32_t              offset_;
+    VkDescriptorSet descriptor_set_;
+    uint32_t        offset_;
   };
 
-  void create_vertex_buffers_and_memories( context & ctx, types::device_size size ) noexcept;
-  void create_index_buffers_and_memories( context & ctx, types::device_size size ) noexcept;
-  void create_staging_buffers_and_memories( context & ctx, types::device_size size ) noexcept;
-  void create_uniform_buffers_memories_and_sets( context & ctx, types::device_size size ) noexcept;
+  void create_vertex_buffers_and_memories( context & ctx, VkDeviceSize size ) noexcept;
+  void destroy_vertex_buffers_and_memories( context & ctx ) noexcept;
+  void create_index_buffers_and_memories( context & ctx, VkDeviceSize size ) noexcept;
+  void destroy_index_buffers_and_memories( context & ctx ) noexcept;
+  void create_staging_buffers_and_memories( context & ctx, VkDeviceSize size ) noexcept;
+  void destroy_staging_buffers_and_memories( context & ctx ) noexcept;
+  void create_uniform_buffers_memories_and_sets( context & ctx, VkDeviceSize size ) noexcept;
+  void destroy_uniform_buffers_memories_and_sets( context & ctx ) noexcept;
 
-  void move_to_garbage_buffers( context & ctx, utility::slice< types::unique_buffer > buffers ) noexcept;
-  void move_to_garbage_descriptor_sets( context & ctx, utility::slice< types::unique_descriptor_set > sets ) noexcept;
-  void move_to_garbage_memories( context & ctx, types::unique_device_memory memory ) noexcept;
+  void destroy_garbage_buffers( context & ctx ) noexcept;
+  void destroy_garbage_memories( context & ctx ) noexcept;
+  void destroy_garbage_sets( context & ctx ) noexcept;
+
+  void move_to_garbage_buffers( context & ctx, utility::slice< VkBuffer > buffers ) noexcept;
+  void move_to_garbage_descriptor_sets( context & ctx, utility::slice< VkDescriptorSet > sets ) noexcept;
+  void move_to_garbage_memories( context & ctx, VkDeviceMemory memory ) noexcept;
 
   [[nodiscard]] staging_allocation staging_allocate( context & ctx, utility::slice< std::byte const > src ) noexcept;
   [[nodiscard]] vertex_allocation  vertex_allocate( context & ctx, staging_allocation allocation ) noexcept;
@@ -45,14 +53,14 @@ namespace mvk::engine
   [[nodiscard]] uniform_allocation uniform_allocate( context & ctx, utility::slice< std::byte const > src ) noexcept;
 
   template< size_t Size >
-  [[nodiscard]] std::array< types::unique_descriptor_set, Size >
-    allocate_descriptor_sets( context const & ctx, types::descriptor_set_layout layout ) noexcept;
+  [[nodiscard]] std::array< VkDescriptorSet, Size > allocate_descriptor_sets( context const &       ctx,
+                                                                              VkDescriptorSetLayout layout ) noexcept;
 
   template< size_t Size >
-  [[nodiscard]] std::array< types::unique_command_buffer, Size >
-    allocate_command_buffers( context const & ctx, VkCommandBufferLevel level ) noexcept;
+  [[nodiscard]] std::array< VkCommandBuffer, Size > allocate_command_buffers( context const &      ctx,
+                                                                              VkCommandBufferLevel level ) noexcept;
 
-  [[nodiscard]] types::unique_command_buffer allocate_single_use_command_buffer( context const & ctx ) noexcept;
+  [[nodiscard]] VkCommandBuffer allocate_single_use_command_buffer( context const & ctx ) noexcept;
 
   void next_buffer( context & ctx ) noexcept;
 
@@ -61,69 +69,45 @@ namespace mvk::engine
 namespace mvk::engine
 {
   template< size_t Size >
-  [[nodiscard]] std::array< types::unique_descriptor_set, Size >
-    allocate_descriptor_sets( context const & ctx, types::descriptor_set_layout layout ) noexcept
+  [[nodiscard]] std::array< VkDescriptorSet, Size > allocate_descriptor_sets( context const &       ctx,
+                                                                              VkDescriptorSetLayout layout ) noexcept
   {
     auto descriptor_set_layouts = std::array< VkDescriptorSetLayout, Size >();
-    std::fill( std::begin( descriptor_set_layouts ), std::end( descriptor_set_layouts ), types::get( layout ) );
+    std::fill( std::begin( descriptor_set_layouts ), std::end( descriptor_set_layouts ), layout );
 
     auto const allocate_info = [ &ctx, &descriptor_set_layouts ]
     {
       auto info               = VkDescriptorSetAllocateInfo();
       info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-      info.descriptorPool     = types::get( ctx.descriptor_pool_ );
+      info.descriptorPool     = ctx.descriptor_pool;
       info.descriptorSetCount = static_cast< uint32_t >( std::size( descriptor_set_layouts ) );
       info.pSetLayouts        = std::data( descriptor_set_layouts );
       return info;
     }();
 
-    auto handles = std::array< VkDescriptorSet, Size >();
-
-    [[maybe_unused]] auto result =
-      vkAllocateDescriptorSets( types::get( ctx.device_ ), &allocate_info, std::data( handles ) );
-
+    auto descriptor_sets = std::array< VkDescriptorSet, Size >();
+    auto result          = vkAllocateDescriptorSets( ctx.device, &allocate_info, std::data( descriptor_sets ) );
     MVK_VERIFY( result == VK_SUCCESS );
-
-    auto descriptor_sets = std::array< types::unique_descriptor_set, Size >();
-
-    for ( auto i = size_t( 0 ); i < Size; ++i )
-    {
-      descriptor_sets[ i ] =
-        types::unique_descriptor_set( handles[ i ], types::get( ctx.device_ ), types::get( ctx.descriptor_pool_ ) );
-    }
-
     return descriptor_sets;
   }
 
   template< size_t Size >
-  [[nodiscard]] std::array< types::unique_command_buffer, Size >
-    allocate_command_buffers( context const & ctx, VkCommandBufferLevel level ) noexcept
+  [[nodiscard]] std::array< VkCommandBuffer, Size > allocate_command_buffers( context const &      ctx,
+                                                                              VkCommandBufferLevel level ) noexcept
   {
     auto const allocate_info = [ &ctx, level ]
     {
       auto info               = VkCommandBufferAllocateInfo();
       info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-      info.commandPool        = types::get( ctx.command_pool_ );
+      info.commandPool        = ctx.command_pool;
       info.level              = level;
       info.commandBufferCount = Size;
       return info;
     }();
 
-    auto handles = std::array< VkCommandBuffer, Size >();
-
-    [[maybe_unused]] auto result =
-      vkAllocateCommandBuffers( types::get( ctx.device_ ), &allocate_info, std::data( handles ) );
-
+    auto command_buffers = std::array< VkCommandBuffer, Size >();
+    auto result          = vkAllocateCommandBuffers( ctx.device, &allocate_info, std::data( command_buffers ) );
     MVK_VERIFY( result == VK_SUCCESS );
-
-    auto command_buffers = std::array< types::unique_command_buffer, Size >();
-
-    for ( auto i = size_t( 0 ); i < Size; ++i )
-    {
-      command_buffers[ i ] =
-        types::unique_command_buffer( handles[ i ], types::get( ctx.device_ ), types::get( ctx.command_pool_ ) );
-    }
-
     return command_buffers;
   }
 

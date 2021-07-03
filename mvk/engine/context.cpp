@@ -9,4 +9,18 @@ namespace mvk::engine
     return std::chrono::duration< float, std::chrono::seconds::period >( delta_time ).count();
   }
 
+  [[nodiscard]] VkExtent2D query_framebuffer_size( context const & ctx ) noexcept
+  {
+    auto width  = 0;
+    auto height = 0;
+
+    do
+    {
+      glfwGetFramebufferSize( ctx.window, &width, &height );
+      glfwWaitEvents();
+    } while ( width == 0 || height == 0 );
+
+    return { static_cast< uint32_t >( width ), static_cast< uint32_t >( height ) };
+  }
+
 }  // namespace mvk::engine

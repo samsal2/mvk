@@ -3,7 +3,7 @@
 namespace mvk::engine
 {
   void transition_layout( context const & ctx,
-                          types::image    image,
+                          VkImage         image,
                           VkImageLayout   old_layout,
                           VkImageLayout   new_layout,
                           uint32_t        mipmap_levels ) noexcept
@@ -17,7 +17,7 @@ namespace mvk::engine
       barrier.newLayout           = new_layout;
       barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
       barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-      barrier.image               = types::get( image );
+      barrier.image               = image;
 
       if ( new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
       {
@@ -81,30 +81,24 @@ namespace mvk::engine
 
     auto const command_buffer = allocate_single_use_command_buffer( ctx );
 
-    vkBeginCommandBuffer( types::get( command_buffer ), &begin_info );
-    vkCmdPipelineBarrier( types::get( command_buffer ),
-                          source_stage,
-                          destination_stage,
-                          0,
-                          0,
-                          nullptr,
-                          0,
-                          nullptr,
-                          1,
-                          &image_memory_barrier );
-    vkEndCommandBuffer( types::get( command_buffer ) );
+    vkBeginCommandBuffer( command_buffer, &begin_info );
+    vkCmdPipelineBarrier(
+      command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier );
+
+    vkEndCommandBuffer( command_buffer );
 
     auto submit_info               = VkSubmitInfo();
     submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers    = &types::get( command_buffer );
+    submit_info.pCommandBuffers    = &command_buffer;
 
-    vkQueueSubmit( types::get( ctx.graphics_queue_ ), 1, &submit_info, nullptr );
-    vkQueueWaitIdle( types::get( ctx.graphics_queue_ ) );
+    vkQueueSubmit( ctx.graphics_queue, 1, &submit_info, nullptr );
+    vkQueueWaitIdle( ctx.graphics_queue );
+    vkFreeCommandBuffers( ctx.device, ctx.command_pool, 1, &command_buffer );
   }
 
   void generate_mipmaps(
-    context const & ctx, types::image image, uint32_t width, uint32_t height, uint32_t mipmap_levels ) noexcept
+    context const & ctx, VkImage image, uint32_t width, uint32_t height, uint32_t mipmap_levels ) noexcept
   {
     if ( mipmap_levels == 1 || mipmap_levels == 0 )
     {
@@ -121,13 +115,13 @@ namespace mvk::engine
     }();
 
     auto command_buffer = allocate_single_use_command_buffer( ctx );
-    vkBeginCommandBuffer( types::get( command_buffer ), &begin_info );
+    vkBeginCommandBuffer( command_buffer, &begin_info );
 
     auto barrier                            = VkImageMemoryBarrier();
     barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image                           = types::get( image );
+    barrier.image                           = image;
     barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount     = 1;
@@ -155,7 +149,7 @@ namespace mvk::engine
       barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
       barrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
 
-      vkCmdPipelineBarrier( types::get( command_buffer ),
+      vkCmdPipelineBarrier( command_buffer,
                             VK_PIPELINE_STAGE_TRANSFER_BIT,
                             VK_PIPELINE_STAGE_TRANSFER_BIT,
                             0,
@@ -188,10 +182,10 @@ namespace mvk::engine
       blit.dstSubresource.baseArrayLayer = 0;
       blit.dstSubresource.layerCount     = 1;
 
-      vkCmdBlitImage( types::get( command_buffer ),
-                      types::get( image ),
+      vkCmdBlitImage( command_buffer,
+                      image,
                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                      types::get( image ),
+                      image,
                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                       1,
                       &blit,
@@ -202,7 +196,7 @@ namespace mvk::engine
       barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
       barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-      vkCmdPipelineBarrier( types::get( command_buffer ),
+      vkCmdPipelineBarrier( command_buffer,
                             VK_PIPELINE_STAGE_TRANSFER_BIT,
                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                             0,
@@ -220,7 +214,7 @@ namespace mvk::engine
     barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrier.dstAccessMask                 = VK_ACCESS_SHADER_READ_BIT;
 
-    vkCmdPipelineBarrier( types::get( command_buffer ),
+    vkCmdPipelineBarrier( command_buffer,
                           VK_PIPELINE_STAGE_TRANSFER_BIT,
                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                           0,
@@ -231,21 +225,22 @@ namespace mvk::engine
                           1,
                           &barrier );
 
-    vkEndCommandBuffer( types::get( command_buffer ) );
+    vkEndCommandBuffer( command_buffer );
 
     auto submit_info               = VkSubmitInfo();
     submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers    = &types::get( command_buffer );
+    submit_info.pCommandBuffers    = &command_buffer;
 
-    vkQueueSubmit( types::get( ctx.graphics_queue_ ), 1, &submit_info, nullptr );
-    vkQueueWaitIdle( types::get( ctx.graphics_queue_ ) );
+    vkQueueSubmit( ctx.graphics_queue, 1, &submit_info, nullptr );
+    vkQueueWaitIdle( ctx.graphics_queue );
+    vkFreeCommandBuffers( ctx.device, ctx.command_pool, 1, &command_buffer );
   }
 
   // buffers
 
-  void stage_image(
-    context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, types::image image ) noexcept
+  void
+    stage_image( context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, VkImage image ) noexcept
   {
     auto const begin_info = []
     {
@@ -277,24 +272,21 @@ namespace mvk::engine
 
     auto const command_buffer = allocate_single_use_command_buffer( ctx );
 
-    vkBeginCommandBuffer( types::get( command_buffer ), &begin_info );
+    vkBeginCommandBuffer( command_buffer, &begin_info );
 
-    vkCmdCopyBufferToImage( types::get( command_buffer ),
-                            types::get( allocation.buffer_ ),
-                            types::get( image ),
-                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                            1,
-                            &copy_region );
+    vkCmdCopyBufferToImage(
+      command_buffer, allocation.buffer_, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region );
 
-    vkEndCommandBuffer( types::get( command_buffer ) );
+    vkEndCommandBuffer( command_buffer );
 
     auto submit_info               = VkSubmitInfo();
     submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers    = &types::get( command_buffer );
+    submit_info.pCommandBuffers    = &command_buffer;
 
-    vkQueueSubmit( types::get( ctx.graphics_queue_ ), 1, &submit_info, nullptr );
-    vkQueueWaitIdle( types::get( ctx.graphics_queue_ ) );
+    vkQueueSubmit( ctx.graphics_queue, 1, &submit_info, nullptr );
+    vkQueueWaitIdle( ctx.graphics_queue );
+    vkFreeCommandBuffers( ctx.device, ctx.command_pool, 1, &command_buffer );
   }
 
 }  // namespace mvk::engine

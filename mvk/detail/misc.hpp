@@ -1,19 +1,19 @@
 #ifndef MVK_DETAIL_MISC_HPP_INCLUDED
 #define MVK_DETAIL_MISC_HPP_INCLUDED
 
-#include "types/types.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
 
 #include <filesystem>
 #include <optional>
+#include <vulkan/vulkan.h>
 
 namespace mvk::detail
 {
-  [[nodiscard]] utility::slice< std::byte > map_memory( types::device        device,
-                                                        types::device_memory memory,
-                                                        types::device_size   size   = VK_WHOLE_SIZE,
-                                                        types::device_size   offset = 0 ) noexcept;
+  [[nodiscard]] utility::slice< std::byte > map_memory( VkDevice       device,
+                                                        VkDeviceMemory memory,
+                                                        VkDeviceSize   size   = VK_WHOLE_SIZE,
+                                                        VkDeviceSize   offset = 0 ) noexcept;
 
   [[nodiscard]] std::tuple< std::vector< unsigned char >, uint32_t, uint32_t >
     load_texture( std::filesystem::path const & path );

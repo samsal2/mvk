@@ -6,7 +6,7 @@ namespace mvk::engine
 {
   void test_run( context & ctx ) noexcept
   {
-    while ( !ctx.window_.should_close() )
+    while ( glfwWindowShouldClose( ctx.window ) == 0 )
     {
       glfwPollEvents();
 
@@ -20,7 +20,7 @@ namespace mvk::engine
       end_draw( ctx );
     }
 
-    vkDeviceWaitIdle( types::get( ctx.device_ ) );
+    vkDeviceWaitIdle( ctx.device );
   }
 
   [[nodiscard]] pvm create_test_pvm( context const & ctx ) noexcept
@@ -36,7 +36,7 @@ namespace mvk::engine
       glm::lookAt( glm::vec3( 2.0F, 2.0F, 2.0F ), glm::vec3( 0.0F, 0.0F, 0.0F ), glm::vec3( 0.0F, 0.0F, 1.0F ) );
 
     auto const ratio =
-      static_cast< float >( ctx.swapchain_extent_.width ) / static_cast< float >( ctx.swapchain_extent_.height );
+      static_cast< float >( ctx.swapchain_extent.width ) / static_cast< float >( ctx.swapchain_extent.height );
 
     ubo.proj = glm::perspective( glm::radians( 45.0F ), ratio, 0.1F, 10.0F );
     ubo.proj[ 1 ][ 1 ] *= -1;

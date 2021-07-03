@@ -4,13 +4,14 @@
 #include "detail/misc.hpp"
 #include "detail/readers.hpp"
 #include "engine/allocate.hpp"
+#include "engine/context.hpp"
 #include "engine/debug.hpp"
 #include "engine/image.hpp"
-#include "vulkan/vulkan_core.h"
+#include "utility/verify.hpp"
 
 namespace mvk::engine
 {
-  [[nodiscard]] context create_context( std::string const & name, types::window::extent extent ) noexcept
+  [[nodiscard]] context create_context( char const * name, VkExtent2D extent ) noexcept
   {
     auto ctx = context();
     init_window( ctx, extent );
@@ -25,7 +26,7 @@ namespace mvk::engine
     init_pools( ctx );
     init_swapchain( ctx );
     init_depth_image( ctx );
-    init_main_render_pass( ctx );
+    init_render_pass( ctx );
     init_framebuffers( ctx );
     init_samplers( ctx );
     init_doesnt_belong_here( ctx );
@@ -39,12 +40,62 @@ namespace mvk::engine
     return ctx;
   }
 
-  void init_window( context & ctx, types::window::extent extent ) noexcept
+  void destroy_context( context & ctx ) noexcept
   {
-    ctx.window_ = types::window( extent );
+    destroy_garbage_sets( ctx );
+    destroy_garbage_memories( ctx );
+    destroy_garbage_buffers( ctx );
+    destroy_uniform_buffers_memories_and_sets( ctx );
+    destroy_index_buffers_and_memories( ctx );
+    destroy_vertex_buffers_and_memories( ctx );
+    destroy_sync( ctx );
+    destroy_pipelines( ctx );
+    destroy_shaders( ctx );
+    destroy_command_buffers( ctx );
+    destroy_doesnt_beling_here( ctx );
+    destroy_samplers( ctx );
+    destroy_framebuffers( ctx );
+    destroy_render_pass( ctx );
+    destroy_depth_image( ctx );
+    destroy_swapchain( ctx );
+    destroy_pools( ctx );
+    destroy_layouts( ctx );
+    destroy_staging_buffers_and_memories( ctx );
+    destroy_device( ctx );
+    destroy_surface( ctx );
+    destroy_debug_messenger( ctx );
+    destroy_instance( ctx );
+    destroy_window( ctx );
   }
 
-  void init_instance( context & ctx, std::string const & name ) noexcept
+  void init_window( context & ctx, VkExtent2D extent ) noexcept
+  {
+    glfwInit();
+    glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
+
+    auto const callback = []( GLFWwindow * const         window_ptr,
+                              [[maybe_unused]] int const callback_width,
+                              [[maybe_unused]] int const callback_height )
+    {
+      auto const user_ptr    = glfwGetWindowUserPointer( window_ptr );
+      auto const c           = reinterpret_cast< context * >( user_ptr );
+      c->framebuffer_resized = true;
+    };
+
+    ctx.window = glfwCreateWindow(
+      static_cast< int >( extent.width ), static_cast< int >( extent.height ), "stan loona", nullptr, nullptr );
+
+    glfwSetWindowUserPointer( ctx.window, &ctx );
+    glfwSetFramebufferSizeCallback( ctx.window, callback );
+  }
+
+  void destroy_window( context & ctx ) noexcept
+  {
+    glfwDestroyWindow( ctx.window );
+    glfwTerminate();
+  }
+
+  void init_instance( context & ctx, char const * name ) noexcept
   {
     if constexpr ( context::use_validation )
     {
@@ -79,14 +130,17 @@ namespace mvk::engine
     {
       auto info               = VkApplicationInfo();
       info.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-      info.pApplicationName   = name.c_str();
+      info.pApplicationName   = name;
       info.applicationVersion = VK_MAKE_VERSION( 1, 0, 0 );
       info.pEngineName        = "No Engine";
       info.engineVersion      = VK_MAKE_VERSION( 1, 0, 0 );
       return info;
     }();
 
-    auto required_extensions = ctx.window_.required_extensions();
+    auto       count = uint32_t( 0 );
+    auto const data  = glfwGetRequiredInstanceExtensions( &count );
+
+    auto required_extensions = std::vector< char const * >( data, std::next( data, count ) );
 
     if constexpr ( context::use_validation )
     {
@@ -127,31 +181,58 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.instance_ = types::create_unique_instance( instance_create_info );
+    auto result = vkCreateInstance( &instance_create_info, nullptr, &ctx.instance );
+    MVK_VERIFY( result == VK_SUCCESS );
+  }
+
+  void destroy_instance( context & ctx ) noexcept
+  {
+    vkDestroyInstance( ctx.instance, nullptr );
   }
 
   void init_debug_messenger( context & ctx ) noexcept
   {
-    if ( context::use_validation )
+    if constexpr ( context::use_validation )
     {
-      ctx.debug_messenger_ = types::create_unique_debug_messenger( types::get( ctx.instance_ ), debug_create_info );
+      auto const create_debug_utils_messenger = reinterpret_cast< PFN_vkCreateDebugUtilsMessengerEXT >(
+        vkGetInstanceProcAddr( ctx.instance, "vkCreateDebugUtilsMessengerEXT" ) );
+
+      MVK_VERIFY( create_debug_utils_messenger );
+
+      create_debug_utils_messenger( ctx.instance, &debug_create_info, nullptr, &ctx.debug_messenger );
+    }
+  }
+
+  void destroy_debug_messenger( context & ctx ) noexcept
+  {
+    if constexpr ( context::use_validation )
+    {
+      auto const destroy_debug_utils_messenger = reinterpret_cast< PFN_vkDestroyDebugUtilsMessengerEXT >(
+        vkGetInstanceProcAddr( ctx.instance, "vkDestroyDebugUtilsMessengerEXT" ) );
+
+      MVK_VERIFY( destroy_debug_utils_messenger );
+
+      destroy_debug_utils_messenger( ctx.instance, ctx.debug_messenger, nullptr );
     }
   }
 
   void init_surface( context & ctx ) noexcept
   {
-    auto surface = types::surface();
-    glfwCreateWindowSurface( types::get( ctx.instance_ ), types::get( ctx.window_ ), nullptr, &types::get( surface ) );
-    ctx.surface_ = types::unique_surface( types::get( surface ), types::get( ctx.instance_ ) );
+    glfwCreateWindowSurface( ctx.instance, ctx.window, nullptr, &ctx.surface );
+  }
+
+  void destroy_surface( context & ctx ) noexcept
+  {
+    vkDestroySurfaceKHR( ctx.instance, ctx.surface, nullptr );
   }
 
   void select_physical_device( context & ctx ) noexcept
   {
     auto physical_device_count = uint32_t( 0 );
-    vkEnumeratePhysicalDevices( types::get( ctx.instance_ ), &physical_device_count, nullptr );
+    vkEnumeratePhysicalDevices( ctx.instance, &physical_device_count, nullptr );
 
     auto physical_devices = std::vector< VkPhysicalDevice >( physical_device_count );
-    vkEnumeratePhysicalDevices( types::get( ctx.instance_ ), &physical_device_count, std::data( physical_devices ) );
+    vkEnumeratePhysicalDevices( ctx.instance, &physical_device_count, std::data( physical_devices ) );
 
     auto const supported = [ &ctx ]( auto const physical_device )
     {
@@ -160,9 +241,8 @@ namespace mvk::engine
 
       auto const extensions_supported = detail::check_extension_support( physical_device, context::device_extensions );
       auto const format_and_present_mode_available =
-        detail::check_format_and_present_mode_availability( physical_device, types::decay( ctx.surface_ ) );
-      auto const family_indices_found =
-        detail::query_family_indices( physical_device, types::decay( ctx.surface_ ) ).has_value();
+        detail::check_format_and_present_mode_availability( physical_device, ctx.surface );
+      auto const family_indices_found = detail::query_family_indices( physical_device, ctx.surface ).has_value();
 
       return extensions_supported && format_and_present_mode_available && family_indices_found &&
              features.samplerAnisotropy;
@@ -172,18 +252,16 @@ namespace mvk::engine
 
     MVK_VERIFY( it != std::end( physical_devices ) );
 
-    ctx.physical_device_ = *it;
+    ctx.physical_device = *it;
   }
 
   void select_surface_format( context & ctx ) noexcept
   {
     auto formats_count = uint32_t( 0 );
-    vkGetPhysicalDeviceSurfaceFormatsKHR(
-      types::get( ctx.physical_device_ ), types::get( ctx.surface_ ), &formats_count, nullptr );
+    vkGetPhysicalDeviceSurfaceFormatsKHR( ctx.physical_device, ctx.surface, &formats_count, nullptr );
 
     auto formats = std::vector< VkSurfaceFormatKHR >( formats_count );
-    vkGetPhysicalDeviceSurfaceFormatsKHR(
-      types::get( ctx.physical_device_ ), types::get( ctx.surface_ ), &formats_count, std::data( formats ) );
+    vkGetPhysicalDeviceSurfaceFormatsKHR( ctx.physical_device, ctx.surface, &formats_count, std::data( formats ) );
 
     auto const meets_requirements = []( auto const & format )
     {
@@ -192,22 +270,21 @@ namespace mvk::engine
 
     auto const it = std::find_if( std::begin( formats ), std::end( formats ), meets_requirements );
 
-    ctx.surface_format_ = ( it != std::end( formats ) ) ? *it : formats[ 0 ];
+    ctx.surface_format = ( it != std::end( formats ) ) ? *it : formats[ 0 ];
   }
 
   void init_device( context & ctx ) noexcept
   {
-    auto const queue_indices_result =
-      detail::query_family_indices( ctx.physical_device_, types::decay( ctx.surface_ ) );
+    auto const queue_indices_result = detail::query_family_indices( ctx.physical_device, ctx.surface );
 
     MVK_VERIFY( queue_indices_result.has_value() );
 
-    auto const queue_indices  = queue_indices_result.value();
-    ctx.graphics_queue_index_ = queue_indices.first;
-    ctx.present_queue_index_  = queue_indices.second;
+    auto const queue_indices = queue_indices_result.value();
+    ctx.graphics_queue_index = queue_indices.first;
+    ctx.present_queue_index  = queue_indices.second;
 
     auto features = VkPhysicalDeviceFeatures();
-    vkGetPhysicalDeviceFeatures( types::get( ctx.physical_device_ ), &features );
+    vkGetPhysicalDeviceFeatures( ctx.physical_device, &features );
 
     auto const queue_priority = 1.0F;
 
@@ -215,7 +292,7 @@ namespace mvk::engine
     {
       auto info             = VkDeviceQueueCreateInfo();
       info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-      info.queueFamilyIndex = ctx.graphics_queue_index_;
+      info.queueFamilyIndex = ctx.graphics_queue_index;
       info.queueCount       = 1;
       info.pQueuePriorities = &queue_priority;
       return info;
@@ -225,7 +302,7 @@ namespace mvk::engine
     {
       auto info             = VkDeviceQueueCreateInfo();
       info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-      info.queueFamilyIndex = ctx.present_queue_index_;
+      info.queueFamilyIndex = ctx.present_queue_index;
       info.queueCount       = 1;
       info.pQueuePriorities = &queue_priority;
       return info;
@@ -258,9 +335,16 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.device_         = types::create_unique_device( types::decay( ctx.physical_device_ ), device_create_info );
-    ctx.graphics_queue_ = types::get_queue( types::decay( ctx.device_ ), ctx.graphics_queue_index_ );
-    ctx.present_queue_  = types::get_queue( types::decay( ctx.device_ ), ctx.present_queue_index_ );
+    auto result = vkCreateDevice( ctx.physical_device, &device_create_info, nullptr, &ctx.device );
+    MVK_VERIFY( result == VK_SUCCESS );
+
+    vkGetDeviceQueue( ctx.device, ctx.graphics_queue_index, 0, &ctx.graphics_queue );
+    vkGetDeviceQueue( ctx.device, ctx.present_queue_index, 0, &ctx.present_queue );
+  }
+
+  void destroy_device( context & ctx ) noexcept
+  {
+    vkDestroyDevice( ctx.device, nullptr );
   }
 
   void init_layouts( context & ctx ) noexcept
@@ -287,8 +371,10 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.uniform_descriptor_set_layout_ = types::create_unique_descriptor_set_layout(
-      types::get( ctx.device_ ), uniform_descriptor_set_layout_create_info );
+    auto uniform_layout_result = vkCreateDescriptorSetLayout(
+      ctx.device, &uniform_descriptor_set_layout_create_info, nullptr, &ctx.uniform_descriptor_set_layout );
+
+    MVK_VERIFY( uniform_layout_result == VK_SUCCESS );
 
     auto const sampler_layout = []
     {
@@ -312,11 +398,12 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.texture_descriptor_set_layout_ = types::create_unique_descriptor_set_layout(
-      types::get( ctx.device_ ), sampler_descriptor_set_layout_create_info );
+    auto sampler_layout_result = vkCreateDescriptorSetLayout(
+      ctx.device, &sampler_descriptor_set_layout_create_info, nullptr, &ctx.texture_descriptor_set_layout );
 
-    auto descriptor_set_layouts =
-      std::array{ types::get( ctx.uniform_descriptor_set_layout_ ), types::get( ctx.texture_descriptor_set_layout_ ) };
+    MVK_VERIFY( sampler_layout_result == VK_SUCCESS );
+
+    auto descriptor_set_layouts = std::array{ ctx.uniform_descriptor_set_layout, ctx.texture_descriptor_set_layout };
 
     auto const pipeline_layout_create_info = [ &descriptor_set_layouts ]
     {
@@ -329,8 +416,17 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.pipeline_layout_ =
-      types::create_unique_pipeline_layout( types::get( ctx.device_ ), pipeline_layout_create_info );
+    auto pipeline_layout_result =
+      vkCreatePipelineLayout( ctx.device, &pipeline_layout_create_info, nullptr, &ctx.pipeline_layout );
+
+    MVK_VERIFY( pipeline_layout_result == VK_SUCCESS );
+  }
+
+  void destroy_layouts( context & ctx ) noexcept
+  {
+    vkDestroyPipelineLayout( ctx.device, ctx.pipeline_layout, nullptr );
+    vkDestroyDescriptorSetLayout( ctx.device, ctx.texture_descriptor_set_layout, nullptr );
+    vkDestroyDescriptorSetLayout( ctx.device, ctx.uniform_descriptor_set_layout, nullptr );
   }
 
   void init_pools( context & ctx ) noexcept
@@ -339,12 +435,13 @@ namespace mvk::engine
     {
       auto info             = VkCommandPoolCreateInfo();
       info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-      info.queueFamilyIndex = ctx.graphics_queue_index_;
+      info.queueFamilyIndex = ctx.graphics_queue_index;
       info.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
       return info;
     }();
 
-    ctx.command_pool_ = types::create_unique_command_pool( types::get( ctx.device_ ), command_pool_create_info );
+    auto command_pool_result = vkCreateCommandPool( ctx.device, &command_pool_create_info, nullptr, &ctx.command_pool );
+    MVK_VERIFY( command_pool_result == VK_SUCCESS );
 
     auto const uniform_pool_size = []
     {
@@ -375,37 +472,37 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.descriptor_pool_ =
-      types::create_unique_descriptor_pool( types::decay( ctx.device_ ), descriptor_pool_create_info );
+    vkCreateDescriptorPool( ctx.device, &descriptor_pool_create_info, nullptr, &ctx.descriptor_pool );
+  }
+
+  void destroy_pools( context & ctx ) noexcept
+  {
+    vkDestroyDescriptorPool( ctx.device, ctx.descriptor_pool, nullptr );
+    vkDestroyCommandPool( ctx.device, ctx.command_pool, nullptr );
   }
 
   void init_swapchain( context & ctx ) noexcept
   {
-    auto const family_indices = std::array{ ctx.graphics_queue_index_, ctx.present_queue_index_ };
+    auto const family_indices = std::array{ ctx.graphics_queue_index, ctx.present_queue_index };
 
     auto const swapchain_create_info = [ &ctx, &family_indices ]
     {
-      auto const framebuffer_size = ctx.window_.query_framebuffer_size();
-      auto const width            = static_cast< uint32_t >( framebuffer_size.width_ );
-      auto const height           = static_cast< uint32_t >( framebuffer_size.height_ );
+      auto const framebuffer_size = query_framebuffer_size( ctx );
 
       auto capabilities = VkSurfaceCapabilitiesKHR();
-      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-        types::get( ctx.physical_device_ ), types::get( ctx.surface_ ), &capabilities );
+      vkGetPhysicalDeviceSurfaceCapabilitiesKHR( ctx.physical_device, ctx.surface, &capabilities );
 
-      auto const present_mode = detail::choose_present_mode( ctx.physical_device_, types::decay( ctx.surface_ ) );
-
-      ctx.swapchain_extent_ = detail::choose_extent( capabilities, { width, height } );
-
-      auto const image_count = detail::choose_image_count( capabilities );
+      auto const present_mode = detail::choose_present_mode( ctx.physical_device, ctx.surface );
+      ctx.swapchain_extent    = detail::choose_extent( capabilities, framebuffer_size );
+      auto const image_count  = detail::choose_image_count( capabilities );
 
       auto info             = VkSwapchainCreateInfoKHR();
       info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-      info.surface          = types::get( ctx.surface_ );
+      info.surface          = ctx.surface;
       info.minImageCount    = image_count;
-      info.imageFormat      = ctx.surface_format_.format;
-      info.imageColorSpace  = ctx.surface_format_.colorSpace;
-      info.imageExtent      = ctx.swapchain_extent_;
+      info.imageFormat      = ctx.surface_format.format;
+      info.imageColorSpace  = ctx.surface_format.colorSpace;
+      info.imageExtent      = ctx.swapchain_extent;
       info.imageArrayLayers = 1;
       info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
       info.preTransform     = capabilities.currentTransform;
@@ -430,19 +527,15 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.swapchain_ = types::create_unique_swapchain( types::get( ctx.device_ ), swapchain_create_info );
+    auto swapchain_result = vkCreateSwapchainKHR( ctx.device, &swapchain_create_info, nullptr, &ctx.swapchain );
+    MVK_VERIFY( swapchain_result == VK_SUCCESS );
 
-    vkGetSwapchainImagesKHR(
-      types::get( ctx.device_ ), types::get( ctx.swapchain_ ), &ctx.swapchain_images_count_, nullptr );
+    vkGetSwapchainImagesKHR( ctx.device, ctx.swapchain, &ctx.swapchain_images_count, nullptr );
 
-    auto swapchain_images = std::vector< VkImage >( ctx.swapchain_images_count_ );
+    auto swapchain_images = std::vector< VkImage >( ctx.swapchain_images_count );
+    vkGetSwapchainImagesKHR( ctx.device, ctx.swapchain, &ctx.swapchain_images_count, std::data( swapchain_images ) );
 
-    vkGetSwapchainImagesKHR( types::get( ctx.device_ ),
-                             types::get( ctx.swapchain_ ),
-                             &ctx.swapchain_images_count_,
-                             std::data( swapchain_images ) );
-
-    ctx.swapchain_image_views_.reserve( ctx.swapchain_images_count_ );
+    ctx.swapchain_image_views.reserve( ctx.swapchain_images_count );
 
     auto const add_image_view = [ &ctx, &swapchain_create_info ]( auto const image )
     {
@@ -465,11 +558,25 @@ namespace mvk::engine
         return view_info;
       }();
 
-      ctx.swapchain_image_views_.push_back(
-        types::create_unique_image_view( types::decay( ctx.device_ ), image_view_create_info ) );
+      auto image_view = VkImageView();
+
+      auto result = vkCreateImageView( ctx.device, &image_view_create_info, nullptr, &image_view );
+      MVK_VERIFY( result == VK_SUCCESS );
+
+      ctx.swapchain_image_views.push_back( image_view );
     };
 
     std::for_each( std::begin( swapchain_images ), std::end( swapchain_images ), add_image_view );
+  }
+
+  void destroy_swapchain( context & ctx ) noexcept
+  {
+    for ( auto const image_view : ctx.swapchain_image_views )
+    {
+      vkDestroyImageView( ctx.device, image_view, nullptr );
+    }
+
+    vkDestroySwapchainKHR( ctx.device, ctx.swapchain, nullptr );
   }
 
   void init_depth_image( context & ctx ) noexcept
@@ -479,8 +586,8 @@ namespace mvk::engine
       auto info          = VkImageCreateInfo();
       info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
       info.imageType     = VK_IMAGE_TYPE_2D;
-      info.extent.width  = ctx.swapchain_extent_.width;
-      info.extent.height = ctx.swapchain_extent_.height;
+      info.extent.width  = ctx.swapchain_extent.width;
+      info.extent.height = ctx.swapchain_extent.height;
       info.extent.depth  = 1;
       info.mipLevels     = 1;
       info.arrayLayers   = 1;
@@ -494,15 +601,15 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.depth_image_ = types::create_unique_image( types::get( ctx.device_ ), depth_image_create_info );
+    auto depth_image_result = vkCreateImage( ctx.device, &depth_image_create_info, nullptr, &ctx.depth_image );
+    MVK_VERIFY( depth_image_result == VK_SUCCESS );
 
     auto depth_image_requirements = VkMemoryRequirements();
-    vkGetImageMemoryRequirements(
-      types::get( ctx.device_ ), types::get( ctx.depth_image_ ), &depth_image_requirements );
+    vkGetImageMemoryRequirements( ctx.device, ctx.depth_image, &depth_image_requirements );
 
-    auto const memory_type_index = detail::find_memory_type( types::get( ctx.physical_device_ ),
-                                                             depth_image_requirements.memoryTypeBits,
-                                                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+    auto const memory_type_index = detail::find_memory_type(
+      ctx.physical_device, depth_image_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+
     MVK_VERIFY( memory_type_index.has_value() );
 
     auto depth_image_memory_allocate_info = [ depth_image_requirements, memory_type_index ]
@@ -514,17 +621,18 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.depth_image_memory_ =
-      types::create_unique_device_memory( types::get( ctx.device_ ), depth_image_memory_allocate_info );
+    auto depth_image_memory_result =
+      vkAllocateMemory( ctx.device, &depth_image_memory_allocate_info, nullptr, &ctx.depth_image_memory );
 
-    vkBindImageMemory(
-      types::get( ctx.device_ ), types::get( ctx.depth_image_ ), types::get( ctx.depth_image_memory_ ), 0 );
+    MVK_VERIFY( depth_image_memory_result == VK_SUCCESS );
+
+    vkBindImageMemory( ctx.device, ctx.depth_image, ctx.depth_image_memory, 0 );
 
     auto const depth_image_view_create_info = [ &ctx ]
     {
       auto info                            = VkImageViewCreateInfo();
       info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-      info.image                           = types::get( ctx.depth_image_ );
+      info.image                           = ctx.depth_image;
       info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
       info.format                          = VK_FORMAT_D32_SFLOAT;
       info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -539,49 +647,66 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.depth_image_view_ = types::create_unique_image_view( types::get( ctx.device_ ), depth_image_view_create_info );
+    auto depth_image_view_result =
+      vkCreateImageView( ctx.device, &depth_image_view_create_info, nullptr, &ctx.depth_image_view );
 
-    transition_layout( ctx,
-                       types::decay( ctx.depth_image_ ),
-                       VK_IMAGE_LAYOUT_UNDEFINED,
-                       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                       1 );
+    MVK_VERIFY( depth_image_view_result == VK_SUCCESS );
+
+    transition_layout(
+      ctx, ctx.depth_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1 );
+  }
+
+  void destroy_depth_image( context & ctx ) noexcept
+  {
+    vkDestroyImageView( ctx.device, ctx.depth_image_view, nullptr );
+    vkFreeMemory( ctx.device, ctx.depth_image_memory, nullptr );
+    vkDestroyImage( ctx.device, ctx.depth_image, nullptr );
   }
 
   void init_framebuffers( context & ctx ) noexcept
   {
-    ctx.framebuffers_.reserve( ctx.swapchain_images_count_ );
+    ctx.framebuffers.reserve( ctx.swapchain_images_count );
 
     auto const add_framebuffer = [ &ctx ]( auto const & image_view )
     {
-      auto const attachments = std::array{ types::get( image_view ), types::get( ctx.depth_image_view_ ) };
+      auto const attachments = std::array{ image_view, ctx.depth_image_view };
 
       auto const framebuffer_create_info = [ &ctx, &attachments ]
       {
         auto info            = VkFramebufferCreateInfo();
         info.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        info.renderPass      = types::get( ctx.render_pass_ );
+        info.renderPass      = ctx.render_pass;
         info.attachmentCount = static_cast< uint32_t >( std::size( attachments ) );
         info.pAttachments    = std::data( attachments );
-        info.width           = ctx.swapchain_extent_.width;
-        info.height          = ctx.swapchain_extent_.height;
+        info.width           = ctx.swapchain_extent.width;
+        info.height          = ctx.swapchain_extent.height;
         info.layers          = 1;
         return info;
       }();
 
-      ctx.framebuffers_.push_back(
-        types::create_unique_framebuffer( types::get( ctx.device_ ), framebuffer_create_info ) );
+      auto framebuffer = VkFramebuffer();
+      auto result      = vkCreateFramebuffer( ctx.device, &framebuffer_create_info, nullptr, &framebuffer );
+      ctx.framebuffers.push_back( framebuffer );
+      MVK_VERIFY( result == VK_SUCCESS );
     };
 
-    std::for_each( std::begin( ctx.swapchain_image_views_ ), std::end( ctx.swapchain_image_views_ ), add_framebuffer );
+    std::for_each( std::begin( ctx.swapchain_image_views ), std::end( ctx.swapchain_image_views ), add_framebuffer );
   }
 
-  void init_main_render_pass( context & ctx ) noexcept
+  void destroy_framebuffers( context & ctx ) noexcept
+  {
+    for ( auto const framebuffer : ctx.framebuffers )
+    {
+      vkDestroyFramebuffer( ctx.device, framebuffer, nullptr );
+    }
+  }
+
+  void init_render_pass( context & ctx ) noexcept
   {
     auto const color_attachment = [ &ctx ]
     {
       auto attachment           = VkAttachmentDescription();
-      attachment.format         = ctx.surface_format_.format;
+      attachment.format         = ctx.surface_format.format;
       attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
       attachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
       attachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -659,7 +784,13 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.render_pass_ = types::create_unique_render_pass( types::get( ctx.device_ ), render_pass_create_info );
+    auto result = vkCreateRenderPass( ctx.device, &render_pass_create_info, nullptr, &ctx.render_pass );
+    MVK_VERIFY( result == VK_SUCCESS );
+  }
+
+  void destroy_render_pass( context & ctx ) noexcept
+  {
+    vkDestroyRenderPass( ctx.device, ctx.render_pass, nullptr );
   }
 
   void init_doesnt_belong_here( context & ctx ) noexcept
@@ -688,13 +819,14 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.image_ = types::create_unique_image( types::get( ctx.device_ ), image_create_info );
+    auto result = vkCreateImage( ctx.device, &image_create_info, nullptr, &ctx.image_ );
+    MVK_VERIFY( result == VK_SUCCESS );
 
     auto image_requirements = VkMemoryRequirements();
-    vkGetImageMemoryRequirements( types::get( ctx.device_ ), types::get( ctx.image_ ), &image_requirements );
+    vkGetImageMemoryRequirements( ctx.device, ctx.image_, &image_requirements );
 
     auto const memory_type_index = detail::find_memory_type(
-      types::get( ctx.physical_device_ ), image_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+      ctx.physical_device, image_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
 
     MVK_VERIFY( memory_type_index.has_value() );
 
@@ -707,25 +839,23 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.image_memory_ = types::create_unique_device_memory( types::get( ctx.device_ ), image_memory_allocate_info );
-    vkBindImageMemory( types::get( ctx.device_ ), types::get( ctx.image_ ), types::get( ctx.image_memory_ ), 0 );
+    result = vkAllocateMemory( ctx.device, &image_memory_allocate_info, nullptr, &ctx.image_memory_ );
+    MVK_VERIFY( result == VK_SUCCESS );
 
-    transition_layout( ctx,
-                       types::decay( ctx.image_ ),
-                       VK_IMAGE_LAYOUT_UNDEFINED,
-                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                       image_create_info.mipLevels );
+    vkBindImageMemory( ctx.device, ctx.image_, ctx.image_memory_, 0 );
+
+    transition_layout(
+      ctx, ctx.image_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image_create_info.mipLevels );
 
     auto staged_texture = staging_allocate( ctx, utility::as_bytes( ctx.texture_ ) );
-    stage_image( ctx, staged_texture, ctx.width_, ctx.height_, types::decay( ctx.image_ ) );
-
-    generate_mipmaps( ctx, types::decay( ctx.image_ ), ctx.width_, ctx.height_, image_create_info.mipLevels );
+    stage_image( ctx, staged_texture, ctx.width_, ctx.height_, ctx.image_ );
+    generate_mipmaps( ctx, ctx.image_, ctx.width_, ctx.height_, image_create_info.mipLevels );
 
     auto const image_view_create_info = [ &ctx, &image_create_info ]
     {
       auto info                            = VkImageViewCreateInfo();
       info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-      info.image                           = types::get( ctx.image_ );
+      info.image                           = ctx.image_;
       info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
       info.format                          = VK_FORMAT_R8G8B8A8_SRGB;
       info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -740,19 +870,19 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.image_view_ = types::create_unique_image_view( types::decay( ctx.device_ ), image_view_create_info );
+    result = vkCreateImageView( ctx.device, &image_view_create_info, nullptr, &ctx.image_view_ );
+    MVK_VERIFY( result == VK_SUCCESS );
 
     std::tie( ctx.vertices_, ctx.indices_ ) = detail::read_object( "../../assets/viking_room.obj" );
 
-    ctx.image_descriptor_set_ =
-      std::move( allocate_descriptor_sets< 1 >( ctx, types::decay( ctx.texture_descriptor_set_layout_ ) )[ 0 ] );
+    ctx.image_descriptor_set_ = allocate_descriptor_sets< 1 >( ctx, ctx.texture_descriptor_set_layout )[ 0 ];
 
     auto const image_descriptor_image_info = [ &ctx ]
     {
       auto info        = VkDescriptorImageInfo();
       info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      info.imageView   = types::get( ctx.image_view_ );
-      info.sampler     = types::get( ctx.texture_sampler_ );
+      info.imageView   = ctx.image_view_;
+      info.sampler     = ctx.texture_sampler;
       return info;
     }();
 
@@ -760,7 +890,7 @@ namespace mvk::engine
     {
       auto write             = VkWriteDescriptorSet();
       write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      write.dstSet           = types::get( ctx.image_descriptor_set_ );
+      write.dstSet           = ctx.image_descriptor_set_;
       write.dstBinding       = 0;
       write.dstArrayElement  = 0;
       write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -771,19 +901,29 @@ namespace mvk::engine
       return write;
     }();
 
-    auto const descriptor_writes = std::array{ image_write };
+    vkUpdateDescriptorSets( ctx.device, 1, &image_write, 0, nullptr );
+  }
 
-    vkUpdateDescriptorSets( types::get( ctx.device_ ),
-                            static_cast< uint32_t >( std::size( descriptor_writes ) ),
-                            std::data( descriptor_writes ),
-                            0,
-                            nullptr );
+  void destroy_doesnt_beling_here( context & ctx ) noexcept
+  {
+    vkFreeDescriptorSets( ctx.device, ctx.descriptor_pool, 1, &ctx.image_descriptor_set_ );
+    vkDestroyImageView( ctx.device, ctx.image_view_, nullptr );
+    vkFreeMemory( ctx.device, ctx.image_memory_, nullptr );
+    vkDestroyImage( ctx.device, ctx.image_, nullptr );
   }
 
   void init_command_buffers( context & ctx ) noexcept
   {
-    ctx.command_buffers_ =
+    ctx.command_buffers =
       allocate_command_buffers< context::dynamic_buffer_count >( ctx, VK_COMMAND_BUFFER_LEVEL_PRIMARY );
+  }
+
+  void destroy_command_buffers( context & ctx ) noexcept
+  {
+    vkFreeCommandBuffers( ctx.device,
+                          ctx.command_pool,
+                          static_cast< uint32_t >( std::size( ctx.command_buffers ) ),
+                          std::data( ctx.command_buffers ) );
   }
 
   void init_shaders( context & ctx ) noexcept
@@ -799,7 +939,8 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.vertex_shader_ = types::create_unique_shader_module( types::get( ctx.device_ ), vertex_shader_create_info );
+    auto result = vkCreateShaderModule( ctx.device, &vertex_shader_create_info, nullptr, &ctx.vertex_shader );
+    MVK_VERIFY( result == VK_SUCCESS );
 
     auto const fragment_code = detail::read_file( "../../shaders/frag.spv" );
 
@@ -812,7 +953,14 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.fragment_shader_ = types::create_unique_shader_module( types::get( ctx.device_ ), fragment_shader_create_info );
+    result = vkCreateShaderModule( ctx.device, &fragment_shader_create_info, nullptr, &ctx.fragment_shader );
+    MVK_VERIFY( result == VK_SUCCESS );
+  }
+
+  void destroy_shaders( context & ctx ) noexcept
+  {
+    vkDestroyShaderModule( ctx.device, ctx.fragment_shader, nullptr );
+    vkDestroyShaderModule( ctx.device, ctx.vertex_shader, nullptr );
   }
 
   void init_samplers( context & ctx ) noexcept
@@ -840,7 +988,13 @@ namespace mvk::engine
       return info;
     }();
 
-    ctx.texture_sampler_ = types::create_unique_sampler( types::get( ctx.device_ ), sampler_create_info );
+    auto result = vkCreateSampler( ctx.device, &sampler_create_info, nullptr, &ctx.texture_sampler );
+    MVK_VERIFY( result == VK_SUCCESS );
+  }
+
+  void destroy_samplers( context & ctx ) noexcept
+  {
+    vkDestroySampler( ctx.device, ctx.texture_sampler, nullptr );
   }
 
   void init_pipeline( context & ctx ) noexcept
@@ -911,8 +1065,8 @@ namespace mvk::engine
       auto tmp     = VkViewport();
       tmp.x        = 0.0F;
       tmp.y        = 0.0F;
-      tmp.width    = static_cast< float >( ctx.swapchain_extent_.width );
-      tmp.height   = static_cast< float >( ctx.swapchain_extent_.height );
+      tmp.width    = static_cast< float >( ctx.swapchain_extent.width );
+      tmp.height   = static_cast< float >( ctx.swapchain_extent.height );
       tmp.minDepth = 0.0F;
       tmp.maxDepth = 1.0F;
       return tmp;
@@ -923,7 +1077,7 @@ namespace mvk::engine
       auto tmp     = VkRect2D();
       tmp.offset.x = 0;
       tmp.offset.y = 0;
-      tmp.extent   = ctx.swapchain_extent_;
+      tmp.extent   = ctx.swapchain_extent;
       return tmp;
     }();
 
@@ -1017,7 +1171,7 @@ namespace mvk::engine
       auto info   = VkPipelineShaderStageCreateInfo();
       info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
       info.stage  = VK_SHADER_STAGE_VERTEX_BIT;
-      info.module = types::get( ctx.vertex_shader_ );
+      info.module = ctx.vertex_shader;
       info.pName  = "main";
       return info;
     }();
@@ -1027,7 +1181,7 @@ namespace mvk::engine
       auto info   = VkPipelineShaderStageCreateInfo();
       info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
       info.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-      info.module = types::get( ctx.fragment_shader_ );
+      info.module = ctx.fragment_shader;
       info.pName  = "main";
       return info;
     }();
@@ -1048,15 +1202,22 @@ namespace mvk::engine
       info.pDepthStencilState  = &depth_stencil_state_create_info;
       info.pColorBlendState    = &color_blend_create_info;
       info.pDynamicState       = nullptr;
-      info.layout              = types::get( ctx.pipeline_layout_ );
-      info.renderPass          = types::get( ctx.render_pass_ );
+      info.layout              = ctx.pipeline_layout;
+      info.renderPass          = ctx.render_pass;
       info.subpass             = 0;
       info.basePipelineHandle  = nullptr;
       info.basePipelineIndex   = -1;
       return info;
     }();
 
-    ctx.pipeline_ = types::create_unique_pipeline( types::get( ctx.device_ ), pipeline_create_info );
+    auto result =
+      vkCreateGraphicsPipelines( ctx.device, VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &ctx.pipeline );
+    MVK_VERIFY( result == VK_SUCCESS );
+  }
+
+  void destroy_pipelines( context & ctx ) noexcept
+  {
+    vkDestroyPipeline( ctx.device, ctx.pipeline, nullptr );
   }
 
   void init_sync( context & ctx ) noexcept
@@ -1078,14 +1239,28 @@ namespace mvk::engine
 
     for ( auto i = size_t( 0 ); i < context::max_frames_in_flight; ++i )
     {
-      ctx.image_available_semaphores_[ i ] =
-        types::create_unique_semaphore( types::get( ctx.device_ ), semaphore_create_info );
-      ctx.render_finished_semaphores_[ i ] =
-        types::create_unique_semaphore( types::get( ctx.device_ ), semaphore_create_info );
-      ctx.frame_in_flight_fences_[ i ] = types::create_unique_fence( types::get( ctx.device_ ), fence_create_info );
+      auto result =
+        vkCreateSemaphore( ctx.device, &semaphore_create_info, nullptr, &ctx.image_available_semaphores[ i ] );
+      MVK_VERIFY( result == VK_SUCCESS );
+
+      result = vkCreateSemaphore( ctx.device, &semaphore_create_info, nullptr, &ctx.render_finished_semaphores[ i ] );
+      MVK_VERIFY( result == VK_SUCCESS );
+
+      result = vkCreateFence( ctx.device, &fence_create_info, nullptr, &ctx.frame_in_flight_fences[ i ] );
+      MVK_VERIFY( result == VK_SUCCESS );
     }
 
-    ctx.image_in_flight_fences_.resize( ctx.swapchain_images_count_, nullptr );
+    ctx.image_in_flight_fences.resize( ctx.swapchain_images_count, nullptr );
+  }
+
+  void destroy_sync( context & ctx ) noexcept
+  {
+    for ( auto i = size_t( 0 ); i < context::max_frames_in_flight; ++i )
+    {
+      vkDestroySemaphore( ctx.device, ctx.image_available_semaphores[ i ], nullptr );
+      vkDestroySemaphore( ctx.device, ctx.render_finished_semaphores[ i ], nullptr );
+      vkDestroyFence( ctx.device, ctx.frame_in_flight_fences[ i ], nullptr );
+    }
   }
 
 }  // namespace mvk::engine

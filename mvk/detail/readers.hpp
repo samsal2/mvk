@@ -2,7 +2,6 @@
 #define MVK_DETAIL_READERS_HPP_INCLUDED
 
 #include "shader_types.hpp"
-#include "types/types.hpp"
 
 #include <filesystem>
 #include <utility>

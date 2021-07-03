@@ -81,13 +81,11 @@ namespace mvk::detail
     return static_cast< uint32_t >( std::floor( std::log2( std::max( height, width ) ) ) + 1 );
   }
 
-  [[nodiscard]] utility::slice< std::byte > map_memory( types::device const        device,
-                                                        types::device_memory const memory,
-                                                        types::device_size const   size,
-                                                        types::device_size const   offset ) noexcept
+  [[nodiscard]] utility::slice< std::byte >
+    map_memory( VkDevice device, VkDeviceMemory memory, VkDeviceSize size, VkDeviceSize offset ) noexcept
   {
     void * data = nullptr;
-    vkMapMemory( types::get( device ), types::get( memory ), offset, size, 0, &data );
+    vkMapMemory( device, memory, offset, size, 0, &data );
     return { utility::force_cast_to_byte( data ), size };
   }
 }  // namespace mvk::detail
