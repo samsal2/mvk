@@ -16,24 +16,6 @@ namespace mvk::wrapper
   };  // namespace storage
 
   template <typename Handle, typename Deleter>
-  class unique;
-
-  template <typename... Args>
-  constexpr auto storage_selector( [[maybe_unused]] storage::unique option ) noexcept
-  {
-    auto arg = select<options::deleter>( Args{}... );
-    static_assert( !utility::is_none( arg ), "Expected a deleter option" );
-
-    auto found    = deleter_selector<Args...>( arg );
-    using deleter = selected_t<decltype( found )>;
-
-    using handle = decltype( select<options::handle>( Args{}... ) );
-    static_assert( !utility::is_none( handle{} ), "Expected a handle option" );
-
-    return selected<unique<handle, deleter>>{};
-  }
-
-  template <typename Handle, typename Deleter>
   class unique
   {
   public:
@@ -95,6 +77,21 @@ namespace mvk::wrapper
 
     utility::compressed_pair<handle_type, deleter_type> container_ = {};
   };
+
+  template <typename... Args>
+  constexpr auto storage_selector( [[maybe_unused]] storage::unique option ) noexcept
+  {
+    auto arg = select<options::deleter>( Args{}... );
+    static_assert( !utility::is_none( arg ), "Expected a deleter option" );
+
+    auto found    = deleter_selector<Args...>( arg );
+    using deleter = selected_t<decltype( found )>;
+
+    using handle = decltype( select<options::handle>( Args{}... ) );
+    static_assert( !utility::is_none( handle{} ), "Expected a handle option" );
+
+    return selected<unique<handle, deleter>>{};
+  }
 
 }  // namespace mvk::wrapper
 #endif
