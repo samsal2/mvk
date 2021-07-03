@@ -4,6 +4,7 @@
 #include "detail/helpers.hpp"
 #include "shader_types.hpp"
 #include "types/types.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace mvk::detail
 {
@@ -70,6 +71,7 @@ namespace mvk
 
     // init_surface
     types::unique_surface surface_;
+    VkSurfaceFormatKHR    surface_format_;
 
     // init_debug_messenger
     types::unique_debug_messenger debug_messenger_;
@@ -77,8 +79,8 @@ namespace mvk
     // init_device
     types::physical_device physical_device_;
     types::unique_device   device_;
-    u32                    graphics_queue_index_;
-    u32                    present_queue_index_;
+    uint32_t               graphics_queue_index_;
+    uint32_t               present_queue_index_;
     types::queue           graphics_queue_;
     types::queue           present_queue_;
 
@@ -91,7 +93,7 @@ namespace mvk
     types::unique_descriptor_pool descriptor_pool_;
 
     // init_swapchain
-    u32                                   swapchain_images_count_;
+    uint32_t                              swapchain_images_count_;
     types::unique_swapchain               swapchain_;
     std::vector<types::unique_image_view> swapchain_image_views_;
     VkExtent2D                            swapchain_extent_;
@@ -110,14 +112,14 @@ namespace mvk
     // doesnt belong here
     // ================================================================================================================
     std::vector<unsigned char>  texture_;
-    u32                         width_;
-    u32                         height_;
+    uint32_t                    width_;
+    uint32_t                    height_;
     types::unique_image         image_;
     types::unique_device_memory image_memory_;
     types::unique_image_view    image_view_;
     types::unique_sampler       sampler_;
     std::vector<vertex>         vertices_;
-    std::vector<u32>            indices_;
+    std::vector<uint32_t>       indices_;
     // ================================================================================================================
 
     // allocate_commands
@@ -175,7 +177,7 @@ namespace mvk
     size_t                current_frame_index_    = 0;
     size_t                current_buffer_index_   = 0;
     size_t                current_garbage_index_  = 0;
-    u32                   current_image_index_    = 0;
+    uint32_t              current_image_index_    = 0;
     types::command_buffer current_command_buffer_ = VK_NULL_HANDLE;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> start_time = std::chrono::high_resolution_clock::now();
@@ -204,6 +206,8 @@ namespace mvk
   void init_instance( context & ctx, std::string const & name ) noexcept;
   void init_debug_messenger( context & ctx ) noexcept;
   void init_surface( context & ctx ) noexcept;
+  void select_physical_device( context & ctx ) noexcept;
+  void select_surface_format( context & ctx ) noexcept;
   void init_device( context & ctx ) noexcept;
   void init_layouts( context & ctx ) noexcept;
   void init_pools( context & ctx ) noexcept;
@@ -226,9 +230,10 @@ namespace mvk
                           types::image    image,
                           VkImageLayout   old_layout,
                           VkImageLayout   new_layout,
-                          u32             mipmap_levels ) noexcept;
+                          uint32_t        mipmap_levels ) noexcept;
 
-  void generate_mipmaps( context const & ctx, types::image image, u32 width, u32 height, u32 mipmap_levels ) noexcept;
+  void generate_mipmaps(
+    context const & ctx, types::image image, uint32_t width, uint32_t height, uint32_t mipmap_levels ) noexcept;
 
   // buffers
   void create_vertex_buffers_and_memories( context & ctx, types::device_size size ) noexcept;
@@ -248,7 +253,8 @@ namespace mvk
   };
 
   [[nodiscard]] staging_allocation staging_allocate( context & ctx, utility::slice<std::byte const> src ) noexcept;
-  void stage_image( context & ctx, staging_allocation allocation, u32 width, u32 height, types::image image ) noexcept;
+  void                             stage_image(
+                                context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, types::image image ) noexcept;
 
   struct vertex_allocation
   {

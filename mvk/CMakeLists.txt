@@ -1,7 +1,6 @@
 
 target_sources(${PROJECT_NAME} PRIVATE context.hpp 
                                        context.cpp
-                                       basic_types.hpp
                                        shader_types.hpp
                                        main.cpp)
 

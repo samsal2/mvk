@@ -20,7 +20,7 @@ namespace mvk::detail
   [[nodiscard]] bool check_extension_support( types::physical_device             physical_device,
                                               utility::slice<char const * const> device_extensions ) noexcept
   {
-    auto extensions_count = u32( 0 );
+    auto extensions_count = uint32_t( 0 );
     vkEnumerateDeviceExtensionProperties( types::get( physical_device ), nullptr, &extensions_count, nullptr );
 
     auto extensions = std::vector<VkExtensionProperties>( extensions_count );
@@ -32,46 +32,7 @@ namespace mvk::detail
       return is_extension_present( extension, extensions );
     };
 
-    auto const begin = std::begin( device_extensions );
-    auto const end   = std::end( device_extensions );
-    return std::all_of( begin, end, is_present );
-  }
-
-  [[nodiscard]] std::optional<types::physical_device>
-    choose_physical_device( types::instance const                    instance,
-                            types::surface const                     surface,
-                            utility::slice<char const * const> const device_extensions ) noexcept
-  {
-    auto physical_device_count = u32( 0 );
-    vkEnumeratePhysicalDevices( types::get( instance ), &physical_device_count, nullptr );
-
-    auto physical_devices = std::vector<VkPhysicalDevice>( physical_device_count );
-    vkEnumeratePhysicalDevices( types::get( instance ), &physical_device_count, std::data( physical_devices ) );
-
-    auto const supported = [device_extensions, &surface]( auto const physical_device )
-    {
-      auto features = VkPhysicalDeviceFeatures();
-      vkGetPhysicalDeviceFeatures( physical_device, &features );
-
-      auto const extensions_supported = check_extension_support( physical_device, device_extensions );
-
-      auto const format_and_present_mode_available =
-        check_format_and_present_mode_availability( physical_device, surface );
-
-      auto const family_indices_found = query_family_indices( physical_device, surface );
-
-      return extensions_supported && format_and_present_mode_available && family_indices_found &&
-             features.samplerAnisotropy;
-    };
-
-    auto const it = std::find_if( std::begin( physical_devices ), std::end( physical_devices ), supported );
-
-    if ( it != std::end( physical_devices ) )
-    {
-      return *it;
-    }
-
-    return std::nullopt;
+    return std::all_of( std::begin( device_extensions ), std::end( device_extensions ), is_present );
   }
 
   [[nodiscard]] bool check_graphic_requirements( VkQueueFamilyProperties const & queue_family ) noexcept
@@ -82,11 +43,11 @@ namespace mvk::detail
   [[nodiscard]] bool check_format_and_present_mode_availability( types::physical_device physical_device,
                                                                  types::surface const   surface ) noexcept
   {
-    auto format_count = u32( 0 );
+    auto format_count = uint32_t( 0 );
     vkGetPhysicalDeviceSurfaceFormatsKHR(
       types::get( physical_device ), types::get( surface ), &format_count, nullptr );
 
-    auto present_mode_count = u32( 0 );
+    auto present_mode_count = uint32_t( 0 );
     vkGetPhysicalDeviceSurfacePresentModesKHR(
       types::get( physical_device ), types::get( surface ), &present_mode_count, nullptr );
 
@@ -95,7 +56,7 @@ namespace mvk::detail
 
   [[nodiscard]] bool check_surface_support( types::physical_device const physical_device,
                                             types::surface const         surface,
-                                            u32                          index ) noexcept
+                                            uint32_t                     index ) noexcept
   {
     auto supported = VkBool32( false );
     vkGetPhysicalDeviceSurfaceSupportKHR( types::get( physical_device ), index, types::get( surface ), &supported );
@@ -106,15 +67,15 @@ namespace mvk::detail
   [[nodiscard]] std::optional<std::pair<types::queue_index, types::queue_index>>
     query_family_indices( types::physical_device const physical_device, types::surface const surface )
   {
-    auto queue_families_count = u32( 0 );
+    auto queue_families_count = uint32_t( 0 );
     vkGetPhysicalDeviceQueueFamilyProperties( types::get( physical_device ), &queue_families_count, nullptr );
 
     auto queue_families = std::vector<VkQueueFamilyProperties>( queue_families_count );
     vkGetPhysicalDeviceQueueFamilyProperties(
       types::get( physical_device ), &queue_families_count, std::data( queue_families ) );
 
-    auto graphics_family = std::optional<u32>();
-    auto present_family  = std::optional<u32>();
+    auto graphics_family = std::optional<uint32_t>();
+    auto present_family  = std::optional<uint32_t>();
 
     auto const is_complete = [&, i = 0U]( auto const & queue_family ) mutable
     {
@@ -151,7 +112,7 @@ namespace mvk::detail
     return std::nullopt;
   }
 
-  [[nodiscard]] u32 choose_image_count( VkSurfaceCapabilitiesKHR const & capabilities ) noexcept
+  [[nodiscard]] uint32_t choose_image_count( VkSurfaceCapabilitiesKHR const & capabilities ) noexcept
   {
     auto const candidate = capabilities.minImageCount + 1;
     auto const max_limit = capabilities.maxImageCount;
@@ -167,7 +128,7 @@ namespace mvk::detail
   [[nodiscard]] VkPresentModeKHR choose_present_mode( types::physical_device const physical_device,
                                                       types::surface const         surface ) noexcept
   {
-    auto modes_count = u32( 0 );
+    auto modes_count = uint32_t( 0 );
     vkGetPhysicalDeviceSurfacePresentModesKHR(
       types::get( physical_device ), types::get( surface ), &modes_count, nullptr );
 
@@ -188,7 +149,7 @@ namespace mvk::detail
   [[nodiscard]] VkExtent2D choose_extent( VkSurfaceCapabilitiesKHR const & capabilities,
                                           VkExtent2D const &               extent ) noexcept
   {
-    if ( capabilities.currentExtent.width != std::numeric_limits<u32>::max() )
+    if ( capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max() )
     {
       return capabilities.currentExtent;
     }

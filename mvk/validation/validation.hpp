@@ -1,7 +1,6 @@
 #ifndef MVK_TYPES_VALIDATION_HPP_INCLUDE
 #define MVK_TYPES_VALIDATION_HPP_INCLUDE
 
-#include "basic_types.hpp"
 #include "utility/slice.hpp"
 
 #include <array>
@@ -64,7 +63,7 @@ namespace mvk::validation
       return true;
     }
 
-    auto layer_properties_count = u32( 0 );
+    auto layer_properties_count = uint32_t( 0 );
     vkEnumerateInstanceLayerProperties( &layer_properties_count, nullptr );
 
     auto layer_properties = std::vector<VkLayerProperties>( layer_properties_count );

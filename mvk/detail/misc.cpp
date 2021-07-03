@@ -1,8 +1,5 @@
 #include "detail/misc.hpp"
 
-#include "detail/creators.hpp"
-#include "vulkan/vulkan_core.h"
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
 #define STB_IMAGE_IMPLEMENTATION
@@ -16,7 +13,8 @@
 
 namespace mvk::detail
 {
-  [[nodiscard]] std::tuple<std::vector<unsigned char>, u32, u32> load_texture( std::filesystem::path const & path )
+  [[nodiscard]] std::tuple<std::vector<unsigned char>, uint32_t, uint32_t>
+    load_texture( std::filesystem::path const & path )
   {
     MVK_VERIFY( std::filesystem::exists( path ) );
 
@@ -25,8 +23,8 @@ namespace mvk::detail
     auto       channels = 0;
     auto const pixels   = stbi_load( path.c_str(), &width, &height, &channels, STBI_rgb_alpha );
 
-    auto buffer =
-      std::vector<unsigned char>( static_cast<u32>( width ) * static_cast<u32>( height ) * 4 * sizeof( *pixels ) );
+    auto buffer = std::vector<unsigned char>( static_cast<uint32_t>( width ) * static_cast<uint32_t>( height ) * 4 *
+                                              sizeof( *pixels ) );
     std::copy( pixels, std::next( pixels, static_cast<int64_t>( std::size( buffer ) ) ), std::begin( buffer ) );
 
     stbi_image_free( pixels );
@@ -34,16 +32,16 @@ namespace mvk::detail
     return { std::move( buffer ), width, height };
   }
 
-  [[nodiscard]] std::optional<u32> find_memory_type( VkPhysicalDevice const      physical_device,
-                                                     u32 const                   filter,
-                                                     VkMemoryPropertyFlags const properties_flags )
+  [[nodiscard]] std::optional<uint32_t> find_memory_type( VkPhysicalDevice const      physical_device,
+                                                          uint32_t const              filter,
+                                                          VkMemoryPropertyFlags const properties_flags )
   {
     auto memory_properties = VkPhysicalDeviceMemoryProperties();
     vkGetPhysicalDeviceMemoryProperties( physical_device, &memory_properties );
 
     auto const type_count = memory_properties.memoryTypeCount;
 
-    for ( auto i = u32( 0 ); i < type_count; ++i )
+    for ( auto i = uint32_t( 0 ); i < type_count; ++i )
     {
       auto const & current_type   = memory_properties.memoryTypes[i];
       auto const   current_flags  = current_type.propertyFlags;
@@ -59,12 +57,12 @@ namespace mvk::detail
     return std::nullopt;
   }
 
-  [[nodiscard]] std::optional<u32> next_swapchain_image( VkDevice const       device,
-                                                         VkSwapchainKHR const swapchain,
-                                                         VkSemaphore const    semaphore,
-                                                         VkFence const        fence )
+  [[nodiscard]] std::optional<uint32_t> next_swapchain_image( VkDevice const       device,
+                                                              VkSwapchainKHR const swapchain,
+                                                              VkSemaphore const    semaphore,
+                                                              VkFence const        fence )
   {
-    auto index = u32( 0 );
+    auto index = uint32_t( 0 );
 
     auto const result =
       vkAcquireNextImageKHR( device, swapchain, std::numeric_limits<uint64_t>::max(), semaphore, fence, &index );
@@ -77,9 +75,9 @@ namespace mvk::detail
     return std::nullopt;
   }
 
-  [[nodiscard]] u32 calculate_mimap_levels( u32 const height, u32 const width ) noexcept
+  [[nodiscard]] uint32_t calculate_mimap_levels( uint32_t const height, uint32_t const width ) noexcept
   {
-    return static_cast<u32>( std::floor( std::log2( std::max( height, width ) ) ) + 1 );
+    return static_cast<uint32_t>( std::floor( std::log2( std::max( height, width ) ) ) + 1 );
   }
 
   [[nodiscard]] utility::slice<std::byte> map_memory( types::device const        device,

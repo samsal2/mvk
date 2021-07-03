@@ -1,12 +1,12 @@
 #include "context.hpp"
 
-#include "detail/creators.hpp"
 #include "detail/helpers.hpp"
 #include "detail/misc.hpp"
 #include "detail/readers.hpp"
 #include "types/types.hpp"
 #include "utility/slice.hpp"
 #include "utility/verify.hpp"
+#include "vulkan/vulkan_core.h"
 
 #include <limits>
 
@@ -19,6 +19,8 @@ namespace mvk
     init_instance( ctx, name );
     init_debug_messenger( ctx );
     init_surface( ctx );
+    select_physical_device( ctx );
+    select_surface_format( ctx );
     init_device( ctx );
     create_staging_buffers_and_memories( ctx, 1024 * 1024 );
     init_layouts( ctx );
@@ -48,7 +50,7 @@ namespace mvk
   {
     if constexpr ( context::use_validation )
     {
-      auto validation_layer_properties_count = u32( 0 );
+      auto validation_layer_properties_count = uint32_t( 0 );
       vkEnumerateInstanceLayerProperties( &validation_layer_properties_count, nullptr );
 
       auto validation_layer_properties = std::vector<VkLayerProperties>( validation_layer_properties_count );
@@ -107,7 +109,7 @@ namespace mvk
 
       if constexpr ( context::use_validation )
       {
-        info.enabledLayerCount   = static_cast<u32>( std::size( context::validation_layers ) );
+        info.enabledLayerCount   = static_cast<uint32_t>( std::size( context::validation_layers ) );
         info.ppEnabledLayerNames = std::data( context::validation_layers );
       }
       else
@@ -116,7 +118,7 @@ namespace mvk
         info.ppEnabledExtensionNames = nullptr;
       }
 
-      info.enabledExtensionCount   = static_cast<u32>( std::size( required_extensions ) );
+      info.enabledExtensionCount   = static_cast<uint32_t>( std::size( required_extensions ) );
       info.ppEnabledExtensionNames = std::data( required_extensions );
       return info;
     }();
@@ -136,15 +138,58 @@ namespace mvk
     ctx.surface_ = types::unique_surface( types::get( surface ), types::get( ctx.instance_ ) );
   }
 
+  void select_physical_device( context & ctx ) noexcept
+  {
+    auto physical_device_count = uint32_t( 0 );
+    vkEnumeratePhysicalDevices( types::get( ctx.instance_ ), &physical_device_count, nullptr );
+
+    auto physical_devices = std::vector<VkPhysicalDevice>( physical_device_count );
+    vkEnumeratePhysicalDevices( types::get( ctx.instance_ ), &physical_device_count, std::data( physical_devices ) );
+
+    auto const supported = [&ctx]( auto const physical_device )
+    {
+      auto features = VkPhysicalDeviceFeatures();
+      vkGetPhysicalDeviceFeatures( physical_device, &features );
+
+      auto const extensions_supported = detail::check_extension_support( physical_device, context::device_extensions );
+      auto const format_and_present_mode_available =
+        detail::check_format_and_present_mode_availability( physical_device, types::decay( ctx.surface_ ) );
+      auto const family_indices_found =
+        detail::query_family_indices( physical_device, types::decay( ctx.surface_ ) ).has_value();
+
+      return extensions_supported && format_and_present_mode_available && family_indices_found &&
+             features.samplerAnisotropy;
+    };
+
+    auto const it = std::find_if( std::begin( physical_devices ), std::end( physical_devices ), supported );
+
+    MVK_VERIFY( it != std::end( physical_devices ) );
+
+    ctx.physical_device_ = *it;
+  }
+
+  void select_surface_format( context & ctx ) noexcept
+  {
+    auto formats_count = uint32_t( 0 );
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+      types::get( ctx.physical_device_ ), types::get( ctx.surface_ ), &formats_count, nullptr );
+
+    auto formats = std::vector<VkSurfaceFormatKHR>( formats_count );
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+      types::get( ctx.physical_device_ ), types::get( ctx.surface_ ), &formats_count, std::data( formats ) );
+
+    auto const meets_requirements = []( auto const & format )
+    {
+      return ( format.format == VK_FORMAT_B8G8R8A8_SRGB ) && ( format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR );
+    };
+
+    auto const it = std::find_if( std::begin( formats ), std::end( formats ), meets_requirements );
+
+    ctx.surface_format_ = ( it != std::end( formats ) ) ? *it : formats[0];
+  }
+
   void init_device( context & ctx ) noexcept
   {
-    auto const physical_device_result = detail::choose_physical_device(
-      types::decay( ctx.instance_ ), types::decay( ctx.surface_ ), context::device_extensions );
-
-    MVK_VERIFY( physical_device_result.has_value() );
-
-    ctx.physical_device_ = physical_device_result.value();
-
     auto const queue_indices_result =
       detail::query_family_indices( ctx.physical_device_, types::decay( ctx.surface_ ) );
 
@@ -180,7 +225,7 @@ namespace mvk
     }();
 
     auto const queue_create_info       = std::array{ graphics_queue_create_info, present_queue_create_info };
-    auto const queue_create_info_count = static_cast<u32>( queue_indices.first != queue_indices.second ? 2 : 1 );
+    auto const queue_create_info_count = static_cast<uint32_t>( queue_indices.first != queue_indices.second ? 2 : 1 );
 
     auto const device_create_info = [&queue_create_info, queue_create_info_count, &features]
     {
@@ -189,12 +234,12 @@ namespace mvk
       info.queueCreateInfoCount    = queue_create_info_count;
       info.pQueueCreateInfos       = std::data( queue_create_info );
       info.pEnabledFeatures        = &features;
-      info.enabledExtensionCount   = static_cast<u32>( std::size( context::device_extensions ) );
+      info.enabledExtensionCount   = static_cast<uint32_t>( std::size( context::device_extensions ) );
       info.ppEnabledExtensionNames = std::data( context::device_extensions );
 
       if constexpr ( context::use_validation )
       {
-        info.enabledLayerCount   = static_cast<u32>( std::size( context::validation_layers ) );
+        info.enabledLayerCount   = static_cast<uint32_t>( std::size( context::validation_layers ) );
         info.ppEnabledLayerNames = std::data( context::validation_layers );
       }
       else
@@ -241,7 +286,7 @@ namespace mvk
     {
       auto info         = VkDescriptorSetLayoutCreateInfo();
       info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-      info.bindingCount = static_cast<u32>( std::size( descriptor_set_bindings ) );
+      info.bindingCount = static_cast<uint32_t>( std::size( descriptor_set_bindings ) );
       info.pBindings    = std::data( descriptor_set_bindings );
       return info;
     }();
@@ -299,7 +344,7 @@ namespace mvk
     {
       auto info          = VkDescriptorPoolCreateInfo();
       info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-      info.poolSizeCount = static_cast<u32>( std::size( descriptor_pool_sizes ) );
+      info.poolSizeCount = static_cast<uint32_t>( std::size( descriptor_pool_sizes ) );
       info.pPoolSizes    = std::data( descriptor_pool_sizes );
       info.maxSets       = 128;
       info.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -317,10 +362,8 @@ namespace mvk
     auto const swapchain_create_info = [&ctx, &family_indices]
     {
       auto const framebuffer_size = ctx.window_.query_framebuffer_size();
-      auto const width            = static_cast<u32>( framebuffer_size.width_ );
-      auto const height           = static_cast<u32>( framebuffer_size.height_ );
-      auto const format           = detail::choose_surface_format(
-        types::get( ctx.physical_device_ ), types::get( ctx.surface_ ), detail::default_format_checker );
+      auto const width            = static_cast<uint32_t>( framebuffer_size.width_ );
+      auto const height           = static_cast<uint32_t>( framebuffer_size.height_ );
 
       auto capabilities = VkSurfaceCapabilitiesKHR();
       vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
@@ -328,15 +371,16 @@ namespace mvk
 
       auto const present_mode = detail::choose_present_mode( ctx.physical_device_, types::decay( ctx.surface_ ) );
 
-      ctx.swapchain_extent_  = detail::choose_extent( capabilities, { width, height } );
+      ctx.swapchain_extent_ = detail::choose_extent( capabilities, { width, height } );
+
       auto const image_count = detail::choose_image_count( capabilities );
 
       auto info             = VkSwapchainCreateInfoKHR();
       info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
       info.surface          = types::get( ctx.surface_ );
       info.minImageCount    = image_count;
-      info.imageFormat      = format.format;
-      info.imageColorSpace  = format.colorSpace;
+      info.imageFormat      = ctx.surface_format_.format;
+      info.imageColorSpace  = ctx.surface_format_.colorSpace;
       info.imageExtent      = ctx.swapchain_extent_;
       info.imageArrayLayers = 1;
       info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -493,7 +537,7 @@ namespace mvk
         auto info            = VkFramebufferCreateInfo();
         info.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         info.renderPass      = types::get( ctx.render_pass_ );
-        info.attachmentCount = static_cast<u32>( std::size( attachments ) );
+        info.attachmentCount = static_cast<uint32_t>( std::size( attachments ) );
         info.pAttachments    = std::data( attachments );
         info.width           = ctx.swapchain_extent_.width;
         info.height          = ctx.swapchain_extent_.height;
@@ -510,15 +554,10 @@ namespace mvk
 
   void init_main_render_pass( context & ctx ) noexcept
   {
-    auto const format = detail::choose_surface_format( types::get( ctx.physical_device_ ),
-                                                       types::get( ctx.surface_ ),
-                                                       detail::default_format_checker )
-                          .format;
-
-    auto const color_attachment = [&format]
+    auto const color_attachment = [&ctx]
     {
       auto attachment           = VkAttachmentDescription();
-      attachment.format         = format;
+      attachment.format         = ctx.surface_format_.format;
       attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
       attachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
       attachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -587,7 +626,7 @@ namespace mvk
     {
       auto info            = VkRenderPassCreateInfo();
       info.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-      info.attachmentCount = static_cast<u32>( std::size( attachments ) );
+      info.attachmentCount = static_cast<uint32_t>( std::size( attachments ) );
       info.pAttachments    = std::data( attachments );
       info.subpassCount    = 1;
       info.pSubpasses      = &subpass_description;
@@ -728,7 +767,7 @@ namespace mvk
       auto info               = VkDescriptorSetAllocateInfo();
       info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
       info.descriptorPool     = types::get( ctx.descriptor_pool_ );
-      info.descriptorSetCount = static_cast<u32>( std::size( descriptor_set_layouts ) );
+      info.descriptorSetCount = static_cast<uint32_t>( std::size( descriptor_set_layouts ) );
       info.pSetLayouts        = std::data( descriptor_set_layouts );
       return info;
     }();
@@ -757,11 +796,31 @@ namespace mvk
       ctx.uniform_buffers_.push_back(
         types::create_unique_buffer( types::get( ctx.device_ ), uniform_buffer_create_info ) );
 
+      auto uniform_memory_requirements = VkMemoryRequirements();
+      vkGetBufferMemoryRequirements(
+        types::get( ctx.device_ ), types::get( ctx.uniform_buffers_.back() ), &uniform_memory_requirements );
+
+      auto memory_type_index =
+        detail::find_memory_type( types::get( ctx.physical_device_ ),
+                                  uniform_memory_requirements.memoryTypeBits,
+                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+
+      MVK_VERIFY( memory_type_index.has_value() );
+
+      auto const uniform_memory_allocate_info = [&uniform_memory_requirements, memory_type_index]
+      {
+        auto info            = VkMemoryAllocateInfo();
+        info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        info.allocationSize  = uniform_memory_requirements.size;
+        info.memoryTypeIndex = memory_type_index.value();
+        return info;
+      }();
+
       auto uniform_buffer_memory =
-        detail::create_device_memory( types::decay( ctx.device_ ),
-                                      ctx.physical_device_,
-                                      types::decay( ctx.uniform_buffers_.back() ),
-                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+        types::create_unique_device_memory( types::decay( ctx.device_ ), uniform_memory_allocate_info );
+
+      vkBindBufferMemory(
+        types::get( ctx.device_ ), types::get( ctx.uniform_buffers_.back() ), types::get( uniform_buffer_memory ), 0 );
 
       ctx.mapped_datas_.push_back(
         detail::map_memory( types::decay( ctx.device_ ), types::decay( uniform_buffer_memory ), sizeof( pvm ) ) );
@@ -820,7 +879,7 @@ namespace mvk
       auto const descriptor_writes = std::array{ ubo_write, image_write };
 
       vkUpdateDescriptorSets( types::get( ctx.device_ ),
-                              static_cast<u32>( std::size( descriptor_writes ) ),
+                              static_cast<uint32_t>( std::size( descriptor_writes ) ),
                               std::data( descriptor_writes ),
                               0,
                               nullptr );
@@ -830,10 +889,30 @@ namespace mvk
   void init_shaders( context & ctx ) noexcept
   {
     auto const vertex_code = detail::read_file( "../../shaders/vert.spv" );
-    ctx.vertex_shader_     = detail::create_shader_module( types::decay( ctx.device_ ), vertex_code );
+
+    auto const vertex_shader_create_info = [&vertex_code]
+    {
+      auto info     = VkShaderModuleCreateInfo();
+      info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+      info.codeSize = static_cast<uint32_t>( std::size( vertex_code ) );
+      info.pCode    = reinterpret_cast<uint32_t const *>( std::data( vertex_code ) );
+      return info;
+    }();
+
+    ctx.vertex_shader_ = types::create_unique_shader_module( types::get( ctx.device_ ), vertex_shader_create_info );
 
     auto const fragment_code = detail::read_file( "../../shaders/frag.spv" );
-    ctx.fragment_shader_     = detail::create_shader_module( types::decay( ctx.device_ ), fragment_code );
+
+    auto const fragment_shader_create_info = [&fragment_code]
+    {
+      auto info     = VkShaderModuleCreateInfo();
+      info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+      info.codeSize = static_cast<uint32_t>( std::size( fragment_code ) );
+      info.pCode    = reinterpret_cast<uint32_t const *>( std::data( fragment_code ) );
+      return info;
+    }();
+
+    ctx.fragment_shader_ = types::create_unique_shader_module( types::get( ctx.device_ ), fragment_shader_create_info );
   }
 
   void init_pipeline( context & ctx ) noexcept
@@ -899,7 +978,7 @@ namespace mvk
       info.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
       info.vertexBindingDescriptionCount   = 1;
       info.pVertexBindingDescriptions      = &vertex_input_binding_description;
-      info.vertexAttributeDescriptionCount = static_cast<u32>( std::size( vertex_attributes ) );
+      info.vertexAttributeDescriptionCount = static_cast<uint32_t>( std::size( vertex_attributes ) );
       info.pVertexAttributeDescriptions    = std::data( vertex_attributes );
       return info;
     }();
@@ -1045,7 +1124,7 @@ namespace mvk
     {
       auto info                = VkGraphicsPipelineCreateInfo();
       info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-      info.stageCount          = static_cast<u32>( std::size( shader_stages ) );
+      info.stageCount          = static_cast<uint32_t>( std::size( shader_stages ) );
       info.pStages             = std::data( shader_stages );
       info.pVertexInputState   = &vertex_input_create_info;
       info.pInputAssemblyState = &input_assembly_create_info;
@@ -1171,7 +1250,7 @@ namespace mvk
       info.renderArea.offset.x = 0;
       info.renderArea.offset.y = 0;
       info.renderArea.extent   = ctx.swapchain_extent_;
-      info.clearValueCount     = static_cast<u32>( std::size( clear_values ) );
+      info.clearValueCount     = static_cast<uint32_t>( std::size( clear_values ) );
       info.pClearValues        = std::data( clear_values );
       return info;
     }();
@@ -1226,7 +1305,7 @@ namespace mvk
                              0,
                              nullptr );
     vkCmdDrawIndexed(
-      types::get( ctx.current_command_buffer_ ), static_cast<u32>( std::size( ctx.indices_ ) ), 1, 0, 0, 0 );
+      types::get( ctx.current_command_buffer_ ), static_cast<uint32_t>( std::size( ctx.indices_ ) ), 1, 0, 0, 0 );
   }
 
   void end_draw( context & ctx ) noexcept
@@ -1260,12 +1339,12 @@ namespace mvk
     {
       auto info                 = VkSubmitInfo();
       info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-      info.waitSemaphoreCount   = static_cast<u32>( std::size( wait_semaphores ) );
+      info.waitSemaphoreCount   = static_cast<uint32_t>( std::size( wait_semaphores ) );
       info.pWaitSemaphores      = std::data( wait_semaphores );
       info.pWaitDstStageMask    = std::data( wait_stages );
-      info.commandBufferCount   = static_cast<u32>( std::size( command_buffers ) );
+      info.commandBufferCount   = static_cast<uint32_t>( std::size( command_buffers ) );
       info.pCommandBuffers      = std::data( command_buffers );
-      info.signalSemaphoreCount = static_cast<u32>( std::size( signal_semaphores ) );
+      info.signalSemaphoreCount = static_cast<uint32_t>( std::size( signal_semaphores ) );
       info.pSignalSemaphores    = std::data( signal_semaphores );
       return info;
     }();
@@ -1284,9 +1363,9 @@ namespace mvk
     {
       auto info               = VkPresentInfoKHR();
       info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-      info.waitSemaphoreCount = static_cast<u32>( std::size( present_signal_semaphores ) );
+      info.waitSemaphoreCount = static_cast<uint32_t>( std::size( present_signal_semaphores ) );
       info.pWaitSemaphores    = std::data( present_signal_semaphores );
-      info.swapchainCount     = static_cast<u32>( std::size( swapchains ) );
+      info.swapchainCount     = static_cast<uint32_t>( std::size( swapchains ) );
       info.pSwapchains        = std::data( swapchains );
       info.pImageIndices      = std::data( image_indices );
       info.pResults           = nullptr;
@@ -1355,7 +1434,7 @@ namespace mvk
                           types::image    image,
                           VkImageLayout   old_layout,
                           VkImageLayout   new_layout,
-                          u32             mipmap_levels ) noexcept
+                          uint32_t        mipmap_levels ) noexcept
   {
     auto const [image_memory_barrier, source_stage, destination_stage] = [old_layout, new_layout, &image, mipmap_levels]
     {
@@ -1451,7 +1530,8 @@ namespace mvk
     vkQueueWaitIdle( types::get( ctx.graphics_queue_ ) );
   }
 
-  void generate_mipmaps( context const & ctx, types::image image, u32 width, u32 height, u32 mipmap_levels ) noexcept
+  void generate_mipmaps(
+    context const & ctx, types::image image, uint32_t width, uint32_t height, uint32_t mipmap_levels ) noexcept
   {
     if ( mipmap_levels == 1 || mipmap_levels == 0 )
     {
@@ -1494,7 +1574,7 @@ namespace mvk
       return 1;
     };
 
-    for ( auto i = u32( 0 ); i < ( mipmap_levels - 1 ); ++i )
+    for ( auto i = uint32_t( 0 ); i < ( mipmap_levels - 1 ); ++i )
     {
       barrier.subresourceRange.baseMipLevel = i;
       barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -1794,7 +1874,8 @@ namespace mvk
              std::size( src ) };
   }
 
-  void stage_image( context & ctx, staging_allocation allocation, u32 width, u32 height, types::image image ) noexcept
+  void stage_image(
+    context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, types::image image ) noexcept
   {
     auto const begin_info = []
     {

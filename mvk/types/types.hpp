@@ -10,7 +10,7 @@
 namespace mvk::types
 {
   using device_size = VkDeviceSize;
-  using queue_index = u32;
+  using queue_index = uint32_t;
   using flags       = VkFlags;
 
   template <typename Wrapper>

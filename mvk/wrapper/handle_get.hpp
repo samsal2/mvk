@@ -1,7 +1,6 @@
 #ifndef MVK_WRAPPER_HANDLE_GET_HPP_INCLUDED
 #define MVK_WRAPPER_HANDLE_GET_HPP_INCLUDED
 
-#include "basic_types.hpp"
 #include "wrapper/fwd.hpp"
 
 namespace mvk::wrapper
@@ -33,7 +32,7 @@ namespace mvk::wrapper
     static constexpr auto get_call = vkGetDeviceQueue;
 
   public:
-    [[nodiscard]] static constexpr wrapper_type retrieve( VkDevice const device, u32 const index ) noexcept
+    [[nodiscard]] static constexpr wrapper_type retrieve( VkDevice const device, uint32_t const index ) noexcept
     {
       auto handle = VkQueue();
       get_call( device, index, 0, &handle );
