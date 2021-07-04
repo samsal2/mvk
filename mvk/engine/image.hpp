@@ -16,7 +16,7 @@ namespace mvk::engine
     context const & ctx, VkImage image, uint32_t width, uint32_t height, uint32_t mipmap_levels ) noexcept;
 
   void stage_image(
-    context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, VkImage image ) noexcept;
+    context const & ctx, staging_allocation allocation, uint32_t width, uint32_t height, VkImage image ) noexcept;
 
 }  // namespace mvk::engine
 

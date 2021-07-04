@@ -231,8 +231,8 @@ namespace mvk::engine
 
   // buffers
 
-  void
-    stage_image( context & ctx, staging_allocation allocation, uint32_t width, uint32_t height, VkImage image ) noexcept
+  void stage_image(
+    context const & ctx, staging_allocation allocation, uint32_t width, uint32_t height, VkImage image ) noexcept
   {
     auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
     command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
