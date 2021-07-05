@@ -1,26 +1,26 @@
-#include "engine/context.hpp"
+#include "engine/Context.hpp"
 
 namespace mvk::engine
 {
-  [[nodiscard]] float current_time( context const & ctx ) noexcept
+  [[nodiscard]] float currentTime( Context const & Ctx ) noexcept
   {
-    auto const current_time = std::chrono::high_resolution_clock::now();
-    auto const delta_time   = current_time - ctx.start_time;
-    return std::chrono::duration< float, std::chrono::seconds::period >( delta_time ).count();
+    auto const CurrentTime = std::chrono::high_resolution_clock::now();
+    auto const DeltaTime   = CurrentTime - Ctx.StartTime;
+    return std::chrono::duration< float, std::chrono::seconds::period >( DeltaTime ).count();
   }
 
-  [[nodiscard]] VkExtent2D query_framebuffer_size( context const & ctx ) noexcept
+  [[nodiscard]] VkExtent2D queryFramebufferSize( Context const & Ctx ) noexcept
   {
-    auto width  = 0;
-    auto height = 0;
+    auto Width  = 0;
+    auto Height = 0;
 
     do
     {
-      glfwGetFramebufferSize( ctx.window, &width, &height );
+      glfwGetFramebufferSize( Ctx.Window, &Width, &Height );
       glfwWaitEvents();
-    } while ( width == 0 || height == 0 );
+    } while ( Width == 0 || Height == 0 );
 
-    return { static_cast< uint32_t >( width ), static_cast< uint32_t >( height ) };
+    return { static_cast< uint32_t >( Width ), static_cast< uint32_t >( Height ) };
   }
 
 }  // namespace mvk::engine

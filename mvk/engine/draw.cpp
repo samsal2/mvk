@@ -6,182 +6,168 @@
 
 namespace mvk::engine
 {
-  void recreate_after_swapchain_change( context & ctx ) noexcept
+  void recreateAfterSwapchainChange( Context & Ctx ) noexcept
   {
-    destroy_swapchain( ctx );
-    ctx.swapchain_image_views.clear();
-    init_swapchain( ctx );
+    destroySwapchain( Ctx );
+    Ctx.SwapchainImgViews.clear();
+    initSwapchain( Ctx );
 
-    destroy_depth_image( ctx );
-    init_depth_image( ctx );
+    destroyDepthImg( Ctx );
+    initDepthImg( Ctx );
 
-    destroy_render_pass( ctx );
-    init_render_pass( ctx );
+    destroyRdrPass( Ctx );
+    initRdrPass( Ctx );
 
-    destroy_framebuffers( ctx );
-    ctx.framebuffers.clear();
-    init_framebuffers( ctx );
+    destroyFramebuffers( Ctx );
+    Ctx.Framebuffers.clear();
+    initFramebuffers( Ctx );
 
-    destroy_pipelines( ctx );
-    init_pipeline( ctx );
+    destroyPipelines( Ctx );
+    initPipeline( Ctx );
 
-    destroy_sync( ctx );
-    ctx.image_in_flight_fences.clear();
-    init_sync( ctx );
+    destroySync( Ctx );
+    Ctx.ImgInFlightFences.clear();
+    initSync( Ctx );
   }
 
-  void begin_draw( context & ctx ) noexcept
+  void beginDraw( Context & Ctx ) noexcept
   {
-    auto const image_available_semaphore = ctx.image_available_semaphores[ ctx.current_frame_index ];
+    auto const ImgAvailableSemaphores = Ctx.ImgAvailableSemaphores[ Ctx.CurrentFrameIdx ];
 
-    auto const current_image_index =
-      detail::next_swapchain_image( ctx.device, ctx.swapchain, image_available_semaphore, nullptr );
+    auto const CurrentImgIdx = detail::querySwapchainImg( Ctx.Dev, Ctx.Swapchain, ImgAvailableSemaphores, nullptr );
 
-    if ( !current_image_index.has_value() )
+    if ( !CurrentImgIdx.has_value() )
     {
-      recreate_after_swapchain_change( ctx );
-      begin_draw( ctx );
+      recreateAfterSwapchainChange( Ctx );
+      beginDraw( Ctx );
       return;
     }
 
-    ctx.current_image_index = current_image_index.value();
+    Ctx.CurrentImgIdx = CurrentImgIdx.value();
 
-    auto clear_color_value  = VkClearValue();
-    clear_color_value.color = { { 0.0F, 0.0F, 0.0F, 1.0F } };
+    auto ClrColorVal  = VkClearValue();
+    ClrColorVal.color = { { 0.0F, 0.0F, 0.0F, 1.0F } };
 
-    auto clear_depth_value         = VkClearValue();
-    clear_depth_value.depthStencil = { 1.0F, 0 };
+    auto ClrDepthVal         = VkClearValue();
+    ClrDepthVal.depthStencil = { 1.0F, 0 };
 
-    auto const clear_values = std::array{ clear_color_value, clear_depth_value };
+    auto const ClrVals = std::array{ ClrColorVal, ClrDepthVal };
 
-    auto const render_pass_begin_info = [ &ctx, &clear_values ]
-    {
-      auto info                = VkRenderPassBeginInfo();
-      info.sType               = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-      info.renderPass          = ctx.render_pass;
-      info.framebuffer         = ctx.framebuffers[ ctx.current_image_index ];
-      info.renderArea.offset.x = 0;
-      info.renderArea.offset.y = 0;
-      info.renderArea.extent   = ctx.swapchain_extent;
-      info.clearValueCount     = static_cast< uint32_t >( std::size( clear_values ) );
-      info.pClearValues        = std::data( clear_values );
-      return info;
-    }();
+    auto RdrPassBeginInfo                = VkRenderPassBeginInfo();
+    RdrPassBeginInfo.sType               = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    RdrPassBeginInfo.renderPass          = Ctx.RdrPass;
+    RdrPassBeginInfo.framebuffer         = Ctx.Framebuffers[ Ctx.CurrentImgIdx ];
+    RdrPassBeginInfo.renderArea.offset.x = 0;
+    RdrPassBeginInfo.renderArea.offset.y = 0;
+    RdrPassBeginInfo.renderArea.extent   = Ctx.SwapchainExtent;
+    RdrPassBeginInfo.clearValueCount     = static_cast< uint32_t >( std::size( ClrVals ) );
+    RdrPassBeginInfo.pClearValues        = std::data( ClrVals );
 
-    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
-    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffer_begin_info.flags            = 0;
-    command_buffer_begin_info.pInheritanceInfo = nullptr;
+    auto CmdBuffBeginInfo             = VkCommandBufferBeginInfo();
+    CmdBuffBeginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    CmdBuffBeginInfo.flags            = 0;
+    CmdBuffBeginInfo.pInheritanceInfo = nullptr;
 
-    ctx.current_command_buffer = ctx.command_buffers[ ctx.current_buffer_index ];
+    Ctx.CurrentCmdBuff = Ctx.CmdBuffs[ Ctx.CurrentBuffIdx ];
 
-    vkBeginCommandBuffer( ctx.current_command_buffer, &command_buffer_begin_info );
-    vkCmdBeginRenderPass( ctx.current_command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE );
+    vkBeginCommandBuffer( Ctx.CurrentCmdBuff, &CmdBuffBeginInfo );
+    vkCmdBeginRenderPass( Ctx.CurrentCmdBuff, &RdrPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
   }
 
-  void basic_draw( context &                         ctx,
-                   utility::slice< std::byte const > vertices,
-                   utility::slice< std::byte const > indices,
-                   utility::slice< std::byte const > pvm ) noexcept
+  void basicDraw( Context &                         Ctx,
+                  utility::Slice< std::byte const > Vtxs,
+                  utility::Slice< std::byte const > Idxs,
+                  utility::Slice< std::byte const > pvm ) noexcept
   {
-    auto vertex_stage                     = staging_allocate( ctx, vertices );
-    auto [ vertex_buffer, vertex_offset ] = vertex_allocate( ctx, vertex_stage );
+    auto VtxStage            = allocStaging( Ctx, Vtxs );
+    auto [ VtxBuff, VtxOff ] = allocVtx( Ctx, VtxStage );
 
-    auto index_stage                    = staging_allocate( ctx, indices );
-    auto [ index_buffer, index_offset ] = index_allocate( ctx, index_stage );
+    auto IdxStage            = allocStaging( Ctx, Idxs );
+    auto [ IdxBuff, IdxOff ] = allocIdx( Ctx, IdxStage );
 
-    auto [ uniform_set, uniform_offset ] = uniform_allocate( ctx, utility::as_bytes( pvm ) );
+    auto [ UboSet, UboOff ] = allocUbo( Ctx, utility::as_bytes( pvm ) );
 
-    auto descriptor_sets = std::array{ uniform_set, ctx.image_descriptor_set_ };
+    auto DescriptorSets = std::array{ UboSet, Ctx.image_descriptor_set_ };
 
-    vkCmdBindPipeline( ctx.current_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, ctx.pipeline );
-    vkCmdBindVertexBuffers( ctx.current_command_buffer, 0, 1, &vertex_buffer, &vertex_offset );
-    vkCmdBindIndexBuffer( ctx.current_command_buffer, index_buffer, index_offset, VK_INDEX_TYPE_UINT32 );
-    vkCmdBindDescriptorSets( ctx.current_command_buffer,
+    vkCmdBindPipeline( Ctx.CurrentCmdBuff, VK_PIPELINE_BIND_POINT_GRAPHICS, Ctx.Pipeline );
+    vkCmdBindVertexBuffers( Ctx.CurrentCmdBuff, 0, 1, &VtxBuff, &VtxOff );
+    vkCmdBindIndexBuffer( Ctx.CurrentCmdBuff, IdxBuff, 0, VK_INDEX_TYPE_UINT32 );
+    vkCmdBindDescriptorSets( Ctx.CurrentCmdBuff,
                              VK_PIPELINE_BIND_POINT_GRAPHICS,
-                             ctx.pipeline_layout,
+                             Ctx.PipelineLay,
                              0,
-                             static_cast< uint32_t >( std::size( descriptor_sets ) ),
-                             std::data( descriptor_sets ),
+                             static_cast< uint32_t >( std::size( DescriptorSets ) ),
+                             std::data( DescriptorSets ),
                              1,
-                             &uniform_offset );
-    vkCmdDrawIndexed( ctx.current_command_buffer, static_cast< uint32_t >( std::size( ctx.indices_ ) ), 1, 0, 0, 0 );
+                             &UboOff );
+    vkCmdDrawIndexed( Ctx.CurrentCmdBuff, static_cast< uint32_t >( std::size( Ctx.indices_ ) ), 1, 0, 0, 0 );
   }
 
-  void end_draw( context & ctx ) noexcept
+  void endDraw( Context & Ctx ) noexcept
   {
-    vkCmdEndRenderPass( ctx.current_command_buffer );
-    vkEndCommandBuffer( ctx.current_command_buffer );
-    // Wait for the image in flight to end if it is
-    auto const * image_in_flight_fence = ctx.image_in_flight_fences[ ctx.current_image_index ];
+    vkCmdEndRenderPass( Ctx.CurrentCmdBuff );
+    vkEndCommandBuffer( Ctx.CurrentCmdBuff );
+    // Wait for the Img in flight to end if it is
+    auto const * ImgInFlightFence = Ctx.ImgInFlightFences[ Ctx.CurrentImgIdx ];
 
-    if ( image_in_flight_fence != nullptr )
+    if ( ImgInFlightFence != nullptr )
     {
-      vkWaitForFences( ctx.device, 1, image_in_flight_fence, VK_TRUE, std::numeric_limits< int64_t >::max() );
+      vkWaitForFences( Ctx.Dev, 1, ImgInFlightFence, VK_TRUE, std::numeric_limits< int64_t >::max() );
     }
 
-    ctx.image_in_flight_fences[ ctx.current_image_index ] = &ctx.frame_in_flight_fences[ ctx.current_frame_index ];
+    Ctx.ImgInFlightFences[ Ctx.CurrentImgIdx ] = &Ctx.FrameInFlightFences[ Ctx.CurrentFrameIdx ];
 
     // get current semaphores
-    auto const image_available_semaphore = ctx.image_available_semaphores[ ctx.current_frame_index ];
-    auto const render_finished_semaphore = ctx.render_finished_semaphores[ ctx.current_frame_index ];
+    auto const ImgAvailableSemaphores = Ctx.ImgAvailableSemaphores[ Ctx.CurrentFrameIdx ];
+    auto const RdrFinishedSemaphore   = Ctx.RdrFinishedSemaphores[ Ctx.CurrentFrameIdx ];
 
-    auto const wait_semaphores   = std::array{ image_available_semaphore };
-    auto const signal_semaphores = std::array{ render_finished_semaphore };
-    auto const wait_stages     = std::array< VkPipelineStageFlags, 1 >{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    auto const command_buffers = std::array{ ctx.current_command_buffer };
+    auto const WaitSemaphore = std::array{ ImgAvailableSemaphores };
+    auto const SigSemaphore  = std::array{ RdrFinishedSemaphore };
+    auto const WaitStages    = std::array< VkPipelineStageFlags, 1 >{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    auto const CmdBuffs      = std::array{ Ctx.CurrentCmdBuff };
 
-    auto const submit_info = [ &wait_semaphores, &signal_semaphores, &wait_stages, &command_buffers ]
+    auto SubmitInfo                 = VkSubmitInfo();
+    SubmitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    SubmitInfo.waitSemaphoreCount   = static_cast< uint32_t >( std::size( WaitSemaphore ) );
+    SubmitInfo.pWaitSemaphores      = std::data( WaitSemaphore );
+    SubmitInfo.pWaitDstStageMask    = std::data( WaitStages );
+    SubmitInfo.commandBufferCount   = static_cast< uint32_t >( std::size( CmdBuffs ) );
+    SubmitInfo.pCommandBuffers      = std::data( CmdBuffs );
+    SubmitInfo.signalSemaphoreCount = static_cast< uint32_t >( std::size( SigSemaphore ) );
+    SubmitInfo.pSignalSemaphores    = std::data( SigSemaphore );
+
+    vkResetFences( Ctx.Dev, 1, &Ctx.FrameInFlightFences[ Ctx.CurrentFrameIdx ] );
+    vkQueueSubmit( Ctx.GfxQueue, 1, &SubmitInfo, Ctx.FrameInFlightFences[ Ctx.CurrentFrameIdx ] );
+
+    auto const present_signal_semaphores = std::array{ RdrFinishedSemaphore };
+    auto const Swapchains                = std::array{ Ctx.Swapchain };
+    auto const Img_Idxs                  = std::array{ Ctx.CurrentImgIdx };
+
+    auto PresentInfo               = VkPresentInfoKHR();
+    PresentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    PresentInfo.waitSemaphoreCount = static_cast< uint32_t >( std::size( present_signal_semaphores ) );
+    PresentInfo.pWaitSemaphores    = std::data( present_signal_semaphores );
+    PresentInfo.swapchainCount     = static_cast< uint32_t >( std::size( Swapchains ) );
+    PresentInfo.pSwapchains        = std::data( Swapchains );
+    PresentInfo.pImageIndices      = std::data( Img_Idxs );
+    PresentInfo.pResults           = nullptr;
+
+    auto Result = vkQueuePresentKHR( Ctx.PresentQueue, &PresentInfo );
+    vkQueueWaitIdle( Ctx.PresentQueue );
+
+    auto const change_Swapchain = ( Result == VK_ERROR_OUT_OF_DATE_KHR ) || ( Result == VK_SUBOPTIMAL_KHR );
+
+    if ( change_Swapchain || Ctx.FramebufferResized )
     {
-      auto info                 = VkSubmitInfo();
-      info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-      info.waitSemaphoreCount   = static_cast< uint32_t >( std::size( wait_semaphores ) );
-      info.pWaitSemaphores      = std::data( wait_semaphores );
-      info.pWaitDstStageMask    = std::data( wait_stages );
-      info.commandBufferCount   = static_cast< uint32_t >( std::size( command_buffers ) );
-      info.pCommandBuffers      = std::data( command_buffers );
-      info.signalSemaphoreCount = static_cast< uint32_t >( std::size( signal_semaphores ) );
-      info.pSignalSemaphores    = std::data( signal_semaphores );
-      return info;
-    }();
-
-    vkResetFences( ctx.device, 1, &ctx.frame_in_flight_fences[ ctx.current_frame_index ] );
-    vkQueueSubmit( ctx.graphics_queue, 1, &submit_info, ctx.frame_in_flight_fences[ ctx.current_frame_index ] );
-
-    auto const present_signal_semaphores = std::array{ render_finished_semaphore };
-    auto const swapchains                = std::array{ ctx.swapchain };
-    auto const image_indices             = std::array{ ctx.current_image_index };
-
-    auto const present_info = [ &present_signal_semaphores, &swapchains, &image_indices ]
-    {
-      auto info               = VkPresentInfoKHR();
-      info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-      info.waitSemaphoreCount = static_cast< uint32_t >( std::size( present_signal_semaphores ) );
-      info.pWaitSemaphores    = std::data( present_signal_semaphores );
-      info.swapchainCount     = static_cast< uint32_t >( std::size( swapchains ) );
-      info.pSwapchains        = std::data( swapchains );
-      info.pImageIndices      = std::data( image_indices );
-      info.pResults           = nullptr;
-      return info;
-    }();
-
-    auto const present_result = vkQueuePresentKHR( ctx.present_queue, &present_info );
-    vkQueueWaitIdle( ctx.present_queue );
-
-    auto const change_swapchain =
-      ( present_result == VK_ERROR_OUT_OF_DATE_KHR ) || ( present_result == VK_SUBOPTIMAL_KHR );
-
-    if ( change_swapchain || ctx.framebuffer_resized )
-    {
-      ctx.framebuffer_resized = false;
-      recreate_after_swapchain_change( ctx );
+      Ctx.FramebufferResized = false;
+      recreateAfterSwapchainChange( Ctx );
       return;
     }
 
-    MVK_VERIFY( VK_SUCCESS == present_result );
+    MVK_VERIFY( VK_SUCCESS == Result );
 
-    ctx.current_frame_index = ( ctx.current_frame_index + 1 ) % context::max_frames_in_flight;
-    next_buffer( ctx );
+    Ctx.CurrentFrameIdx = ( Ctx.CurrentFrameIdx + 1 ) % Context::MaxFramesInFlight;
+    nextBuffer( Ctx );
   }
 
 }  // namespace mvk::engine

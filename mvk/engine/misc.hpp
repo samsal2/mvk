@@ -1,13 +1,13 @@
 #ifndef MVK_ENGINE_MISC_HPP_INCLUDED
 #define MVK_ENGINE_MISC_HPP_INCLUDED
 
-#include "engine/context.hpp"
+#include "engine/Context.hpp"
 
 namespace mvk::engine
 {
-  [[nodiscard]] pvm create_test_pvm( context const & ctx ) noexcept;
+  [[nodiscard]] pvm createTestPvm( Context const & Ctx ) noexcept;
 
-  void test_run( context & ctx ) noexcept;
+  void testRun( Context & Ctx ) noexcept;
 
 }  // namespace mvk::engine
 

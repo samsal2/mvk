@@ -2,160 +2,157 @@
 
 #include "detail/misc.hpp"
 
-#include <algorithm>
 #include <vector>
 
 namespace mvk::detail
 {
-  [[nodiscard]] bool is_extension_present( char const *                                        extension_name,
-                                           utility::slice< VkExtensionProperties const > const extensions ) noexcept
+  [[nodiscard]] bool isExtPresent( char const *                                        ExtName,
+                                   utility::Slice< VkExtensionProperties const > const Exts ) noexcept
   {
-    auto const matches = [ &extension_name ]( auto const & extension )
+    for ( auto const & Ext : Exts )
     {
-      auto const name = static_cast< char const * >( extension.extensionName );
-      return std::strcmp( extension_name, name ) == 0;
-    };
-    return std::any_of( std::begin( extensions ), std::end( extensions ), matches );
+      if ( std::strcmp( Ext.extensionName, ExtName ) == 0 )
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  [[nodiscard]] bool check_extension_support( VkPhysicalDevice                     physical_device,
-                                              utility::slice< char const * const > device_extensions ) noexcept
+  [[nodiscard]] bool chkExtSup( VkPhysicalDevice PhysicalDevice, utility::Slice< char const * const > DevExts ) noexcept
   {
-    auto extensions_count = uint32_t( 0 );
-    vkEnumerateDeviceExtensionProperties( physical_device, nullptr, &extensions_count, nullptr );
+    auto ExtCnt = uint32_t( 0 );
+    vkEnumerateDeviceExtensionProperties( PhysicalDevice, nullptr, &ExtCnt, nullptr );
 
-    auto extensions = std::vector< VkExtensionProperties >( extensions_count );
-    vkEnumerateDeviceExtensionProperties( physical_device, nullptr, &extensions_count, std::data( extensions ) );
+    auto Exts = std::vector< VkExtensionProperties >( ExtCnt );
+    vkEnumerateDeviceExtensionProperties( PhysicalDevice, nullptr, &ExtCnt, std::data( Exts ) );
 
-    auto is_present = [ &extensions ]( auto const & extension )
+    for ( auto const & DevExt : DevExts )
     {
-      return is_extension_present( extension, extensions );
-    };
+      if ( !isExtPresent( DevExt, Exts ) )
+      {
+        return false;
+      }
+    }
 
-    return std::all_of( std::begin( device_extensions ), std::end( device_extensions ), is_present );
+    return true;
   }
 
-  [[nodiscard]] bool check_graphic_requirements( VkQueueFamilyProperties const & queue_family ) noexcept
+  [[nodiscard]] bool chkGfxReq( VkQueueFamilyProperties const & QueueFamily ) noexcept
   {
-    return ( queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0U;
+    return ( QueueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0U;
   }
 
-  [[nodiscard]] bool check_format_and_present_mode_availability( VkPhysicalDevice physical_device,
-                                                                 VkSurfaceKHR     surface ) noexcept
+  [[nodiscard]] bool chkFmtAndPresentModeAvailablity( VkPhysicalDevice PhysicalDevice, VkSurfaceKHR Surface ) noexcept
   {
-    auto format_count = uint32_t( 0 );
-    vkGetPhysicalDeviceSurfaceFormatsKHR( physical_device, surface, &format_count, nullptr );
+    auto FmtCnt = uint32_t( 0 );
+    vkGetPhysicalDeviceSurfaceFormatsKHR( PhysicalDevice, Surface, &FmtCnt, nullptr );
 
-    auto present_mode_count = uint32_t( 0 );
-    vkGetPhysicalDeviceSurfacePresentModesKHR( physical_device, surface, &present_mode_count, nullptr );
+    auto PresentModeCnt = uint32_t( 0 );
+    vkGetPhysicalDeviceSurfacePresentModesKHR( PhysicalDevice, Surface, &PresentModeCnt, nullptr );
 
-    return format_count != 0 && present_mode_count != 0;
+    return FmtCnt != 0 && PresentModeCnt != 0;
   }
 
-  [[nodiscard]] bool
-    check_surface_support( VkPhysicalDevice physical_device, VkSurfaceKHR surface, uint32_t index ) noexcept
+  [[nodiscard]] bool chSurfSup( VkPhysicalDevice PhysicalDevice, VkSurfaceKHR Surface, uint32_t Idx ) noexcept
   {
-    auto supported = VkBool32( false );
-    vkGetPhysicalDeviceSurfaceSupportKHR( physical_device, index, surface, &supported );
+    auto Sup = VkBool32( false );
+    vkGetPhysicalDeviceSurfaceSupportKHR( PhysicalDevice, Idx, Surface, &Sup );
 
-    return supported != 0U;
+    return Sup != 0U;
   }
 
   [[nodiscard]] std::optional< std::pair< uint32_t, uint32_t > >
-    query_family_indices( VkPhysicalDevice const physical_device, VkSurfaceKHR const surface )
+    queryFamiliyIdxs( VkPhysicalDevice const PhysicalDevice, VkSurfaceKHR const Surface )
   {
-    auto queue_families_count = uint32_t( 0 );
-    vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &queue_families_count, nullptr );
+    auto QueueFamilyCnt = uint32_t( 0 );
+    vkGetPhysicalDeviceQueueFamilyProperties( PhysicalDevice, &QueueFamilyCnt, nullptr );
 
-    auto queue_families = std::vector< VkQueueFamilyProperties >( queue_families_count );
-    vkGetPhysicalDeviceQueueFamilyProperties( physical_device, &queue_families_count, std::data( queue_families ) );
+    auto QueueFamilyProps = std::vector< VkQueueFamilyProperties >( QueueFamilyCnt );
+    vkGetPhysicalDeviceQueueFamilyProperties( PhysicalDevice, &QueueFamilyCnt, std::data( QueueFamilyProps ) );
 
-    auto graphics_family = std::optional< uint32_t >();
-    auto present_family  = std::optional< uint32_t >();
+    auto GfxFamily     = std::optional< uint32_t >();
+    auto PresentFamily = std::optional< uint32_t >();
 
-    auto const is_complete = [ &, i = 0U ]( auto const & queue_family ) mutable
+    auto i = 0;
+    for ( auto const & QueueFamilyProp : QueueFamilyProps )
     {
-      if ( queue_family.queueCount == 0 )
+      if ( QueueFamilyProp.queueCount == 0 )
       {
-        ++i;
-        return false;
+        continue;
       }
 
-      if ( check_graphic_requirements( queue_family ) )
+      if ( chkGfxReq( QueueFamilyProp ) )
       {
-        graphics_family = i;
+        GfxFamily = i;
       }
 
-      if ( check_surface_support( physical_device, surface, i ) )
+      if ( chSurfSup( PhysicalDevice, Surface, i ) )
       {
-        present_family = i;
+        PresentFamily = i;
       }
 
-      auto const families_have_value = graphics_family.has_value() && present_family.has_value();
+      if ( PresentFamily.has_value() && GfxFamily.has_value() )
+      {
+        return std::make_optional( std::make_pair( GfxFamily.value(), PresentFamily.value() ) );
+      }
 
-      i += !families_have_value;
-
-      return families_have_value;
-    };
-
-    auto const family = std::find_if( std::begin( queue_families ), std::end( queue_families ), is_complete );
-
-    if ( family != std::end( queue_families ) )
-    {
-      return std::make_optional( std::make_pair( graphics_family.value(), present_family.value() ) );
+      ++i;
     }
 
     return std::nullopt;
   }
 
-  [[nodiscard]] uint32_t choose_image_count( VkSurfaceCapabilitiesKHR const & capabilities ) noexcept
+  [[nodiscard]] uint32_t chooseImgCnt( VkSurfaceCapabilitiesKHR const & Capabilities ) noexcept
   {
-    auto const candidate = capabilities.minImageCount + 1;
-    auto const max_limit = capabilities.maxImageCount;
+    auto const Candidate = Capabilities.minImageCount + 1;
+    auto const Max       = Capabilities.maxImageCount;
 
-    if ( max_limit > 0 && candidate > max_limit )
+    if ( Max > 0 && Candidate > Max )
     {
-      return max_limit;
+      return Max;
     }
 
-    return candidate;
+    return Candidate;
   }
 
-  [[nodiscard]] VkPresentModeKHR choose_present_mode( VkPhysicalDevice physical_device, VkSurfaceKHR surface ) noexcept
+  [[nodiscard]] VkPresentModeKHR choosePresentMode( VkPhysicalDevice PhysicalDevice, VkSurfaceKHR Surface ) noexcept
   {
-    auto modes_count = uint32_t( 0 );
-    vkGetPhysicalDeviceSurfacePresentModesKHR( physical_device, surface, &modes_count, nullptr );
+    auto PresentModeCnt = uint32_t( 0 );
+    vkGetPhysicalDeviceSurfacePresentModesKHR( PhysicalDevice, Surface, &PresentModeCnt, nullptr );
 
-    auto modes = std::vector< VkPresentModeKHR >( modes_count );
-    vkGetPhysicalDeviceSurfacePresentModesKHR( physical_device, surface, &modes_count, std::data( modes ) );
+    auto PresentModes = std::vector< VkPresentModeKHR >( PresentModeCnt );
+    vkGetPhysicalDeviceSurfacePresentModesKHR( PhysicalDevice, Surface, &PresentModeCnt, std::data( PresentModes ) );
 
-    auto const it = std::find( std::begin( modes ), std::end( modes ), VK_PRESENT_MODE_MAILBOX_KHR );
-
-    if ( it != std::end( modes ) )
+    for ( auto const PresentMode : PresentModes )
     {
-      return *it;
+      if ( PresentMode == VK_PRESENT_MODE_MAILBOX_KHR )
+      {
+        return PresentMode;
+      }
     }
 
-    return VK_PRESENT_MODE_FIFO_KHR;
+    return PresentModes[ 0 ];
   }
 
-  [[nodiscard]] VkExtent2D choose_extent( VkSurfaceCapabilitiesKHR const & capabilities,
-                                          VkExtent2D const &               extent ) noexcept
+  [[nodiscard]] VkExtent2D chooseExtent( VkSurfaceCapabilitiesKHR const & Capabilities,
+                                         VkExtent2D const &               Extent ) noexcept
   {
-    if ( capabilities.currentExtent.width != std::numeric_limits< uint32_t >::max() )
+    if ( Capabilities.currentExtent.width != std::numeric_limits< uint32_t >::max() )
     {
-      return capabilities.currentExtent;
+      return Capabilities.currentExtent;
     }
 
-    auto const min_width  = capabilities.minImageExtent.width;
-    auto const min_height = capabilities.minImageExtent.height;
-    auto const max_width  = capabilities.maxImageExtent.width;
-    auto const max_height = capabilities.maxImageExtent.height;
+    auto const MinWidth  = Capabilities.minImageExtent.width;
+    auto const MinHeight = Capabilities.minImageExtent.height;
+    auto const MaxWidth  = Capabilities.maxImageExtent.width;
+    auto const MaxHeight = Capabilities.maxImageExtent.height;
 
-    auto const extent_width  = std::clamp( extent.width, min_width, max_width );
-    auto const extent_height = std::clamp( extent.height, min_height, max_height );
+    auto const ExtentWidth  = std::clamp( Extent.width, MinWidth, MaxWidth );
+    auto const ExtentHeight = std::clamp( Extent.height, MinHeight, MaxHeight );
 
-    return { extent_width, extent_height };
+    return { ExtentWidth, ExtentHeight };
   }
 
 }  // namespace mvk::detail

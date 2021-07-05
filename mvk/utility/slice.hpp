@@ -1,60 +1,61 @@
-#ifndef MVK_UTILITY_SLICE_HPP
-#define MVK_UTILITY_SLICE_HPP
+#ifndef MVK_UTILITY_Slice_HPP
+#define MVK_UTILITY_Slice_HPP
 
 #include "utility/concepts.hpp"
+#include "utility/types.hpp"
 #include "utility/verify.hpp"
 
 #include <limits>
 #include <type_traits>
 namespace mvk::utility
 {
-  static constexpr size_t dynamic_extent = std::numeric_limits< size_t >::max();
+  static constexpr size_t DynamicExtent = std::numeric_limits< size_t >::max();
 
   namespace detail
   {
-    template< typename T, size_t Extent >
-    struct slice_storage
+    template< typename T, size_t Size >
+    struct SliceStorage
     {
-      constexpr slice_storage() noexcept = default;
+      constexpr SliceStorage() noexcept = default;
 
-      explicit slice_storage( T * const data, [[maybe_unused]] size_t const size ) noexcept : data_( data ) {}
+      explicit SliceStorage( T * const Ptr, [[maybe_unused]] size_t const Count ) noexcept : Data( Ptr ) {}
 
       [[nodiscard]] constexpr size_t size() const noexcept
       {
-        return extent;
+        return Extent;
       }
 
-      T *                     data_  = nullptr;
-      static constexpr size_t extent = Extent;
+      T *                     Data   = nullptr;
+      static constexpr size_t Extent = Size;
     };
 
     template< typename T >
-    struct slice_storage< T, dynamic_extent >
+    struct SliceStorage< T, DynamicExtent >
     {
-      constexpr slice_storage() noexcept = default;
+      constexpr SliceStorage() noexcept = default;
 
-      explicit slice_storage( T * const data, size_t const size ) noexcept : data_( data ), size_( size ) {}
+      explicit SliceStorage( T * const Ptr, size_t const Size ) noexcept : Data( Ptr ), Extent( Size ) {}
 
       [[nodiscard]] constexpr size_t size() const noexcept
       {
-        return size_;
+        return Extent;
       }
 
-      T *    data_ = nullptr;
-      size_t size_ = 0;
+      T *    Data   = nullptr;
+      size_t Extent = 0;
     };
 
-    template< typename Iterator, typename Element, typename Value = detail::value_type_from_iterator_t< Iterator > >
-    concept valid_slice_iterator = requires
+    template< typename It, typename Elem, typename Val = detail::ValueTypeFromIt< It > >
+    concept ValidSliceIt = requires
     {
-      requires random_access< Iterator >;
-      requires convertible_as_array_to< Value, Element >;
+      requires RandomAccess< It >;
+      requires ConvertibleAsArrayTo< Val, Elem >;
     };
 
   }  // namespace detail
 
-  template< typename T, size_t Extent = dynamic_extent >
-  class slice
+  template< typename T, size_t Extent = DynamicExtent >
+  class Slice
   {
   public:
     using value_type             = std::remove_cv_t< T >;
@@ -72,65 +73,65 @@ namespace mvk::utility
 
     static constexpr auto extent = Extent;
 
-    constexpr slice() noexcept = default;
+    constexpr Slice() noexcept = default;
 
-    template< typename Iterator >
-    requires detail::valid_slice_iterator< Iterator, element_type >
-    constexpr explicit( extent != dynamic_extent ) slice( Iterator begin, size_type count ) noexcept
-      : storage_( detail::unwrap_iterator( begin ), count )
+    template< typename It >
+    requires detail::ValidSliceIt< It, element_type >
+    constexpr explicit( Extent != DynamicExtent ) Slice( It Begin, size_type Count ) noexcept
+      : Storage( detail::unwrapIt( Begin ), Count )
     {
-      MVK_VERIFY( Extent == dynamic_extent || Extent == size() );
+      MVK_VERIFY( Extent == DynamicExtent || Extent == size() );
     }
 
-    template< typename Iterator >
-    requires detail::valid_slice_iterator< Iterator, element_type >
-    constexpr explicit( extent != dynamic_extent ) slice( Iterator begin, Iterator end ) noexcept
-      : storage_( detail::unwrap_iterator( begin ), std::distance( begin, end ) )
+    template< typename It >
+    requires detail::ValidSliceIt< It, element_type >
+    constexpr explicit( Extent != DynamicExtent ) Slice( It begin, It end ) noexcept
+      : Storage( detail::unwrapIt( begin ), std::distance( begin, end ) )
     {
-      MVK_VERIFY( extent == dynamic_extent || extent == size() );
+      MVK_VERIFY( Extent == DynamicExtent || Extent == size() );
     }
 
     /*
     template <size_t N>
-    constexpr explicit slice(element_type (&array)[N])
-      : storage_(std::begin(array), N)
+    constexpr explicit Slice(element_type (&array)[N])
+      : Storage(std::begin(array), N)
     {
-      MVK_VERIFY(extent == dynamic_extent || extent == size());
+      MVK_VERIFY(Extent == DynamicExtent || Extent == size());
     }
     */
 
     template< typename U, size_t N >
-    requires convertible_as_array_to< U, element_type >
-    constexpr slice( std::array< U, N > & array ) noexcept : storage_( std::data( array ), std::size( array ) )
+    requires ConvertibleAsArrayTo< U, element_type >
+    constexpr Slice( std::array< U, N > & Arr ) noexcept : Storage( std::data( Arr ), std::size( Arr ) )
     {
-      MVK_VERIFY( extent == dynamic_extent || extent == size() );
+      MVK_VERIFY( Extent == DynamicExtent || Extent == size() );
     }
 
     template< typename U, size_t N >
-    requires convertible_as_array_to< U, element_type >
-    constexpr slice( std::array< U, N > const & array ) noexcept : storage_( std::data( array ), std::size( array ) )
+    requires ConvertibleAsArrayTo< U, element_type >
+    constexpr Slice( std::array< U, N > const & Arr ) noexcept : Storage( std::data( Arr ), std::size( Arr ) )
     {
-      MVK_VERIFY( extent == dynamic_extent || extent == size() );
+      MVK_VERIFY( Extent == DynamicExtent || Extent == size() );
     }
 
     template< typename Container >
-    requires with_data_and_size< Container > && compatible_with_element< Container, element_type >
-    constexpr slice( Container & container ) noexcept : storage_( std::data( container ), std::size( container ) )
+    requires WithDataAndSize< Container > && CompatibleWithElement< Container, element_type >
+    constexpr Slice( Container & Contr ) noexcept : Storage( std::data( Contr ), std::size( Contr ) )
     {
-      MVK_VERIFY( extent == dynamic_extent || extent == size() );
+      MVK_VERIFY( Extent == DynamicExtent || Extent == size() );
     }
 
     template< typename U, size_t N >
-    requires convertible_as_array_to< U, element_type >
-    constexpr explicit( extent != dynamic_extent && N == dynamic_extent ) slice( slice< U, N > other ) noexcept
-      : storage_( std::data( other ), std::size( other ) )
+    requires ConvertibleAsArrayTo< U, element_type >
+    constexpr explicit( Extent != DynamicExtent && N == DynamicExtent ) Slice( Slice< U, N > Other ) noexcept
+      : Storage( std::data( Other ), std::size( Other ) )
     {
-      MVK_VERIFY( extent == dynamic_extent || extent == size() );
+      MVK_VERIFY( Extent == DynamicExtent || Extent == size() );
     }
 
     template< typename U >
-    requires convertible_as_array_to< U, element_type >
-    constexpr slice( U & value ) noexcept : storage_( &value, 1 ) {}
+    requires ConvertibleAsArrayTo< U, element_type >
+    constexpr Slice( U & value ) noexcept : Storage( &value, 1 ) {}
 
     [[nodiscard]] constexpr bool empty() const noexcept
     {
@@ -139,12 +140,12 @@ namespace mvk::utility
 
     [[nodiscard]] constexpr size_type size() const noexcept
     {
-      return std::size( storage_ );
+      return std::size( Storage );
     }
 
     [[nodiscard]] constexpr pointer data() const noexcept
     {
-      return storage_.data_;
+      return Storage.Data;
     }
 
     [[nodiscard]] constexpr iterator begin() const noexcept
@@ -157,78 +158,78 @@ namespace mvk::utility
       return &data()[ size() ];
     }
 
-    [[nodiscard]] constexpr reference operator[]( size_t const index ) const noexcept
+    [[nodiscard]] constexpr reference operator[]( size_t const Idx ) const noexcept
     {
-      MVK_VERIFY( index < size() );
-      return data()[ index ];
+      MVK_VERIFY( Idx < size() );
+      return data()[ Idx ];
     }
 
-    [[nodiscard]] constexpr slice last( size_type const count ) const noexcept
+    [[nodiscard]] constexpr Slice last( size_type const Cnt ) const noexcept
     {
-      return { &operator[]( size() - count ), count };
+      return { &operator[]( size() - Cnt ), Cnt };
     }
 
-    [[nodiscard]] constexpr slice first( size_type const count ) const noexcept
+    [[nodiscard]] constexpr Slice first( size_type const Cnt ) const noexcept
     {
-      return { &operator[]( 0 ), count };
+      return { &operator[]( 0 ), Cnt };
     }
 
-    [[nodiscard]] constexpr slice< element_type > subslice( size_type const offset,
-                                                            size_type const count = dynamic_extent ) const noexcept
+    [[nodiscard]] constexpr Slice< element_type > subSlice( size_type const Off,
+                                                            size_type const Cnt = DynamicExtent ) const noexcept
     {
-      auto const new_data = &operator[]( offset );
+      auto const NewData = &operator[]( Off );
 
-      if ( count == dynamic_extent )
+      if ( Cnt == DynamicExtent )
       {
-        return { new_data, size() - offset };
+        return { NewData, size() - Off };
       }
 
-      MVK_VERIFY( ( offset + count ) < size() );
-      return { new_data, count };
+      MVK_VERIFY( ( Off + Cnt ) < size() );
+      return { NewData, Cnt };
     }
 
   private:
-    detail::slice_storage< T, extent > storage_;
+    detail::SliceStorage< T, Extent > Storage;
   };
 
   template< typename T >
-  slice( T *, size_t ) -> slice< T >;
+  Slice( T *, size_t ) -> Slice< T >;
 
   template< typename T, size_t S >
-  slice( std::array< T, S > const & ) -> slice< T const, S >;
+  Slice( std::array< T, S > const & ) -> Slice< T const, S >;
 
   template< typename T, size_t S >
-  slice( std::array< T, S > const & ) -> slice< T, S >;
+  Slice( std::array< T, S > const & ) -> Slice< T, S >;
 
   template< typename T >
-  slice( T & ) -> slice< detail::value_type_from_data_t< T > >;
+  Slice( T & ) -> Slice< detail::ValueTypeFromData< T > >;
 
   template< typename T, size_t E >
-  [[nodiscard]] constexpr slice< std::byte const, E * sizeof( T ) > as_bytes( slice< T const, E > const src ) noexcept
+  [[nodiscard]] constexpr Slice< std::byte const, E * sizeof( T ) > as_bytes( Slice< T const, E > const Src ) noexcept
   {
-    return { force_cast_to_byte( std::data( src ) ), E * sizeof( T ) };
+    return { force_cast_to_byte( std::data( Src ) ), E * sizeof( T ) };
   }
 
   template< typename T >
-  [[nodiscard]] constexpr slice< std::byte const > as_bytes( slice< T const > const src ) noexcept
+  [[nodiscard]] constexpr Slice< std::byte const > as_bytes( Slice< T const > const Src ) noexcept
   {
-    auto const size = std::size( src );
-    return { force_cast_to_byte( std::data( src ) ), size * sizeof( T ) };
+    auto const size = std::size( Src );
+    return { forceCastToByte( std::data( Src ) ), size * sizeof( T ) };
   }
 
   template< typename Container >
-  requires with_data_and_size< Container >
-  [[nodiscard]] constexpr slice< std::byte const > as_bytes( Container const & src ) noexcept
+  requires WithDataAndSize< Container >
+  [[nodiscard]] constexpr Slice< std::byte const > as_bytes( Container const & Src ) noexcept
   {
-    return as_bytes( slice( src ) );
+    return as_bytes( Slice( Src ) );
   }
 
   template< typename T >
-  requires trivial< T >
-  [[nodiscard]] constexpr slice< std::byte const > as_bytes( T const & src ) noexcept
+  requires Trivial< T >
+  [[nodiscard]] constexpr Slice< std::byte const > as_bytes( T const & Src ) noexcept
   {
     auto const size = sizeof( T );
-    return { force_cast_to_byte( &src ), size };
+    return { forceCastToByte( &Src ), size };
   }
 
 }  // namespace mvk::utility

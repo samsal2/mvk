@@ -3,9 +3,9 @@
 
 int main()
 {
-  auto ctx = mvk::engine::create_context( "stan loona", { 600, 600 } );
-  mvk::engine::test_run( ctx );
-  mvk::engine::destroy_context( ctx );
+  auto Ctx = mvk::engine::createContext( "stan loona", { 600, 600 } );
+  mvk::engine::testRun( Ctx );
+  mvk::engine::destroyContext( Ctx );
 
   return 0;
 }

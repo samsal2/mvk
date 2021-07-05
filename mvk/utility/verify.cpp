@@ -4,9 +4,9 @@
 
 namespace mvk::utility
 {
-  [[noreturn]] void verify_failed( std::string_view file, int line, std::string_view function )
+  [[noreturn]] void veriftFaile( std::string_view File, int Line, std::string_view Fn )
   {
-    std::cerr << "MVK_VERIFY failure in " << file << ':' << line << " inside " << function << '\n';
+    std::cerr << "MVK_VERIFY failure in " << File << ':' << Line << " inside " << Fn << '\n';
     abort();
   }
 

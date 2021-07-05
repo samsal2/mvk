@@ -16,7 +16,7 @@ namespace mvk::engine
     return VK_FALSE;
   }
 
-  static constexpr auto debug_create_info = []
+  static constexpr auto DbgCrtInfo = []
   {
     auto tmp            = VkDebugUtilsMessengerCreateInfoEXT();
     tmp.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;

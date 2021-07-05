@@ -9,5 +9,5 @@ target_sources(${PROJECT_NAME} PRIVATE allocate.hpp
                                        init.cpp
                                        misc.hpp
                                        misc.cpp
-                                       context.hpp 
-                                       context.cpp)
+                                       Context.hpp 
+                                       Context.cpp)

@@ -1,22 +1,16 @@
 #ifndef MVK_ENGINE_IMAGE_HPP_INCLUDED
 #define MVK_ENGINE_IMAGE_HPP_INCLUDED
 
+#include "engine/Context.hpp"
 #include "engine/allocate.hpp"
-#include "engine/context.hpp"
 
 namespace mvk::engine
 {
-  void transition_layout( context const & ctx,
-                          VkImage         image,
-                          VkImageLayout   old_layout,
-                          VkImageLayout   new_layout,
-                          uint32_t        mipmap_levels ) noexcept;
+  void transition_layout(
+    Context const & Ctx, VkImage Img, VkImageLayout OldLay, VkImageLayout NewLay, uint32_t MipLvl ) noexcept;
 
-  void generate_mipmaps(
-    context const & ctx, VkImage image, uint32_t width, uint32_t height, uint32_t mipmap_levels ) noexcept;
-
-  void stage_image(
-    context const & ctx, staging_allocation allocation, uint32_t width, uint32_t height, VkImage image ) noexcept;
+  void generate_mipmaps( Context const & Ctx, VkImage Img, uint32_t Width, uint32_t Height, uint32_t MipLvl ) noexcept;
+  void stage_image( Context const & Ctx, StagingAlloc Alloc, uint32_t Width, uint32_t Height, VkImage Image ) noexcept;
 
 }  // namespace mvk::engine
 

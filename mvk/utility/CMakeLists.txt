@@ -1,6 +1,4 @@
-target_sources(${PROJECT_NAME} PRIVATE pack.hpp
-                                       compressed_pair.hpp
-                                       concepts.hpp
+target_sources(${PROJECT_NAME} PRIVATE concepts.hpp
                                        slice.hpp
                                        types.hpp
                                        verify.cpp

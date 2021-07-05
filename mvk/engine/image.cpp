@@ -1,126 +1,115 @@
 #include "engine/image.hpp"
 
+#include "vulkan/vulkan_core.h"
+
 namespace mvk::engine
 {
-  void transition_layout( context const & ctx,
-                          VkImage         image,
-                          VkImageLayout   old_layout,
-                          VkImageLayout   new_layout,
-                          uint32_t        mipmap_levels ) noexcept
+  void transition_layout(
+    Context const & Ctx, VkImage Img, VkImageLayout OldLay, VkImageLayout NewLay, uint32_t MipLvl ) noexcept
   {
-    auto const [ image_memory_barrier, source_stage, destination_stage ] =
-      [ old_layout, new_layout, &image, mipmap_levels ]
+    auto ImgMemBarrier                = VkImageMemoryBarrier();
+    ImgMemBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    ImgMemBarrier.oldLayout           = OldLay;
+    ImgMemBarrier.newLayout           = NewLay;
+    ImgMemBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    ImgMemBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    ImgMemBarrier.image               = Img;
+
+    if ( NewLay == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
     {
-      auto barrier                = VkImageMemoryBarrier();
-      barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-      barrier.oldLayout           = old_layout;
-      barrier.newLayout           = new_layout;
-      barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-      barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-      barrier.image               = image;
+      ImgMemBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    }
+    else
+    {
+      ImgMemBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
 
-      if ( new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
-      {
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-      }
-      else
-      {
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-      }
+    ImgMemBarrier.subresourceRange.baseMipLevel   = 0;
+    ImgMemBarrier.subresourceRange.levelCount     = MipLvl;
+    ImgMemBarrier.subresourceRange.baseArrayLayer = 0;
+    ImgMemBarrier.subresourceRange.layerCount     = 1;
 
-      barrier.subresourceRange.baseMipLevel   = 0;
-      barrier.subresourceRange.levelCount     = mipmap_levels;
-      barrier.subresourceRange.baseArrayLayer = 0;
-      barrier.subresourceRange.layerCount     = 1;
+    auto SrcStage = VkPipelineStageFlags();
+    auto DstStage = VkPipelineStageFlags();
 
-      auto source_stage      = VkPipelineStageFlags();
-      auto destination_stage = VkPipelineStageFlags();
+    if ( OldLay == VK_IMAGE_LAYOUT_UNDEFINED && NewLay == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL )
+    {
+      ImgMemBarrier.srcAccessMask = 0;
+      ImgMemBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-      if ( old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL )
-      {
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+      SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+      DstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if ( OldLay == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && NewLay == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL )
+    {
+      ImgMemBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+      ImgMemBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-        source_stage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-      }
-      else if ( old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
-                new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL )
-      {
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+      SrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+      DstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else if ( OldLay == VK_IMAGE_LAYOUT_UNDEFINED && NewLay == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
+    {
+      ImgMemBarrier.srcAccessMask = 0;
+      ImgMemBarrier.dstAccessMask =
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+      SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+      DstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    }
+    else
+    {
+      MVK_VERIFY_NOT_REACHED();
+    }
 
-        source_stage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-      }
-      else if ( old_layout == VK_IMAGE_LAYOUT_UNDEFINED &&
-                new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL )
-      {
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask =
-          VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        source_stage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        destination_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-      }
-      else
-      {
-        MVK_VERIFY_NOT_REACHED();
-      }
+    auto CmdBuffBeginInfo             = VkCommandBufferBeginInfo();
+    CmdBuffBeginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    CmdBuffBeginInfo.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    CmdBuffBeginInfo.pInheritanceInfo = nullptr;
 
-      return std::make_tuple( barrier, source_stage, destination_stage );
-    }();
+    auto const CmdBuff = allocSingleUseCmdBuf( Ctx );
 
-    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
-    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    command_buffer_begin_info.pInheritanceInfo = nullptr;
+    vkBeginCommandBuffer( CmdBuff, &CmdBuffBeginInfo );
+    vkCmdPipelineBarrier( CmdBuff, SrcStage, DstStage, 0, 0, nullptr, 0, nullptr, 1, &ImgMemBarrier );
 
-    auto const command_buffer = allocate_single_use_command_buffer( ctx );
+    vkEndCommandBuffer( CmdBuff );
 
-    vkBeginCommandBuffer( command_buffer, &command_buffer_begin_info );
-    vkCmdPipelineBarrier(
-      command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier );
+    auto SubmitInfo               = VkSubmitInfo();
+    SubmitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    SubmitInfo.commandBufferCount = 1;
+    SubmitInfo.pCommandBuffers    = &CmdBuff;
 
-    vkEndCommandBuffer( command_buffer );
-
-    auto submit_info               = VkSubmitInfo();
-    submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers    = &command_buffer;
-
-    vkQueueSubmit( ctx.graphics_queue, 1, &submit_info, nullptr );
-    vkQueueWaitIdle( ctx.graphics_queue );
-    vkFreeCommandBuffers( ctx.device, ctx.command_pool, 1, &command_buffer );
+    vkQueueSubmit( Ctx.GfxQueue, 1, &SubmitInfo, nullptr );
+    vkQueueWaitIdle( Ctx.GfxQueue );
+    vkFreeCommandBuffers( Ctx.Dev, Ctx.CmdPool, 1, &CmdBuff );
   }
 
-  void generate_mipmaps(
-    context const & ctx, VkImage image, uint32_t width, uint32_t height, uint32_t mipmap_levels ) noexcept
+  void generate_mipmaps( Context const & Ctx, VkImage Img, uint32_t Width, uint32_t Height, uint32_t MipLvl ) noexcept
   {
-    if ( mipmap_levels == 1 || mipmap_levels == 0 )
+    if ( MipLvl == 1 || MipLvl == 0 )
     {
       return;
     }
 
-    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
-    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    command_buffer_begin_info.pInheritanceInfo = nullptr;
+    auto CmdBuffBeginInfo             = VkCommandBufferBeginInfo();
+    CmdBuffBeginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    CmdBuffBeginInfo.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    CmdBuffBeginInfo.pInheritanceInfo = nullptr;
 
-    auto command_buffer = allocate_single_use_command_buffer( ctx );
-    vkBeginCommandBuffer( command_buffer, &command_buffer_begin_info );
+    auto CmdBuff = allocSingleUseCmdBuf( Ctx );
+    vkBeginCommandBuffer( CmdBuff, &CmdBuffBeginInfo );
 
-    auto barrier                            = VkImageMemoryBarrier();
-    barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image                           = image;
-    barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount     = 1;
-    barrier.subresourceRange.levelCount     = 1;
+    auto ImgMemBarrier                            = VkImageMemoryBarrier();
+    ImgMemBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    ImgMemBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    ImgMemBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    ImgMemBarrier.image                           = Img;
+    ImgMemBarrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    ImgMemBarrier.subresourceRange.baseArrayLayer = 0;
+    ImgMemBarrier.subresourceRange.layerCount     = 1;
+    ImgMemBarrier.subresourceRange.levelCount     = 1;
 
-    auto mipmap_width  = static_cast< int32_t >( width );
-    auto mipmap_height = static_cast< int32_t >( height );
+    auto MipWidth  = static_cast< int32_t >( Width );
+    auto MipHeight = static_cast< int32_t >( Height );
 
     auto const half = []( auto & num )
     {
@@ -133,15 +122,15 @@ namespace mvk::engine
       return 1;
     };
 
-    for ( auto i = uint32_t( 0 ); i < ( mipmap_levels - 1 ); ++i )
+    for ( auto i = uint32_t( 0 ); i < ( MipLvl - 1 ); ++i )
     {
-      barrier.subresourceRange.baseMipLevel = i;
-      barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-      barrier.newLayout                     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-      barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
-      barrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
+      ImgMemBarrier.subresourceRange.baseMipLevel = i;
+      ImgMemBarrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+      ImgMemBarrier.newLayout                     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+      ImgMemBarrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
+      ImgMemBarrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
 
-      vkCmdPipelineBarrier( command_buffer,
+      vkCmdPipelineBarrier( CmdBuff,
                             VK_PIPELINE_STAGE_TRANSFER_BIT,
                             VK_PIPELINE_STAGE_TRANSFER_BIT,
                             0,
@@ -150,45 +139,45 @@ namespace mvk::engine
                             0,
                             nullptr,
                             1,
-                            &barrier );
+                            &ImgMemBarrier );
 
-      auto blit                          = VkImageBlit();
-      blit.srcOffsets[ 0 ].x             = 0;
-      blit.srcOffsets[ 0 ].y             = 0;
-      blit.srcOffsets[ 0 ].z             = 0;
-      blit.srcOffsets[ 1 ].x             = mipmap_width;
-      blit.srcOffsets[ 1 ].y             = mipmap_height;
-      blit.srcOffsets[ 1 ].z             = 1;
-      blit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-      blit.srcSubresource.mipLevel       = i;
-      blit.srcSubresource.baseArrayLayer = 0;
-      blit.srcSubresource.layerCount     = 1;
-      blit.dstOffsets[ 0 ].x             = 0;
-      blit.dstOffsets[ 0 ].y             = 0;
-      blit.dstOffsets[ 0 ].z             = 0;
-      blit.dstOffsets[ 1 ].x             = half( mipmap_width );
-      blit.dstOffsets[ 1 ].y             = half( mipmap_height );
-      blit.dstOffsets[ 1 ].z             = 1;
-      blit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-      blit.dstSubresource.mipLevel       = i + 1;
-      blit.dstSubresource.baseArrayLayer = 0;
-      blit.dstSubresource.layerCount     = 1;
+      auto ImgBlit                          = VkImageBlit();
+      ImgBlit.srcOffsets[ 0 ].x             = 0;
+      ImgBlit.srcOffsets[ 0 ].y             = 0;
+      ImgBlit.srcOffsets[ 0 ].z             = 0;
+      ImgBlit.srcOffsets[ 1 ].x             = MipWidth;
+      ImgBlit.srcOffsets[ 1 ].y             = MipHeight;
+      ImgBlit.srcOffsets[ 1 ].z             = 1;
+      ImgBlit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+      ImgBlit.srcSubresource.mipLevel       = i;
+      ImgBlit.srcSubresource.baseArrayLayer = 0;
+      ImgBlit.srcSubresource.layerCount     = 1;
+      ImgBlit.dstOffsets[ 0 ].x             = 0;
+      ImgBlit.dstOffsets[ 0 ].y             = 0;
+      ImgBlit.dstOffsets[ 0 ].z             = 0;
+      ImgBlit.dstOffsets[ 1 ].x             = half( MipWidth );
+      ImgBlit.dstOffsets[ 1 ].y             = half( MipHeight );
+      ImgBlit.dstOffsets[ 1 ].z             = 1;
+      ImgBlit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+      ImgBlit.dstSubresource.mipLevel       = i + 1;
+      ImgBlit.dstSubresource.baseArrayLayer = 0;
+      ImgBlit.dstSubresource.layerCount     = 1;
 
-      vkCmdBlitImage( command_buffer,
-                      image,
+      vkCmdBlitImage( CmdBuff,
+                      Img,
                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                      image,
+                      Img,
                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                       1,
-                      &blit,
+                      &ImgBlit,
                       VK_FILTER_LINEAR );
 
-      barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-      barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-      barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+      ImgMemBarrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+      ImgMemBarrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      ImgMemBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+      ImgMemBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-      vkCmdPipelineBarrier( command_buffer,
+      vkCmdPipelineBarrier( CmdBuff,
                             VK_PIPELINE_STAGE_TRANSFER_BIT,
                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                             0,
@@ -197,16 +186,16 @@ namespace mvk::engine
                             0,
                             nullptr,
                             1,
-                            &barrier );
+                            &ImgMemBarrier );
     }
 
-    barrier.subresourceRange.baseMipLevel = mipmap_levels - 1;
-    barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrier.newLayout                     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask                 = VK_ACCESS_SHADER_READ_BIT;
+    ImgMemBarrier.subresourceRange.baseMipLevel = MipLvl - 1;
+    ImgMemBarrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    ImgMemBarrier.newLayout                     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    ImgMemBarrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
+    ImgMemBarrier.dstAccessMask                 = VK_ACCESS_SHADER_READ_BIT;
 
-    vkCmdPipelineBarrier( command_buffer,
+    vkCmdPipelineBarrier( CmdBuff,
                           VK_PIPELINE_STAGE_TRANSFER_BIT,
                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                           0,
@@ -215,62 +204,60 @@ namespace mvk::engine
                           0,
                           nullptr,
                           1,
-                          &barrier );
+                          &ImgMemBarrier );
 
-    vkEndCommandBuffer( command_buffer );
+    vkEndCommandBuffer( CmdBuff );
 
-    auto submit_info               = VkSubmitInfo();
-    submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers    = &command_buffer;
+    auto SubmitInfo               = VkSubmitInfo();
+    SubmitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    SubmitInfo.commandBufferCount = 1;
+    SubmitInfo.pCommandBuffers    = &CmdBuff;
 
-    vkQueueSubmit( ctx.graphics_queue, 1, &submit_info, nullptr );
-    vkQueueWaitIdle( ctx.graphics_queue );
-    vkFreeCommandBuffers( ctx.device, ctx.command_pool, 1, &command_buffer );
+    vkQueueSubmit( Ctx.GfxQueue, 1, &SubmitInfo, nullptr );
+    vkQueueWaitIdle( Ctx.GfxQueue );
+    vkFreeCommandBuffers( Ctx.Dev, Ctx.CmdPool, 1, &CmdBuff );
   }
 
   // buffers
 
-  void stage_image(
-    context const & ctx, staging_allocation allocation, uint32_t width, uint32_t height, VkImage image ) noexcept
+  void stage_image( Context const & Ctx, StagingAlloc Alloc, uint32_t Width, uint32_t Height, VkImage Img ) noexcept
   {
-    auto command_buffer_begin_info             = VkCommandBufferBeginInfo();
-    command_buffer_begin_info.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    command_buffer_begin_info.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    command_buffer_begin_info.pInheritanceInfo = nullptr;
+    auto CmdBuffBeginInfo             = VkCommandBufferBeginInfo();
+    CmdBuffBeginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    CmdBuffBeginInfo.flags            = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    CmdBuffBeginInfo.pInheritanceInfo = nullptr;
 
-    auto copy_region                            = VkBufferImageCopy();
-    copy_region.bufferOffset                    = allocation.offset_;
-    copy_region.bufferRowLength                 = 0;
-    copy_region.bufferImageHeight               = 0;
-    copy_region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    copy_region.imageSubresource.mipLevel       = 0;
-    copy_region.imageSubresource.baseArrayLayer = 0;
-    copy_region.imageSubresource.layerCount     = 1;
-    copy_region.imageOffset.x                   = 0;
-    copy_region.imageOffset.y                   = 0;
-    copy_region.imageOffset.z                   = 0;
-    copy_region.imageExtent.width               = width;
-    copy_region.imageExtent.height              = height;
-    copy_region.imageExtent.depth               = 1;
+    auto CopyRegion                            = VkBufferImageCopy();
+    CopyRegion.bufferOffset                    = Alloc.Off;
+    CopyRegion.bufferRowLength                 = 0;
+    CopyRegion.bufferImageHeight               = 0;
+    CopyRegion.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    CopyRegion.imageSubresource.mipLevel       = 0;
+    CopyRegion.imageSubresource.baseArrayLayer = 0;
+    CopyRegion.imageSubresource.layerCount     = 1;
+    CopyRegion.imageOffset.x                   = 0;
+    CopyRegion.imageOffset.y                   = 0;
+    CopyRegion.imageOffset.z                   = 0;
+    CopyRegion.imageExtent.width               = Width;
+    CopyRegion.imageExtent.height              = Height;
+    CopyRegion.imageExtent.depth               = 1;
 
-    auto const command_buffer = allocate_single_use_command_buffer( ctx );
+    auto const CmdBuff = allocSingleUseCmdBuf( Ctx );
 
-    vkBeginCommandBuffer( command_buffer, &command_buffer_begin_info );
+    vkBeginCommandBuffer( CmdBuff, &CmdBuffBeginInfo );
 
-    vkCmdCopyBufferToImage(
-      command_buffer, allocation.buffer_, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region );
+    vkCmdCopyBufferToImage( CmdBuff, Alloc.Buff, Img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &CopyRegion );
 
-    vkEndCommandBuffer( command_buffer );
+    vkEndCommandBuffer( CmdBuff );
 
-    auto submit_info               = VkSubmitInfo();
-    submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers    = &command_buffer;
+    auto SubmitInfo               = VkSubmitInfo();
+    SubmitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    SubmitInfo.commandBufferCount = 1;
+    SubmitInfo.pCommandBuffers    = &CmdBuff;
 
-    vkQueueSubmit( ctx.graphics_queue, 1, &submit_info, nullptr );
-    vkQueueWaitIdle( ctx.graphics_queue );
-    vkFreeCommandBuffers( ctx.device, ctx.command_pool, 1, &command_buffer );
+    vkQueueSubmit( Ctx.GfxQueue, 1, &SubmitInfo, nullptr );
+    vkQueueWaitIdle( Ctx.GfxQueue );
+    vkFreeCommandBuffers( Ctx.Dev, Ctx.CmdPool, 1, &CmdBuff );
   }
 
 }  // namespace mvk::engine

@@ -15,41 +15,40 @@
 namespace mvk::detail
 {
   [[nodiscard]] std::tuple< std::vector< unsigned char >, uint32_t, uint32_t >
-    load_texture( std::filesystem::path const & path )
+    loadTex( std::filesystem::path const & Path )
   {
-    MVK_VERIFY( std::filesystem::exists( path ) );
+    MVK_VERIFY( std::filesystem::exists( Path ) );
 
-    auto       width    = 0;
-    auto       height   = 0;
-    auto       channels = 0;
-    auto const pixels   = stbi_load( path.c_str(), &width, &height, &channels, STBI_rgb_alpha );
+    auto       Width    = 0;
+    auto       Height   = 0;
+    auto       Channels = 0;
+    auto const Pixels   = stbi_load( Path.c_str(), &Width, &Height, &Channels, STBI_rgb_alpha );
 
-    auto buffer = std::vector< unsigned char >( static_cast< uint32_t >( width ) * static_cast< uint32_t >( height ) *
-                                                4 * sizeof( *pixels ) );
-    std::copy( pixels, std::next( pixels, static_cast< int64_t >( std::size( buffer ) ) ), std::begin( buffer ) );
+    auto Buff = std::vector< unsigned char >( static_cast< uint32_t >( Width ) * static_cast< uint32_t >( Height ) * 4 *
+                                              sizeof( *Pixels ) );
+    std::copy( Pixels, std::next( Pixels, static_cast< int64_t >( std::size( Buff ) ) ), std::begin( Buff ) );
 
-    stbi_image_free( pixels );
+    stbi_image_free( Pixels );
 
-    return { std::move( buffer ), width, height };
+    return { std::move( Buff ), Width, Height };
   }
 
-  [[nodiscard]] std::optional< uint32_t > find_memory_type( VkPhysicalDevice const      physical_device,
-                                                            uint32_t const              filter,
-                                                            VkMemoryPropertyFlags const properties_flags )
+  [[nodiscard]] std::optional< uint32_t >
+    queryMemType( VkPhysicalDevice PhysicalDevice, uint32_t Filter, VkMemoryPropertyFlags PropFlags )
   {
-    auto memory_properties = VkPhysicalDeviceMemoryProperties();
-    vkGetPhysicalDeviceMemoryProperties( physical_device, &memory_properties );
+    auto MemProp = VkPhysicalDeviceMemoryProperties();
+    vkGetPhysicalDeviceMemoryProperties( PhysicalDevice, &MemProp );
 
-    auto const type_count = memory_properties.memoryTypeCount;
+    auto const TypeCnt = MemProp.memoryTypeCount;
 
-    for ( auto i = uint32_t( 0 ); i < type_count; ++i )
+    for ( auto i = uint32_t( 0 ); i < TypeCnt; ++i )
     {
-      auto const & current_type   = memory_properties.memoryTypes[ i ];
-      auto const   current_flags  = current_type.propertyFlags;
-      auto const   matches_flags  = ( current_flags & properties_flags ) != 0U;
-      auto const   matches_filter = ( filter & ( 1U << i ) ) != 0U;
+      auto const & CurrentType   = MemProp.memoryTypes[ i ];
+      auto const   CurrentFlags  = CurrentType.propertyFlags;
+      auto const   MatchesFlags  = ( CurrentFlags & PropFlags ) != 0U;
+      auto const   MatchesFilter = ( Filter & ( 1U << i ) ) != 0U;
 
-      if ( matches_flags && matches_filter )
+      if ( MatchesFlags && MatchesFilter )
       {
         return i;
       }
@@ -58,34 +57,34 @@ namespace mvk::detail
     return std::nullopt;
   }
 
-  [[nodiscard]] std::optional< uint32_t > next_swapchain_image( VkDevice const       device,
-                                                                VkSwapchainKHR const swapchain,
-                                                                VkSemaphore const    semaphore,
-                                                                VkFence const        fence )
+  [[nodiscard]] std::optional< uint32_t > querySwapchainImg( VkDevice const       Device,
+                                                             VkSwapchainKHR const Swapchain,
+                                                             VkSemaphore const    Semaphore,
+                                                             VkFence const        Fence )
   {
-    auto index = uint32_t( 0 );
+    auto Idx = uint32_t( 0 );
 
-    auto const result =
-      vkAcquireNextImageKHR( device, swapchain, std::numeric_limits< uint64_t >::max(), semaphore, fence, &index );
+    auto const Result =
+      vkAcquireNextImageKHR( Device, Swapchain, std::numeric_limits< uint64_t >::max(), Semaphore, Fence, &Idx );
 
-    if ( result != VK_ERROR_OUT_OF_DATE_KHR )
+    if ( Result != VK_ERROR_OUT_OF_DATE_KHR )
     {
-      return index;
+      return Idx;
     }
 
     return std::nullopt;
   }
 
-  [[nodiscard]] uint32_t calculate_mimap_levels( uint32_t const height, uint32_t const width ) noexcept
+  [[nodiscard]] uint32_t calcMipLvl( uint32_t const Height, uint32_t const Width ) noexcept
   {
-    return static_cast< uint32_t >( std::floor( std::log2( std::max( height, width ) ) ) + 1 );
+    return static_cast< uint32_t >( std::floor( std::log2( std::max( Height, Width ) ) ) + 1 );
   }
 
-  [[nodiscard]] utility::slice< std::byte >
-    map_memory( VkDevice device, VkDeviceMemory memory, VkDeviceSize size, VkDeviceSize offset ) noexcept
+  [[nodiscard]] utility::Slice< std::byte >
+    map_memory( VkDevice Device, VkDeviceMemory Mem, VkDeviceSize Size, VkDeviceSize Off ) noexcept
   {
-    void * data = nullptr;
-    vkMapMemory( device, memory, offset, size, 0, &data );
-    return { utility::force_cast_to_byte( data ), size };
+    void * Data = nullptr;
+    vkMapMemory( Device, Mem, Off, Size, 0, &Data );
+    return { utility::forceCastToByte( Data ), Size };
   }
 }  // namespace mvk::detail

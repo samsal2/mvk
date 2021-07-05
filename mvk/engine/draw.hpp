@@ -1,20 +1,20 @@
 #ifndef MVK_ENGINE_DRAW_HPP_INCLUDED
 #define MVK_ENGINE_DRAW_HPP_INCLUDED
 
-#include "engine/context.hpp"
+#include "engine/Context.hpp"
 
 namespace mvk::engine
 {
-  void begin_draw( context & ctx ) noexcept;
+  void beginDraw( Context & Ctx ) noexcept;
 
-  void basic_draw( context &                         ctx,
-                   utility::slice< std::byte const > vertices,
-                   utility::slice< std::byte const > indices,
-                   utility::slice< std::byte const > pvm ) noexcept;
+  void basicDraw( Context &                         Ctx,
+                  utility::Slice< std::byte const > Vtxs,
+                  utility::Slice< std::byte const > Idxs,
+                  utility::Slice< std::byte const > Pvm ) noexcept;
 
-  void end_draw( context & ctx ) noexcept;
+  void endDraw( Context & Ctx ) noexcept;
 
-  void recreate_after_swapchain_change( context & ctx ) noexcept;
+  void recreateAfterSwapchainChange( Context & Ctx ) noexcept;
 
 }  // namespace mvk::engine
 #endif

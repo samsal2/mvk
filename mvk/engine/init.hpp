@@ -1,67 +1,67 @@
-#ifndef MVK_ENGINE_INIT_HPP_INCLUDED
-#define MVK_ENGINE_INIT_HPP_INCLUDED
+#ifndef MVK_ENGINE_initHPP_INCLUDED
+#define MVK_ENGINE_initHPP_INCLUDED
 
-#include "engine/context.hpp"
+#include "engine/Context.hpp"
 
 namespace mvk::engine
 {
-  [[nodiscard]] context create_context( char const * name, VkExtent2D extent ) noexcept;
+  [[nodiscard]] Context createContext( char const * Name, VkExtent2D Extent ) noexcept;
 
-  void destroy_context( context & ctx ) noexcept;
+  void destroyContext( Context & Ctx ) noexcept;
 
-  void init_window( context & ctx, VkExtent2D extent ) noexcept;
-  void destroy_window( context & ctx ) noexcept;
+  void initWindow( Context & Ctx, VkExtent2D Extent ) noexcept;
+  void destroyWindow( Context & Ctx ) noexcept;
 
-  void init_instance( context & ctx, char const * name ) noexcept;
-  void destroy_instance( context & ctx ) noexcept;
+  void initInst( Context & Ctx, char const * Name ) noexcept;
+  void destroyInst( Context & Ctx ) noexcept;
 
-  void init_debug_messenger( context & ctx ) noexcept;
-  void destroy_debug_messenger( context & ctx ) noexcept;
+  void initDbgMsngr( Context & Ctx ) noexcept;
+  void destroyDbgMsngr( Context & Ctx ) noexcept;
 
-  void init_surface( context & ctx ) noexcept;
-  void destroy_surface( context & ctx ) noexcept;
+  void initSurf( Context & Ctx ) noexcept;
+  void destroySurf( Context & Ctx ) noexcept;
 
-  void select_physical_device( context & ctx ) noexcept;
-  void select_surface_format( context & ctx ) noexcept;
+  void selectPhysicalDev( Context & Ctx ) noexcept;
+  void selectSurfFmt( Context & Ctx ) noexcept;
 
-  void init_device( context & ctx ) noexcept;
-  void destroy_device( context & ctx ) noexcept;
+  void initDev( Context & Ctx ) noexcept;
+  void destroyDev( Context & Ctx ) noexcept;
 
-  void init_layouts( context & ctx ) noexcept;
-  void destroy_layouts( context & ctx ) noexcept;
+  void initLays( Context & Ctx ) noexcept;
+  void destroyLays( Context & Ctx ) noexcept;
 
-  void init_pools( context & ctx ) noexcept;
-  void destroy_pools( context & ctx ) noexcept;
+  void initPools( Context & Ctx ) noexcept;
+  void destroyPools( Context & Ctx ) noexcept;
 
-  void init_swapchain( context & ctx ) noexcept;
-  void destroy_swapchain( context & ctx ) noexcept;
+  void initSwapchain( Context & Ctx ) noexcept;
+  void destroySwapchain( Context & Ctx ) noexcept;
 
-  void init_depth_image( context & ctx ) noexcept;
-  void destroy_depth_image( context & ctx ) noexcept;
+  void initDepthImg( Context & Ctx ) noexcept;
+  void destroyDepthImg( Context & Ctx ) noexcept;
 
-  void init_framebuffers( context & ctx ) noexcept;
-  void destroy_framebuffers( context & ctx ) noexcept;
+  void initFramebuffers( Context & Ctx ) noexcept;
+  void destroyFramebuffers( Context & Ctx ) noexcept;
 
-  void init_render_pass( context & ctx ) noexcept;
-  void destroy_render_pass( context & ctx ) noexcept;
+  void initRdrPass( Context & Ctx ) noexcept;
+  void destroyRdrPass( Context & Ctx ) noexcept;
 
-  void init_doesnt_belong_here( context & ctx ) noexcept;
-  void destroy_doesnt_beling_here( context & ctx ) noexcept;
+  void initDoesntBelongHere( Context & Ctx ) noexcept;
+  void destroyDoesntBelongHere( Context & Ctx ) noexcept;
 
-  void init_command_buffers( context & ctx ) noexcept;
-  void destroy_command_buffers( context & ctx ) noexcept;
+  void initCmdBuffs( Context & Ctx ) noexcept;
+  void destroyCmdBuffs( Context & Ctx ) noexcept;
 
-  void init_shaders( context & ctx ) noexcept;
-  void destroy_shaders( context & ctx ) noexcept;
+  void initShaders( Context & Ctx ) noexcept;
+  void destroyShaders( Context & Ctx ) noexcept;
 
-  void init_samplers( context & ctx ) noexcept;
-  void destroy_samplers( context & ctx ) noexcept;
+  void initSamplers( Context & Ctx ) noexcept;
+  void destroySamplers( Context & Ctx ) noexcept;
 
-  void init_pipeline( context & ctx ) noexcept;
-  void destroy_pipelines( context & ctx ) noexcept;
+  void initPipeline( Context & Ctx ) noexcept;
+  void destroyPipelines( Context & Ctx ) noexcept;
 
-  void init_sync( context & ctx ) noexcept;
-  void destroy_sync( context & ctx ) noexcept;
+  void initSync( Context & Ctx ) noexcept;
+  void destroySync( Context & Ctx ) noexcept;
 }  // namespace mvk::engine
 
 #endif

@@ -4,28 +4,27 @@
 
 namespace mvk::engine
 {
-  void test_run( context & ctx ) noexcept
+  void testRun( Context & Ctx ) noexcept
   {
-    while ( glfwWindowShouldClose( ctx.window ) == 0 )
+    while ( glfwWindowShouldClose( Ctx.Window ) == 0 )
     {
       glfwPollEvents();
 
-      begin_draw( ctx );
+      beginDraw( Ctx );
 
-      auto const pvm = create_test_pvm( ctx );
+      auto const pvm = createTestPvm( Ctx );
 
-      basic_draw(
-        ctx, utility::as_bytes( ctx.vertices_ ), utility::as_bytes( ctx.indices_ ), utility::as_bytes( pvm ) );
+      basicDraw( Ctx, utility::as_bytes( Ctx.vertices_ ), utility::as_bytes( Ctx.indices_ ), utility::as_bytes( pvm ) );
 
-      end_draw( ctx );
+      endDraw( Ctx );
     }
 
-    vkDeviceWaitIdle( ctx.device );
+    vkDeviceWaitIdle( Ctx.Dev );
   }
 
-  [[nodiscard]] pvm create_test_pvm( context const & ctx ) noexcept
+  [[nodiscard]] pvm createTestPvm( Context const & Ctx ) noexcept
   {
-    auto const time = current_time( ctx );
+    auto const time = currentTime( Ctx );
 
     constexpr auto turn_rate = glm::radians( 90.0F );
 
@@ -36,7 +35,7 @@ namespace mvk::engine
       glm::lookAt( glm::vec3( 2.0F, 2.0F, 2.0F ), glm::vec3( 0.0F, 0.0F, 0.0F ), glm::vec3( 0.0F, 0.0F, 1.0F ) );
 
     auto const ratio =
-      static_cast< float >( ctx.swapchain_extent.width ) / static_cast< float >( ctx.swapchain_extent.height );
+      static_cast< float >( Ctx.SwapchainExtent.width ) / static_cast< float >( Ctx.SwapchainExtent.height );
 
     ubo.proj = glm::perspective( glm::radians( 45.0F ), ratio, 0.1F, 10.0F );
     ubo.proj[ 1 ][ 1 ] *= -1;

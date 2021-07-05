@@ -10,30 +10,25 @@
 
 namespace mvk::detail
 {
-  [[nodiscard]] utility::slice< std::byte > map_memory( VkDevice       device,
-                                                        VkDeviceMemory memory,
-                                                        VkDeviceSize   size   = VK_WHOLE_SIZE,
-                                                        VkDeviceSize   offset = 0 ) noexcept;
-
   [[nodiscard]] std::tuple< std::vector< unsigned char >, uint32_t, uint32_t >
-    load_texture( std::filesystem::path const & path );
+    loadTex( std::filesystem::path const & Path );
 
   [[nodiscard]] std::optional< uint32_t >
-    find_memory_type( VkPhysicalDevice physical_device, uint32_t filter, VkMemoryPropertyFlags properties_flags );
+    queryMemType( VkPhysicalDevice PhysicalDevice, uint32_t Filter, VkMemoryPropertyFlags PropFlags );
 
   [[nodiscard]] std::optional< uint32_t >
-    next_swapchain_image( VkDevice device, VkSwapchainKHR swapchain, VkSemaphore semaphore, VkFence fence );
+    querySwapchainImg( VkDevice Device, VkSwapchainKHR Swapchain, VkSemaphore Semaphore, VkFence Fence );
 
-  [[nodiscard]] uint32_t calculate_mimap_levels( uint32_t height, uint32_t width ) noexcept;
+  [[nodiscard]] uint32_t calcMipLvl( uint32_t Height, uint32_t Width ) noexcept;
 
-  [[nodiscard]] constexpr auto aligned_size( utility::integral auto size, utility::integral auto alignment ) noexcept
+  [[nodiscard]] constexpr auto alignedSize( utility::Integral auto Size, utility::Integral auto Alignment ) noexcept
   {
-    if ( auto mod = size % alignment; mod != 0 )
+    if ( auto Mod = Size % Alignment; Mod != 0 )
     {
-      return size + alignment - mod;
+      return Size + Alignment - Mod;
     }
 
-    return static_cast< decltype( size + alignment ) >( size );
+    return static_cast< decltype( Size + Alignment ) >( Size );
   }
 
 }  // namespace mvk::detail

@@ -33,21 +33,14 @@ target_link_libraries(${PROJECT_NAME} glm::glm)
 target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${Vulkan_INCLUDE_DIR})
 target_compile_options(${PROJECT_NAME} PRIVATE -O3 
-                                               -Weverything
+                                               -Wall
+                                               -Wextra
                                                -Werror
                                                -Wpedantic
                                                -pedantic-errors
                                                -Wshadow
-                                               -Wno-old-style-cast
-                                               -Wno-documentation
-                                               -Wno-padded
-                                               -Wno-c++98-compat-pedantic
-                                               -Wno-c++98-compat
-                                               -Wno-documentation-unknown-command
-                                               -Wno-unused-template
-                                               -Wno-unused-function
-                                               -Wno-unused-macros
-                                               -Wno-unused-member-function
+                                               -fno-exceptions
+                                               -fno-rtti
                                                )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/external/include)
