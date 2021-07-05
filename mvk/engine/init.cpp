@@ -3,114 +3,114 @@
 #include "detail/helpers.hpp"
 #include "detail/misc.hpp"
 #include "detail/readers.hpp"
-#include "engine/Context.hpp"
 #include "engine/allocate.hpp"
+#include "engine/context.hpp"
 #include "engine/debug.hpp"
 #include "engine/image.hpp"
 #include "utility/verify.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace mvk::engine
 {
-  [[nodiscard]] Context createContext( char const * Name, VkExtent2D Extent ) noexcept
+  void createContext(char const * Name, VkExtent2D Extent, InOut<Context> Ctx) noexcept
   {
-    auto Ctx = Context();
-    initWindow( Ctx, Extent );
-    initInst( Ctx, Name );
-    initDbgMsngr( Ctx );
-    initSurf( Ctx );
-    selectPhysicalDev( Ctx );
-    selectSurfFmt( Ctx );
-    initDev( Ctx );
-    crtStagingBuffAndMem( Ctx, 1024 * 1024 );
-    initLays( Ctx );
-    initPools( Ctx );
-    initSwapchain( Ctx );
-    initDepthImg( Ctx );
-    initRdrPass( Ctx );
-    initFramebuffers( Ctx );
-    initSamplers( Ctx );
-    initDoesntBelongHere( Ctx );
-    initCmdBuffs( Ctx );
-    initShaders( Ctx );
-    initPipeline( Ctx );
-    initSync( Ctx );
-    crtVtxBuffAndMem( Ctx, 1024 * 1024 );
-    crtIdxBuffAndMem( Ctx, 1024 * 1024 );
-    crtStagingBuffMemAndSets( Ctx, 1024 * 1024 );
-    return Ctx;
+    *Ctx = Context();
+    initWindow(Ctx, Extent);
+    initInst(Ctx, Name);
+    initDbgMsngr(Ctx);
+    initSurf(Ctx);
+    selectPhysicalDev(Ctx);
+    selectSurfFmt(Ctx);
+    initDev(Ctx);
+    crtStagingBuffAndMem(Ctx, 1024 * 1024);
+    initLays(Ctx);
+    initPools(Ctx);
+    initSwapchain(Ctx);
+    initDepthImg(Ctx);
+    initRdrPass(Ctx);
+    initFramebuffers(Ctx);
+    initSamplers(Ctx);
+    initDoesntBelongHere(Ctx);
+    initCmdBuffs(Ctx);
+    initShaders(Ctx);
+    initPipeline(Ctx);
+    initSync(Ctx);
+    crtVtxBuffAndMem(Ctx, 1024 * 1024);
+    crtIdxBuffAndMem(Ctx, 1024 * 1024);
+    crtStagingBuffMemAndSets(Ctx, 1024 * 1024);
   }
 
-  void destroyContext( Context & Ctx ) noexcept
+  void dtyContext(InOut<Context> Ctx) noexcept
   {
-    dtyGarbageSets( Ctx );
-    dtyGarbageMem( Ctx );
-    dtyGarbageBuff( Ctx );
-    dtyBuffMemAndSet( Ctx );
-    dtyIdxBuffAndMem( Ctx );
-    dtyVtxBuffAndMem( Ctx );
-    destroySync( Ctx );
-    destroyPipelines( Ctx );
-    destroyShaders( Ctx );
-    destroyCmdBuffs( Ctx );
-    destroyDoesntBelongHere( Ctx );
-    destroySamplers( Ctx );
-    destroyFramebuffers( Ctx );
-    destroyRdrPass( Ctx );
-    destroyDepthImg( Ctx );
-    destroySwapchain( Ctx );
-    destroyPools( Ctx );
-    destroyLays( Ctx );
-    dtyStagingBuffAndMem( Ctx );
-    destroyDev( Ctx );
-    destroySurf( Ctx );
-    destroyDbgMsngr( Ctx );
-    destroyInst( Ctx );
-    destroyWindow( Ctx );
+    dtyGarbageSets(Ctx);
+    dtyGarbageMem(Ctx);
+    dtyGarbageBuff(Ctx);
+    dtyBuffMemAndSet(Ctx);
+    dtyIdxBuffAndMem(Ctx);
+    dtyVtxBuffAndMem(Ctx);
+    dtySync(Ctx);
+    dtyPipelines(Ctx);
+    dtyShaders(Ctx);
+    dtyCmdBuffs(Ctx);
+    dtyDoesntBelongHere(Ctx);
+    dtySamplers(Ctx);
+    dtyFramebuffers(Ctx);
+    dtyRdrPass(Ctx);
+    dtyDepthImg(Ctx);
+    dtySwapchain(Ctx);
+    dtyPools(Ctx);
+    dtyLays(Ctx);
+    dtyStagingBuffAndMem(Ctx);
+    dtyDev(Ctx);
+    dtySurf(Ctx);
+    dtyDbgMsngr(Ctx);
+    dtyInst(Ctx);
+    dtyWindow(Ctx);
   }
 
-  void initWindow( Context & Ctx, VkExtent2D Extent ) noexcept
+  void initWindow(InOut<Context> Ctx, VkExtent2D Extent) noexcept
   {
     glfwInit();
-    glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     auto const Cb =
-      []( GLFWwindow * const Window, [[maybe_unused]] int const CbWidth, [[maybe_unused]] int const CbHeight )
+      [](GLFWwindow * const Window, [[maybe_unused]] int const CbWidth, [[maybe_unused]] int const CbHeight)
     {
-      auto const User                = glfwGetWindowUserPointer( Window );
-      auto const CurrentCtx          = reinterpret_cast< Context * >( User );
+      auto const User                = glfwGetWindowUserPointer(Window);
+      auto const CurrentCtx          = reinterpret_cast<Context *>(User);
       CurrentCtx->FramebufferResized = true;
     };
 
-    Ctx.Window = glfwCreateWindow(
-      static_cast< int >( Extent.width ), static_cast< int >( Extent.height ), "stan loona", nullptr, nullptr );
+    Ctx->Window =
+      glfwCreateWindow(static_cast<int>(Extent.width), static_cast<int>(Extent.height), "stan loona", nullptr, nullptr);
 
-    glfwSetWindowUserPointer( Ctx.Window, &Ctx );
-    glfwSetFramebufferSizeCallback( Ctx.Window, Cb );
+    glfwSetWindowUserPointer(Ctx->Window, &Ctx);
+    glfwSetFramebufferSizeCallback(Ctx->Window, Cb);
   }
 
-  void destroyWindow( Context & Ctx ) noexcept
+  void dtyWindow(InOut<Context> Ctx) noexcept
   {
-    glfwDestroyWindow( Ctx.Window );
+    glfwDestroyWindow(Ctx->Window);
     glfwTerminate();
   }
 
-  void initInst( Context & Ctx, char const * Name ) noexcept
+  void initInst(InOut<Context> Ctx, char const * Name) noexcept
   {
-    if constexpr ( Context::UseVal )
+    if constexpr (Context::UseVal)
     {
-      auto ValLaysPropCnt = uint32_t( 0 );
-      vkEnumerateInstanceLayerProperties( &ValLaysPropCnt, nullptr );
+      auto ValLaysPropCnt = uint32_t(0);
+      vkEnumerateInstanceLayerProperties(&ValLaysPropCnt, nullptr);
 
-      auto ValLayerProps = std::vector< VkLayerProperties >( ValLaysPropCnt );
-      vkEnumerateInstanceLayerProperties( &ValLaysPropCnt, std::data( ValLayerProps ) );
+      auto ValLayerProps = std::vector<VkLayerProperties>(ValLaysPropCnt);
+      vkEnumerateInstanceLayerProperties(&ValLaysPropCnt, std::data(ValLayerProps));
 
-      auto const Matched = [ &ValLayerProps ]
+      auto const Matched = [&ValLayerProps]
       {
-        for ( auto const & ValLayserProp : ValLayerProps )
+        for (auto const & ValLayserProp : ValLayerProps)
         {
-          for ( auto const ValLayser : Context::ValLays )
+          for (auto const ValLayser : Context::ValLays)
           {
-            if ( std::strcmp( ValLayser, ValLayserProp.layerName ) == 0 )
+            if (std::strcmp(ValLayser, ValLayserProp.layerName) == 0)
             {
               return true;
             }
@@ -119,30 +119,30 @@ namespace mvk::engine
         return false;
       }();
 
-      MVK_VERIFY( Matched );
+      MVK_VERIFY(Matched);
     }
 
     auto AppInfo               = VkApplicationInfo();
     AppInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     AppInfo.pApplicationName   = Name;
-    AppInfo.applicationVersion = VK_MAKE_VERSION( 1, 0, 0 );
+    AppInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     AppInfo.pEngineName        = "No Engine";
-    AppInfo.engineVersion      = VK_MAKE_VERSION( 1, 0, 0 );
+    AppInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
 
-    auto       ReqInstExtCnt  = uint32_t( 0 );
-    auto const ReqInstExtData = glfwGetRequiredInstanceExtensions( &ReqInstExtCnt );
+    auto       ReqInstExtCnt  = uint32_t(0);
+    auto const ReqInstExtData = glfwGetRequiredInstanceExtensions(&ReqInstExtCnt);
 
-    auto ReqExts = std::vector< char const * >( ReqInstExtData, std::next( ReqInstExtData, ReqInstExtCnt ) );
+    auto ReqExts = std::vector<char const *>(ReqInstExtData, std::next(ReqInstExtData, ReqInstExtCnt));
 
-    if constexpr ( Context::UseVal )
+    if constexpr (Context::UseVal)
     {
-      ReqExts.insert( std::begin( ReqExts ), std::begin( Context::ValInstExts ), std::end( Context::ValInstExts ) );
+      ReqExts.insert(std::begin(ReqExts), std::begin(Context::ValInstExts), std::end(Context::ValInstExts));
     }
 
     auto InstCrtInfo  = VkInstanceCreateInfo();
     InstCrtInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 
-    if constexpr ( Context::UseVal )
+    if constexpr (Context::UseVal)
     {
       InstCrtInfo.pNext = &DbgCrtInfo;
     }
@@ -153,10 +153,10 @@ namespace mvk::engine
 
     InstCrtInfo.pApplicationInfo = &AppInfo;
 
-    if constexpr ( Context::UseVal )
+    if constexpr (Context::UseVal)
     {
-      InstCrtInfo.enabledLayerCount   = static_cast< uint32_t >( std::size( Context::ValLays ) );
-      InstCrtInfo.ppEnabledLayerNames = std::data( Context::ValLays );
+      InstCrtInfo.enabledLayerCount   = static_cast<uint32_t>(std::size(Context::ValLays));
+      InstCrtInfo.ppEnabledLayerNames = std::data(Context::ValLays);
     }
     else
     {
@@ -164,72 +164,72 @@ namespace mvk::engine
       InstCrtInfo.ppEnabledExtensionNames = nullptr;
     }
 
-    InstCrtInfo.enabledExtensionCount   = static_cast< uint32_t >( std::size( ReqExts ) );
-    InstCrtInfo.ppEnabledExtensionNames = std::data( ReqExts );
+    InstCrtInfo.enabledExtensionCount   = static_cast<uint32_t>(std::size(ReqExts));
+    InstCrtInfo.ppEnabledExtensionNames = std::data(ReqExts);
 
-    [[maybe_unused]] auto Result = vkCreateInstance( &InstCrtInfo, nullptr, &Ctx.Inst );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    [[maybe_unused]] auto Result = vkCreateInstance(&InstCrtInfo, nullptr, &Ctx->Inst);
+    MVK_VERIFY(Result == VK_SUCCESS);
   }
 
-  void destroyInst( Context & Ctx ) noexcept
+  void dtyInst(InOut<Context> Ctx) noexcept
   {
-    vkDestroyInstance( Ctx.Inst, nullptr );
+    vkDestroyInstance(Ctx->Inst, nullptr);
   }
 
-  void initDbgMsngr( Context & Ctx ) noexcept
+  void initDbgMsngr(InOut<Context> Ctx) noexcept
   {
-    if constexpr ( Context::UseVal )
+    if constexpr (Context::UseVal)
     {
-      auto const CrtDbgUtilMsngr = reinterpret_cast< PFN_vkCreateDebugUtilsMessengerEXT >(
-        vkGetInstanceProcAddr( Ctx.Inst, "vkCreateDebugUtilsMessengerEXT" ) );
+      auto const CrtDbgUtilMsngr = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+        vkGetInstanceProcAddr(Ctx->Inst, "vkCreateDebugUtilsMessengerEXT"));
 
-      MVK_VERIFY( CrtDbgUtilMsngr );
+      MVK_VERIFY(CrtDbgUtilMsngr);
 
-      CrtDbgUtilMsngr( Ctx.Inst, &DbgCrtInfo, nullptr, &Ctx.DbgMsngr );
+      CrtDbgUtilMsngr(Ctx->Inst, &DbgCrtInfo, nullptr, &Ctx->DbgMsngr);
     }
   }
 
-  void destroyDbgMsngr( Context & Ctx ) noexcept
+  void dtyDbgMsngr(InOut<Context> Ctx) noexcept
   {
-    if constexpr ( Context::UseVal )
+    if constexpr (Context::UseVal)
     {
-      auto const DestroyDbgMsngr = reinterpret_cast< PFN_vkDestroyDebugUtilsMessengerEXT >(
-        vkGetInstanceProcAddr( Ctx.Inst, "vkDestroyDebugUtilsMessengerEXT" ) );
+      auto const DestroyDbgMsngr = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+        vkGetInstanceProcAddr(Ctx->Inst, "vkDestroyDebugUtilsMessengerEXT"));
 
-      MVK_VERIFY( DestroyDbgMsngr );
+      MVK_VERIFY(DestroyDbgMsngr);
 
-      DestroyDbgMsngr( Ctx.Inst, Ctx.DbgMsngr, nullptr );
+      DestroyDbgMsngr(Ctx->Inst, Ctx->DbgMsngr, nullptr);
     }
   }
 
-  void initSurf( Context & Ctx ) noexcept
+  void initSurf(InOut<Context> Ctx) noexcept
   {
-    glfwCreateWindowSurface( Ctx.Inst, Ctx.Window, nullptr, &Ctx.Surf );
+    glfwCreateWindowSurface(Ctx->Inst, Ctx->Window, nullptr, &Ctx->Surf);
   }
 
-  void destroySurf( Context & Ctx ) noexcept
+  void dtySurf(InOut<Context> Ctx) noexcept
   {
-    vkDestroySurfaceKHR( Ctx.Inst, Ctx.Surf, nullptr );
+    vkDestroySurfaceKHR(Ctx->Inst, Ctx->Surf, nullptr);
   }
 
-  void selectPhysicalDev( Context & Ctx ) noexcept
+  void selectPhysicalDev(InOut<Context> Ctx) noexcept
   {
-    auto PhysicalDeviceCnt = uint32_t( 0 );
-    vkEnumeratePhysicalDevices( Ctx.Inst, &PhysicalDeviceCnt, nullptr );
+    auto PhysicalDeviceCnt = uint32_t(0);
+    vkEnumeratePhysicalDevices(Ctx->Inst, &PhysicalDeviceCnt, nullptr);
 
-    auto PhysicalDevices = std::vector< VkPhysicalDevice >( PhysicalDeviceCnt );
-    vkEnumeratePhysicalDevices( Ctx.Inst, &PhysicalDeviceCnt, std::data( PhysicalDevices ) );
+    auto PhysicalDevices = std::vector<VkPhysicalDevice>(PhysicalDeviceCnt);
+    vkEnumeratePhysicalDevices(Ctx->Inst, &PhysicalDeviceCnt, std::data(PhysicalDevices));
 
-    for ( auto const PhysicalDevice : PhysicalDevices )
+    for (auto const PhysicalDevice : PhysicalDevices)
     {
       auto features = VkPhysicalDeviceFeatures();
-      vkGetPhysicalDeviceFeatures( PhysicalDevice, &features );
+      vkGetPhysicalDeviceFeatures(PhysicalDevice, &features);
 
-      if ( detail::chkExtSup( PhysicalDevice, Context::DevExts ) &&
-           detail::chkFmtAndPresentModeAvailablity( PhysicalDevice, Ctx.Surf ) &&
-           detail::queryFamiliyIdxs( PhysicalDevice, Ctx.Surf ).has_value() && features.samplerAnisotropy )
+      if (detail::chkExtSup(PhysicalDevice, Context::DevExts) &&
+          detail::chkFmtAndPresentModeAvailablity(PhysicalDevice, Ctx->Surf) &&
+          detail::queryFamiliyIdxs(PhysicalDevice, Ctx->Surf).has_value() && features.samplerAnisotropy)
       {
-        Ctx.PhysicalDev = PhysicalDevice;
+        Ctx->PhysicalDev = PhysicalDevice;
         return;
       }
     }
@@ -237,68 +237,68 @@ namespace mvk::engine
     MVK_VERIFY_NOT_REACHED();
   }
 
-  void selectSurfFmt( Context & Ctx ) noexcept
+  void selectSurfFmt(InOut<Context> Ctx) noexcept
   {
-    auto FmtCnt = uint32_t( 0 );
-    vkGetPhysicalDeviceSurfaceFormatsKHR( Ctx.PhysicalDev, Ctx.Surf, &FmtCnt, nullptr );
+    auto FmtCnt = uint32_t(0);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(Ctx->PhysicalDev, Ctx->Surf, &FmtCnt, nullptr);
 
-    auto Fmts = std::vector< VkSurfaceFormatKHR >( FmtCnt );
-    vkGetPhysicalDeviceSurfaceFormatsKHR( Ctx.PhysicalDev, Ctx.Surf, &FmtCnt, std::data( Fmts ) );
+    auto Fmts = std::vector<VkSurfaceFormatKHR>(FmtCnt);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(Ctx->PhysicalDev, Ctx->Surf, &FmtCnt, std::data(Fmts));
 
-    for ( auto const Fmt : Fmts )
+    for (auto const Fmt : Fmts)
     {
-      if ( Fmt.format == VK_FORMAT_B8G8R8A8_SRGB && Fmt.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR )
+      if (Fmt.format == VK_FORMAT_B8G8R8A8_SRGB && Fmt.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
       {
-        Ctx.SurfFmt = Fmt;
+        Ctx->SurfFmt = Fmt;
         return;
       }
     }
 
-    Ctx.SurfFmt = Fmts[ 0 ];
+    Ctx->SurfFmt = Fmts[0];
   }
 
-  void initDev( Context & Ctx ) noexcept
+  void initDev(InOut<Context> Ctx) noexcept
   {
-    auto const OptQueueIdx = detail::queryFamiliyIdxs( Ctx.PhysicalDev, Ctx.Surf );
+    auto const OptQueueIdx = detail::queryFamiliyIdxs(Ctx->PhysicalDev, Ctx->Surf);
 
-    MVK_VERIFY( OptQueueIdx.has_value() );
+    MVK_VERIFY(OptQueueIdx.has_value());
 
     auto const QueueIdxs = OptQueueIdx.value();
-    Ctx.GfxQueueIdx      = QueueIdxs.first;
-    Ctx.PresentQueueIdx  = QueueIdxs.second;
+    Ctx->GfxQueueIdx     = QueueIdxs.first;
+    Ctx->PresentQueueIdx = QueueIdxs.second;
 
     auto Features = VkPhysicalDeviceFeatures();
-    vkGetPhysicalDeviceFeatures( Ctx.PhysicalDev, &Features );
+    vkGetPhysicalDeviceFeatures(Ctx->PhysicalDev, &Features);
 
     auto const QueuePrio = 1.0F;
 
     auto GfxQueueCrtInfo             = VkDeviceQueueCreateInfo();
     GfxQueueCrtInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    GfxQueueCrtInfo.queueFamilyIndex = Ctx.GfxQueueIdx;
+    GfxQueueCrtInfo.queueFamilyIndex = Ctx->GfxQueueIdx;
     GfxQueueCrtInfo.queueCount       = 1;
     GfxQueueCrtInfo.pQueuePriorities = &QueuePrio;
 
     auto PresentQueueCrtInfo             = VkDeviceQueueCreateInfo();
     PresentQueueCrtInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    PresentQueueCrtInfo.queueFamilyIndex = Ctx.PresentQueueIdx;
+    PresentQueueCrtInfo.queueFamilyIndex = Ctx->PresentQueueIdx;
     PresentQueueCrtInfo.queueCount       = 1;
     PresentQueueCrtInfo.pQueuePriorities = &QueuePrio;
 
     auto const queue_create_info       = std::array{ GfxQueueCrtInfo, PresentQueueCrtInfo };
-    auto const queue_create_info_count = static_cast< uint32_t >( QueueIdxs.first != QueueIdxs.second ? 2 : 1 );
+    auto const queue_create_info_count = static_cast<uint32_t>(QueueIdxs.first != QueueIdxs.second ? 2 : 1);
 
     auto Device_create_info                    = VkDeviceCreateInfo();
     Device_create_info.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     Device_create_info.queueCreateInfoCount    = queue_create_info_count;
-    Device_create_info.pQueueCreateInfos       = std::data( queue_create_info );
+    Device_create_info.pQueueCreateInfos       = std::data(queue_create_info);
     Device_create_info.pEnabledFeatures        = &Features;
-    Device_create_info.enabledExtensionCount   = static_cast< uint32_t >( std::size( Context::DevExts ) );
-    Device_create_info.ppEnabledExtensionNames = std::data( Context::DevExts );
+    Device_create_info.enabledExtensionCount   = static_cast<uint32_t>(std::size(Context::DevExts));
+    Device_create_info.ppEnabledExtensionNames = std::data(Context::DevExts);
 
-    if constexpr ( Context::UseVal )
+    if constexpr (Context::UseVal)
     {
-      Device_create_info.enabledLayerCount   = static_cast< uint32_t >( std::size( Context::ValLays ) );
-      Device_create_info.ppEnabledLayerNames = std::data( Context::ValLays );
+      Device_create_info.enabledLayerCount   = static_cast<uint32_t>(std::size(Context::ValLays));
+      Device_create_info.ppEnabledLayerNames = std::data(Context::ValLays);
     }
     else
     {
@@ -306,19 +306,19 @@ namespace mvk::engine
       Device_create_info.ppEnabledLayerNames = nullptr;
     }
 
-    [[maybe_unused]] auto Result = vkCreateDevice( Ctx.PhysicalDev, &Device_create_info, nullptr, &Ctx.Dev );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    [[maybe_unused]] auto Result = vkCreateDevice(Ctx->PhysicalDev, &Device_create_info, nullptr, &Ctx->Dev);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
-    vkGetDeviceQueue( Ctx.Dev, Ctx.GfxQueueIdx, 0, &Ctx.GfxQueue );
-    vkGetDeviceQueue( Ctx.Dev, Ctx.PresentQueueIdx, 0, &Ctx.PresentQueue );
+    vkGetDeviceQueue(Ctx->Dev, Ctx->GfxQueueIdx, 0, &Ctx->GfxQueue);
+    vkGetDeviceQueue(Ctx->Dev, Ctx->PresentQueueIdx, 0, &Ctx->PresentQueue);
   }
 
-  void destroyDev( Context & Ctx ) noexcept
+  void dtyDev(InOut<Context> Ctx) noexcept
   {
-    vkDestroyDevice( Ctx.Dev, nullptr );
+    vkDestroyDevice(Ctx->Dev, nullptr);
   }
 
-  void initLays( Context & Ctx ) noexcept
+  void initLays(InOut<Context> Ctx) noexcept
   {
     auto UniformDescriptorSetLayBind               = VkDescriptorSetLayoutBinding();
     UniformDescriptorSetLayBind.binding            = 0;
@@ -333,9 +333,9 @@ namespace mvk::engine
     UniformDescriptorSetLayoutCrtInfo.pBindings    = &UniformDescriptorSetLayBind;
 
     auto Result =
-      vkCreateDescriptorSetLayout( Ctx.Dev, &UniformDescriptorSetLayoutCrtInfo, nullptr, &Ctx.UboDescriptorSetLay );
+      vkCreateDescriptorSetLayout(Ctx->Dev, &UniformDescriptorSetLayoutCrtInfo, nullptr, &Ctx->UboDescriptorSetLay);
 
-    MVK_VERIFY( Result == VK_SUCCESS );
+    MVK_VERIFY(Result == VK_SUCCESS);
 
     auto SamplerDescriptorSetLayBind               = VkDescriptorSetLayoutBinding();
     SamplerDescriptorSetLayBind.binding            = 0;
@@ -349,40 +349,40 @@ namespace mvk::engine
     SamplerDescriptorSetLayCrtInfo.bindingCount = 1;
     SamplerDescriptorSetLayCrtInfo.pBindings    = &SamplerDescriptorSetLayBind;
 
-    Result = vkCreateDescriptorSetLayout( Ctx.Dev, &SamplerDescriptorSetLayCrtInfo, nullptr, &Ctx.TexDescriptorSetLay );
+    Result = vkCreateDescriptorSetLayout(Ctx->Dev, &SamplerDescriptorSetLayCrtInfo, nullptr, &Ctx->TexDescriptorSetLay);
 
-    MVK_VERIFY( Result == VK_SUCCESS );
+    MVK_VERIFY(Result == VK_SUCCESS);
 
-    auto DescriptorSetLays = std::array{ Ctx.UboDescriptorSetLay, Ctx.TexDescriptorSetLay };
+    auto DescriptorSetLays = std::array{ Ctx->UboDescriptorSetLay, Ctx->TexDescriptorSetLay };
 
     auto PipelineLayCrtInfo                   = VkPipelineLayoutCreateInfo();
     PipelineLayCrtInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    PipelineLayCrtInfo.setLayoutCount         = static_cast< uint32_t >( std::size( DescriptorSetLays ) );
-    PipelineLayCrtInfo.pSetLayouts            = std::data( DescriptorSetLays );
+    PipelineLayCrtInfo.setLayoutCount         = static_cast<uint32_t>(std::size(DescriptorSetLays));
+    PipelineLayCrtInfo.pSetLayouts            = std::data(DescriptorSetLays);
     PipelineLayCrtInfo.pushConstantRangeCount = 0;
     PipelineLayCrtInfo.pPushConstantRanges    = nullptr;
 
-    Result = vkCreatePipelineLayout( Ctx.Dev, &PipelineLayCrtInfo, nullptr, &Ctx.PipelineLay );
+    Result = vkCreatePipelineLayout(Ctx->Dev, &PipelineLayCrtInfo, nullptr, &Ctx->PipelineLay);
 
-    MVK_VERIFY( Result == VK_SUCCESS );
+    MVK_VERIFY(Result == VK_SUCCESS);
   }
 
-  void destroyLays( Context & Ctx ) noexcept
+  void dtyLays(InOut<Context> Ctx) noexcept
   {
-    vkDestroyPipelineLayout( Ctx.Dev, Ctx.PipelineLay, nullptr );
-    vkDestroyDescriptorSetLayout( Ctx.Dev, Ctx.TexDescriptorSetLay, nullptr );
-    vkDestroyDescriptorSetLayout( Ctx.Dev, Ctx.UboDescriptorSetLay, nullptr );
+    vkDestroyPipelineLayout(Ctx->Dev, Ctx->PipelineLay, nullptr);
+    vkDestroyDescriptorSetLayout(Ctx->Dev, Ctx->TexDescriptorSetLay, nullptr);
+    vkDestroyDescriptorSetLayout(Ctx->Dev, Ctx->UboDescriptorSetLay, nullptr);
   }
 
-  void initPools( Context & Ctx ) noexcept
+  void initPools(InOut<Context> Ctx) noexcept
   {
     auto CmdPoolCrtInfo             = VkCommandPoolCreateInfo();
     CmdPoolCrtInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    CmdPoolCrtInfo.queueFamilyIndex = Ctx.GfxQueueIdx;
+    CmdPoolCrtInfo.queueFamilyIndex = Ctx->GfxQueueIdx;
     CmdPoolCrtInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    [[maybe_unused]] auto Result = vkCreateCommandPool( Ctx.Dev, &CmdPoolCrtInfo, nullptr, &Ctx.CmdPool );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    [[maybe_unused]] auto Result = vkCreateCommandPool(Ctx->Dev, &CmdPoolCrtInfo, nullptr, &Ctx->CmdPool);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
     auto UniformDescriptorPoolSize            = VkDescriptorPoolSize();
     UniformDescriptorPoolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -396,39 +396,41 @@ namespace mvk::engine
 
     auto DescriptorPoolCrtInfo          = VkDescriptorPoolCreateInfo();
     DescriptorPoolCrtInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    DescriptorPoolCrtInfo.poolSizeCount = static_cast< uint32_t >( std::size( DescriptorPoolSizes ) );
-    DescriptorPoolCrtInfo.pPoolSizes    = std::data( DescriptorPoolSizes );
+    DescriptorPoolCrtInfo.poolSizeCount = static_cast<uint32_t>(std::size(DescriptorPoolSizes));
+    DescriptorPoolCrtInfo.pPoolSizes    = std::data(DescriptorPoolSizes);
     DescriptorPoolCrtInfo.maxSets       = 128;
     DescriptorPoolCrtInfo.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
-    vkCreateDescriptorPool( Ctx.Dev, &DescriptorPoolCrtInfo, nullptr, &Ctx.DescriptorPool );
+    vkCreateDescriptorPool(Ctx->Dev, &DescriptorPoolCrtInfo, nullptr, &Ctx->DescriptorPool);
   }
 
-  void destroyPools( Context & Ctx ) noexcept
+  void dtyPools(InOut<Context> Ctx) noexcept
   {
-    vkDestroyDescriptorPool( Ctx.Dev, Ctx.DescriptorPool, nullptr );
-    vkDestroyCommandPool( Ctx.Dev, Ctx.CmdPool, nullptr );
+    vkDestroyDescriptorPool(Ctx->Dev, Ctx->DescriptorPool, nullptr);
+    vkDestroyCommandPool(Ctx->Dev, Ctx->CmdPool, nullptr);
   }
 
-  void initSwapchain( Context & Ctx ) noexcept
+  void initSwapchain(InOut<Context> Ctx) noexcept
   {
-    auto const FamilyIdxs      = std::array{ Ctx.GfxQueueIdx, Ctx.PresentQueueIdx };
-    auto const FramebufferSize = queryFramebufferSize( Ctx );
+    auto const FamilyIdxs = std::array{ Ctx->GfxQueueIdx, Ctx->PresentQueueIdx };
 
-    auto Capabilities = VkSurfaceCapabilitiesKHR();
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR( Ctx.PhysicalDev, Ctx.Surf, &Capabilities );
+    VkExtent2D FramebufferSize;
+    getFramebufferSize(Ctx, &FramebufferSize);
 
-    auto const present_mode = detail::choosePresentMode( Ctx.PhysicalDev, Ctx.Surf );
-    Ctx.SwapchainExtent     = detail::chooseExtent( Capabilities, FramebufferSize );
-    auto const image_count  = detail::chooseImgCnt( Capabilities );
+    VkSurfaceCapabilitiesKHR Capabilities;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Ctx->PhysicalDev, Ctx->Surf, &Capabilities);
+
+    auto const present_mode = detail::choosePresentMode(Ctx->PhysicalDev, Ctx->Surf);
+    Ctx->SwapchainExtent    = detail::chooseExtent(Capabilities, FramebufferSize);
+    auto const image_count  = detail::chooseImgCnt(Capabilities);
 
     auto SwapchainCrtInfo             = VkSwapchainCreateInfoKHR();
     SwapchainCrtInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    SwapchainCrtInfo.surface          = Ctx.Surf;
+    SwapchainCrtInfo.surface          = Ctx->Surf;
     SwapchainCrtInfo.minImageCount    = image_count;
-    SwapchainCrtInfo.imageFormat      = Ctx.SurfFmt.format;
-    SwapchainCrtInfo.imageColorSpace  = Ctx.SurfFmt.colorSpace;
-    SwapchainCrtInfo.imageExtent      = Ctx.SwapchainExtent;
+    SwapchainCrtInfo.imageFormat      = Ctx->SurfFmt.format;
+    SwapchainCrtInfo.imageColorSpace  = Ctx->SurfFmt.colorSpace;
+    SwapchainCrtInfo.imageExtent      = Ctx->SwapchainExtent;
     SwapchainCrtInfo.imageArrayLayers = 1;
     SwapchainCrtInfo.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     SwapchainCrtInfo.preTransform     = Capabilities.currentTransform;
@@ -437,11 +439,11 @@ namespace mvk::engine
     SwapchainCrtInfo.clipped          = VK_TRUE;
     SwapchainCrtInfo.oldSwapchain     = nullptr;
 
-    if ( FamilyIdxs[ 0 ] != FamilyIdxs[ 1 ] )
+    if (FamilyIdxs[0] != FamilyIdxs[1])
     {
       SwapchainCrtInfo.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
       SwapchainCrtInfo.queueFamilyIndexCount = 2;
-      SwapchainCrtInfo.pQueueFamilyIndices   = std::data( FamilyIdxs );
+      SwapchainCrtInfo.pQueueFamilyIndices   = std::data(FamilyIdxs);
     }
     else
     {
@@ -450,18 +452,18 @@ namespace mvk::engine
       SwapchainCrtInfo.pQueueFamilyIndices   = nullptr;
     }
 
-    auto Result = vkCreateSwapchainKHR( Ctx.Dev, &SwapchainCrtInfo, nullptr, &Ctx.Swapchain );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    auto Result = vkCreateSwapchainKHR(Ctx->Dev, &SwapchainCrtInfo, nullptr, &Ctx->Swapchain);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
-    Result = vkGetSwapchainImagesKHR( Ctx.Dev, Ctx.Swapchain, &Ctx.SwapchainImgCnt, nullptr );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    Result = vkGetSwapchainImagesKHR(Ctx->Dev, Ctx->Swapchain, &Ctx->SwapchainImgCnt, nullptr);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
-    auto SwapchainImgs = std::vector< VkImage >( Ctx.SwapchainImgCnt );
-    vkGetSwapchainImagesKHR( Ctx.Dev, Ctx.Swapchain, &Ctx.SwapchainImgCnt, std::data( SwapchainImgs ) );
+    auto SwapchainImgs = std::vector<VkImage>(Ctx->SwapchainImgCnt);
+    vkGetSwapchainImagesKHR(Ctx->Dev, Ctx->Swapchain, &Ctx->SwapchainImgCnt, std::data(SwapchainImgs));
 
-    Ctx.SwapchainImgViews.reserve( Ctx.SwapchainImgCnt );
+    Ctx->SwapchainImgViews.reserve(Ctx->SwapchainImgCnt);
 
-    for ( auto const image : SwapchainImgs )
+    for (auto const image : SwapchainImgs)
     {
       auto SwapchainImgViewCrtInfo                            = VkImageViewCreateInfo();
       SwapchainImgViewCrtInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -479,28 +481,28 @@ namespace mvk::engine
       SwapchainImgViewCrtInfo.subresourceRange.layerCount     = 1;
 
       auto ImgView = VkImageView();
-      Result       = vkCreateImageView( Ctx.Dev, &SwapchainImgViewCrtInfo, nullptr, &ImgView );
-      Ctx.SwapchainImgViews.push_back( ImgView );
+      Result       = vkCreateImageView(Ctx->Dev, &SwapchainImgViewCrtInfo, nullptr, &ImgView);
+      Ctx->SwapchainImgViews.push_back(ImgView);
     }
   }
 
-  void destroySwapchain( Context & Ctx ) noexcept
+  void dtySwapchain(InOut<Context> Ctx) noexcept
   {
-    for ( auto const ImgView : Ctx.SwapchainImgViews )
+    for (auto const ImgView : Ctx->SwapchainImgViews)
     {
-      vkDestroyImageView( Ctx.Dev, ImgView, nullptr );
+      vkDestroyImageView(Ctx->Dev, ImgView, nullptr);
     }
 
-    vkDestroySwapchainKHR( Ctx.Dev, Ctx.Swapchain, nullptr );
+    vkDestroySwapchainKHR(Ctx->Dev, Ctx->Swapchain, nullptr);
   }
 
-  void initDepthImg( Context & Ctx ) noexcept
+  void initDepthImg(InOut<Context> Ctx) noexcept
   {
     auto DepthImgCreateInfo          = VkImageCreateInfo();
     DepthImgCreateInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     DepthImgCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
-    DepthImgCreateInfo.extent.width  = Ctx.SwapchainExtent.width;
-    DepthImgCreateInfo.extent.height = Ctx.SwapchainExtent.height;
+    DepthImgCreateInfo.extent.width  = Ctx->SwapchainExtent.width;
+    DepthImgCreateInfo.extent.height = Ctx->SwapchainExtent.height;
     DepthImgCreateInfo.extent.depth  = 1;
     DepthImgCreateInfo.mipLevels     = 1;
     DepthImgCreateInfo.arrayLayers   = 1;
@@ -512,31 +514,31 @@ namespace mvk::engine
     DepthImgCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
     DepthImgCreateInfo.flags         = 0;
 
-    auto Result = vkCreateImage( Ctx.Dev, &DepthImgCreateInfo, nullptr, &Ctx.DepthImg );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    auto Result = vkCreateImage(Ctx->Dev, &DepthImgCreateInfo, nullptr, &Ctx->DepthImg);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
     auto DepthImgReq = VkMemoryRequirements();
-    vkGetImageMemoryRequirements( Ctx.Dev, Ctx.DepthImg, &DepthImgReq );
+    vkGetImageMemoryRequirements(Ctx->Dev, Ctx->DepthImg, &DepthImgReq);
 
     auto const MemTypeIdx =
-      detail::queryMemType( Ctx.PhysicalDev, DepthImgReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+      detail::queryMemType(Ctx->PhysicalDev, DepthImgReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    MVK_VERIFY( MemTypeIdx.has_value() );
+    MVK_VERIFY(MemTypeIdx.has_value());
 
     auto DepthImgMemAllocInfo            = VkMemoryAllocateInfo();
     DepthImgMemAllocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     DepthImgMemAllocInfo.allocationSize  = DepthImgReq.size;
     DepthImgMemAllocInfo.memoryTypeIndex = MemTypeIdx.value();
 
-    Result = vkAllocateMemory( Ctx.Dev, &DepthImgMemAllocInfo, nullptr, &Ctx.DepthImgMem );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    Result = vkAllocateMemory(Ctx->Dev, &DepthImgMemAllocInfo, nullptr, &Ctx->DepthImgMem);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
-    Result = vkBindImageMemory( Ctx.Dev, Ctx.DepthImg, Ctx.DepthImgMem, 0 );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    Result = vkBindImageMemory(Ctx->Dev, Ctx->DepthImg, Ctx->DepthImgMem, 0);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
     auto DepthImgViewCrtInfo                            = VkImageViewCreateInfo();
     DepthImgViewCrtInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    DepthImgViewCrtInfo.image                           = Ctx.DepthImg;
+    DepthImgViewCrtInfo.image                           = Ctx->DepthImg;
     DepthImgViewCrtInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
     DepthImgViewCrtInfo.format                          = VK_FORMAT_D32_SFLOAT;
     DepthImgViewCrtInfo.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -549,57 +551,56 @@ namespace mvk::engine
     DepthImgViewCrtInfo.subresourceRange.baseArrayLayer = 0;
     DepthImgViewCrtInfo.subresourceRange.layerCount     = 1;
 
-    Result = vkCreateImageView( Ctx.Dev, &DepthImgViewCrtInfo, nullptr, &Ctx.DepthImgView );
+    Result = vkCreateImageView(Ctx->Dev, &DepthImgViewCrtInfo, nullptr, &Ctx->DepthImgView);
 
-    MVK_VERIFY( Result == VK_SUCCESS );
+    MVK_VERIFY(Result == VK_SUCCESS);
 
-    transition_layout(
-      Ctx, Ctx.DepthImg, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1 );
+    trainstionLay(Ctx, Ctx->DepthImg, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
   }
 
-  void destroyDepthImg( Context & Ctx ) noexcept
+  void dtyDepthImg(InOut<Context> Ctx) noexcept
   {
-    vkDestroyImageView( Ctx.Dev, Ctx.DepthImgView, nullptr );
-    vkFreeMemory( Ctx.Dev, Ctx.DepthImgMem, nullptr );
-    vkDestroyImage( Ctx.Dev, Ctx.DepthImg, nullptr );
+    vkDestroyImageView(Ctx->Dev, Ctx->DepthImgView, nullptr);
+    vkFreeMemory(Ctx->Dev, Ctx->DepthImgMem, nullptr);
+    vkDestroyImage(Ctx->Dev, Ctx->DepthImg, nullptr);
   }
 
-  void initFramebuffers( Context & Ctx ) noexcept
+  void initFramebuffers(InOut<Context> Ctx) noexcept
   {
-    Ctx.Framebuffers.reserve( Ctx.SwapchainImgCnt );
+    Ctx->Framebuffers.reserve(Ctx->SwapchainImgCnt);
 
-    for ( auto const ImgView : Ctx.SwapchainImgViews )
+    for (auto const ImgView : Ctx->SwapchainImgViews)
     {
-      auto const Attachments = std::array{ ImgView, Ctx.DepthImgView };
+      auto const Attachments = std::array{ ImgView, Ctx->DepthImgView };
 
       auto FramebufferCrtInfo            = VkFramebufferCreateInfo();
       FramebufferCrtInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-      FramebufferCrtInfo.renderPass      = Ctx.RdrPass;
-      FramebufferCrtInfo.attachmentCount = static_cast< uint32_t >( std::size( Attachments ) );
-      FramebufferCrtInfo.pAttachments    = std::data( Attachments );
-      FramebufferCrtInfo.width           = Ctx.SwapchainExtent.width;
-      FramebufferCrtInfo.height          = Ctx.SwapchainExtent.height;
+      FramebufferCrtInfo.renderPass      = Ctx->RdrPass;
+      FramebufferCrtInfo.attachmentCount = static_cast<uint32_t>(std::size(Attachments));
+      FramebufferCrtInfo.pAttachments    = std::data(Attachments);
+      FramebufferCrtInfo.width           = Ctx->SwapchainExtent.width;
+      FramebufferCrtInfo.height          = Ctx->SwapchainExtent.height;
       FramebufferCrtInfo.layers          = 1;
 
       auto Framebuffer = VkFramebuffer();
 
-      [[maybe_unused]] auto Result = vkCreateFramebuffer( Ctx.Dev, &FramebufferCrtInfo, nullptr, &Framebuffer );
-      Ctx.Framebuffers.push_back( Framebuffer );
-      MVK_VERIFY( Result == VK_SUCCESS );
+      [[maybe_unused]] auto Result = vkCreateFramebuffer(Ctx->Dev, &FramebufferCrtInfo, nullptr, &Framebuffer);
+      Ctx->Framebuffers.push_back(Framebuffer);
+      MVK_VERIFY(Result == VK_SUCCESS);
     }
   }
 
-  void destroyFramebuffers( Context & Ctx ) noexcept
+  void dtyFramebuffers(InOut<Context> Ctx) noexcept
   {
-    for ( auto const Framebuffer : Ctx.Framebuffers )
+    for (auto const Framebuffer : Ctx->Framebuffers)
 
-      vkDestroyFramebuffer( Ctx.Dev, Framebuffer, nullptr );
+      vkDestroyFramebuffer(Ctx->Dev, Framebuffer, nullptr);
   }
 
-  void initRdrPass( Context & Ctx ) noexcept
+  void initRdrPass(InOut<Context> Ctx) noexcept
   {
     auto ColorAttachDesc           = VkAttachmentDescription();
-    ColorAttachDesc.format         = Ctx.SurfFmt.format;
+    ColorAttachDesc.format         = Ctx->SurfFmt.format;
     ColorAttachDesc.samples        = VK_SAMPLE_COUNT_1_BIT;
     ColorAttachDesc.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
     ColorAttachDesc.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -644,33 +645,33 @@ namespace mvk::engine
 
     auto RdrPassCrtInfo            = VkRenderPassCreateInfo();
     RdrPassCrtInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    RdrPassCrtInfo.attachmentCount = static_cast< uint32_t >( std::size( Attachments ) );
-    RdrPassCrtInfo.pAttachments    = std::data( Attachments );
+    RdrPassCrtInfo.attachmentCount = static_cast<uint32_t>(std::size(Attachments));
+    RdrPassCrtInfo.pAttachments    = std::data(Attachments);
     RdrPassCrtInfo.subpassCount    = 1;
     RdrPassCrtInfo.pSubpasses      = &SubpassDesc;
     RdrPassCrtInfo.dependencyCount = 1;
     RdrPassCrtInfo.pDependencies   = &SubpassDep;
 
-    [[maybe_unused]] auto Result = vkCreateRenderPass( Ctx.Dev, &RdrPassCrtInfo, nullptr, &Ctx.RdrPass );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    [[maybe_unused]] auto Result = vkCreateRenderPass(Ctx->Dev, &RdrPassCrtInfo, nullptr, &Ctx->RdrPass);
+    MVK_VERIFY(Result == VK_SUCCESS);
   }
 
-  void destroyRdrPass( Context & Ctx ) noexcept
+  void dtyRdrPass(InOut<Context> Ctx) noexcept
   {
-    vkDestroyRenderPass( Ctx.Dev, Ctx.RdrPass, nullptr );
+    vkDestroyRenderPass(Ctx->Dev, Ctx->RdrPass, nullptr);
   }
 
-  void initDoesntBelongHere( Context & Ctx ) noexcept
+  void initDoesntBelongHere(InOut<Context> Ctx) noexcept
   {
-    std::tie( Ctx.texture_, Ctx.width_, Ctx.height_ ) = detail::loadTex( "../../assets/viking_room.png" );
+    std::tie(Ctx->texture_, Ctx->width_, Ctx->height_) = detail::loadTex("../../assets/viking_room.png");
 
     auto ImgCrtInfo          = VkImageCreateInfo();
     ImgCrtInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImgCrtInfo.imageType     = VK_IMAGE_TYPE_2D;
-    ImgCrtInfo.extent.width  = Ctx.width_;
-    ImgCrtInfo.extent.height = Ctx.height_;
+    ImgCrtInfo.extent.width  = Ctx->width_;
+    ImgCrtInfo.extent.height = Ctx->height_;
     ImgCrtInfo.extent.depth  = 1;
-    ImgCrtInfo.mipLevels     = detail::calcMipLvl( Ctx.width_, Ctx.height_ );
+    ImgCrtInfo.mipLevels     = detail::calcMipLvl(Ctx->width_, Ctx->height_);
     ImgCrtInfo.arrayLayers   = 1;
     ImgCrtInfo.format        = VK_FORMAT_R8G8B8A8_SRGB;
     ImgCrtInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
@@ -680,37 +681,37 @@ namespace mvk::engine
     ImgCrtInfo.samples     = VK_SAMPLE_COUNT_1_BIT;
     ImgCrtInfo.flags       = 0;
 
-    auto Result = vkCreateImage( Ctx.Dev, &ImgCrtInfo, nullptr, &Ctx.image_ );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    auto Result = vkCreateImage(Ctx->Dev, &ImgCrtInfo, nullptr, &Ctx->image_);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
     auto ImgMemReq = VkMemoryRequirements();
-    vkGetImageMemoryRequirements( Ctx.Dev, Ctx.image_, &ImgMemReq );
+    vkGetImageMemoryRequirements(Ctx->Dev, Ctx->image_, &ImgMemReq);
 
     auto const MemTypeIdx =
-      detail::queryMemType( Ctx.PhysicalDev, ImgMemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
+      detail::queryMemType(Ctx->PhysicalDev, ImgMemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    MVK_VERIFY( MemTypeIdx.has_value() );
+    MVK_VERIFY(MemTypeIdx.has_value());
 
     auto ImgMemAllocInfo            = VkMemoryAllocateInfo();
     ImgMemAllocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     ImgMemAllocInfo.allocationSize  = ImgMemReq.size;
     ImgMemAllocInfo.memoryTypeIndex = MemTypeIdx.value();
 
-    Result = vkAllocateMemory( Ctx.Dev, &ImgMemAllocInfo, nullptr, &Ctx.image_memory_ );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    Result = vkAllocateMemory(Ctx->Dev, &ImgMemAllocInfo, nullptr, &Ctx->image_memory_);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
-    vkBindImageMemory( Ctx.Dev, Ctx.image_, Ctx.image_memory_, 0 );
+    vkBindImageMemory(Ctx->Dev, Ctx->image_, Ctx->image_memory_, 0);
 
-    transition_layout(
-      Ctx, Ctx.image_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ImgCrtInfo.mipLevels );
+    trainstionLay(
+      Ctx, Ctx->image_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ImgCrtInfo.mipLevels);
 
-    auto StagedTex = allocStaging( Ctx, utility::as_bytes( Ctx.texture_ ) );
-    stage_image( Ctx, StagedTex, Ctx.width_, Ctx.height_, Ctx.image_ );
-    generate_mipmaps( Ctx, Ctx.image_, Ctx.width_, Ctx.height_, ImgCrtInfo.mipLevels );
+    auto StagedTex = allocStaging(Ctx, utility::as_bytes(Ctx->texture_));
+    stageImage(Ctx, StagedTex, Ctx->width_, Ctx->height_, Ctx->image_);
+    generateMip(Ctx, Ctx->image_, Ctx->width_, Ctx->height_, ImgCrtInfo.mipLevels);
 
     auto ImgViewCrtInfo                            = VkImageViewCreateInfo();
     ImgViewCrtInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    ImgViewCrtInfo.image                           = Ctx.image_;
+    ImgViewCrtInfo.image                           = Ctx->image_;
     ImgViewCrtInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
     ImgViewCrtInfo.format                          = VK_FORMAT_R8G8B8A8_SRGB;
     ImgViewCrtInfo.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -723,21 +724,21 @@ namespace mvk::engine
     ImgViewCrtInfo.subresourceRange.baseArrayLayer = 0;
     ImgViewCrtInfo.subresourceRange.layerCount     = 1;
 
-    Result = vkCreateImageView( Ctx.Dev, &ImgViewCrtInfo, nullptr, &Ctx.image_view_ );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    Result = vkCreateImageView(Ctx->Dev, &ImgViewCrtInfo, nullptr, &Ctx->image_view_);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
-    std::tie( Ctx.vertices_, Ctx.indices_ ) = detail::readObj( "../../assets/viking_room.obj" );
+    std::tie(Ctx->vertices_, Ctx->indices_) = detail::readObj("../../assets/viking_room.obj");
 
-    Ctx.image_descriptor_set_ = allocDescriptorSets< 1 >( Ctx, Ctx.TexDescriptorSetLay )[ 0 ];
+    Ctx->image_descriptor_set_ = allocDescriptorSets<1>(Ctx, Ctx->TexDescriptorSetLay)[0];
 
     auto ImgDescriptorImgCreateInfo        = VkDescriptorImageInfo();
     ImgDescriptorImgCreateInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    ImgDescriptorImgCreateInfo.imageView   = Ctx.image_view_;
-    ImgDescriptorImgCreateInfo.sampler     = Ctx.TexSampler;
+    ImgDescriptorImgCreateInfo.imageView   = Ctx->image_view_;
+    ImgDescriptorImgCreateInfo.sampler     = Ctx->TexSampler;
 
     auto ImgWriteDescriptorSet             = VkWriteDescriptorSet();
     ImgWriteDescriptorSet.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    ImgWriteDescriptorSet.dstSet           = Ctx.image_descriptor_set_;
+    ImgWriteDescriptorSet.dstSet           = Ctx->image_descriptor_set_;
     ImgWriteDescriptorSet.dstBinding       = 0;
     ImgWriteDescriptorSet.dstArrayElement  = 0;
     ImgWriteDescriptorSet.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -746,58 +747,58 @@ namespace mvk::engine
     ImgWriteDescriptorSet.pImageInfo       = &ImgDescriptorImgCreateInfo;
     ImgWriteDescriptorSet.pTexelBufferView = nullptr;
 
-    vkUpdateDescriptorSets( Ctx.Dev, 1, &ImgWriteDescriptorSet, 0, nullptr );
+    vkUpdateDescriptorSets(Ctx->Dev, 1, &ImgWriteDescriptorSet, 0, nullptr);
   }
 
-  void destroyDoesntBelongHere( Context & Ctx ) noexcept
+  void dtyDoesntBelongHere(InOut<Context> Ctx) noexcept
   {
-    vkFreeDescriptorSets( Ctx.Dev, Ctx.DescriptorPool, 1, &Ctx.image_descriptor_set_ );
-    vkDestroyImageView( Ctx.Dev, Ctx.image_view_, nullptr );
-    vkFreeMemory( Ctx.Dev, Ctx.image_memory_, nullptr );
-    vkDestroyImage( Ctx.Dev, Ctx.image_, nullptr );
+    vkFreeDescriptorSets(Ctx->Dev, Ctx->DescriptorPool, 1, &Ctx->image_descriptor_set_);
+    vkDestroyImageView(Ctx->Dev, Ctx->image_view_, nullptr);
+    vkFreeMemory(Ctx->Dev, Ctx->image_memory_, nullptr);
+    vkDestroyImage(Ctx->Dev, Ctx->image_, nullptr);
   }
 
-  void initCmdBuffs( Context & Ctx ) noexcept
+  void initCmdBuffs(InOut<Context> Ctx) noexcept
   {
-    Ctx.CmdBuffs = allocCmdBuff< Context::DynamicBuffCnt >( Ctx, VK_COMMAND_BUFFER_LEVEL_PRIMARY );
+    Ctx->CmdBuffs = allocCmdBuff<Context::DynamicBuffCnt>(Ctx, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
   }
 
-  void destroyCmdBuffs( Context & Ctx ) noexcept
+  void dtyCmdBuffs(InOut<Context> Ctx) noexcept
   {
     vkFreeCommandBuffers(
-      Ctx.Dev, Ctx.CmdPool, static_cast< uint32_t >( std::size( Ctx.CmdBuffs ) ), std::data( Ctx.CmdBuffs ) );
+      Ctx->Dev, Ctx->CmdPool, static_cast<uint32_t>(std::size(Ctx->CmdBuffs)), std::data(Ctx->CmdBuffs));
   }
 
-  void initShaders( Context & Ctx ) noexcept
+  void initShaders(InOut<Context> Ctx) noexcept
   {
-    auto const VtxCode = detail::readFile( "../../shaders/vert.spv" );
+    auto const VtxCode = detail::readFile("../../shaders/vert.spv");
 
     auto VtxShaderModuleCrtInfo     = VkShaderModuleCreateInfo();
     VtxShaderModuleCrtInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    VtxShaderModuleCrtInfo.codeSize = static_cast< uint32_t >( std::size( VtxCode ) );
-    VtxShaderModuleCrtInfo.pCode    = reinterpret_cast< uint32_t const * >( std::data( VtxCode ) );
+    VtxShaderModuleCrtInfo.codeSize = static_cast<uint32_t>(std::size(VtxCode));
+    VtxShaderModuleCrtInfo.pCode    = reinterpret_cast<uint32_t const *>(std::data(VtxCode));
 
-    auto Result = vkCreateShaderModule( Ctx.Dev, &VtxShaderModuleCrtInfo, nullptr, &Ctx.VtxShader );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    auto Result = vkCreateShaderModule(Ctx->Dev, &VtxShaderModuleCrtInfo, nullptr, &Ctx->VtxShader);
+    MVK_VERIFY(Result == VK_SUCCESS);
 
-    auto const FragCode = detail::readFile( "../../shaders/frag.spv" );
+    auto const FragCode = detail::readFile("../../shaders/frag.spv");
 
     auto FragShaderModuleCrtInfo     = VkShaderModuleCreateInfo();
     FragShaderModuleCrtInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    FragShaderModuleCrtInfo.codeSize = static_cast< uint32_t >( std::size( FragCode ) );
-    FragShaderModuleCrtInfo.pCode    = reinterpret_cast< uint32_t const * >( std::data( FragCode ) );
+    FragShaderModuleCrtInfo.codeSize = static_cast<uint32_t>(std::size(FragCode));
+    FragShaderModuleCrtInfo.pCode    = reinterpret_cast<uint32_t const *>(std::data(FragCode));
 
-    Result = vkCreateShaderModule( Ctx.Dev, &FragShaderModuleCrtInfo, nullptr, &Ctx.FragShader );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    Result = vkCreateShaderModule(Ctx->Dev, &FragShaderModuleCrtInfo, nullptr, &Ctx->FragShader);
+    MVK_VERIFY(Result == VK_SUCCESS);
   }
 
-  void destroyShaders( Context & Ctx ) noexcept
+  void dtyShaders(InOut<Context> Ctx) noexcept
   {
-    vkDestroyShaderModule( Ctx.Dev, Ctx.FragShader, nullptr );
-    vkDestroyShaderModule( Ctx.Dev, Ctx.VtxShader, nullptr );
+    vkDestroyShaderModule(Ctx->Dev, Ctx->FragShader, nullptr);
+    vkDestroyShaderModule(Ctx->Dev, Ctx->VtxShader, nullptr);
   }
 
-  void initSamplers( Context & Ctx ) noexcept
+  void initSamplers(InOut<Context> Ctx) noexcept
   {
     auto SamplerCrtInfo                    = VkSamplerCreateInfo();
     SamplerCrtInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -816,41 +817,41 @@ namespace mvk::engine
     SamplerCrtInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     SamplerCrtInfo.mipLodBias              = 0.0F;
     SamplerCrtInfo.minLod                  = 0.0F;
-    SamplerCrtInfo.maxLod                  = std::numeric_limits< float >::max();
+    SamplerCrtInfo.maxLod                  = std::numeric_limits<float>::max();
 
-    [[maybe_unused]] auto Result = vkCreateSampler( Ctx.Dev, &SamplerCrtInfo, nullptr, &Ctx.TexSampler );
-    MVK_VERIFY( Result == VK_SUCCESS );
+    [[maybe_unused]] auto Result = vkCreateSampler(Ctx->Dev, &SamplerCrtInfo, nullptr, &Ctx->TexSampler);
+    MVK_VERIFY(Result == VK_SUCCESS);
   }
 
-  void destroySamplers( Context & Ctx ) noexcept
+  void dtySamplers(InOut<Context> Ctx) noexcept
   {
-    vkDestroySampler( Ctx.Dev, Ctx.TexSampler, nullptr );
+    vkDestroySampler(Ctx->Dev, Ctx->TexSampler, nullptr);
   }
 
-  void initPipeline( Context & Ctx ) noexcept
+  void initPipeline(InOut<Context> Ctx) noexcept
   {
     auto VtxInputBindDesc      = VkVertexInputBindingDescription();
     VtxInputBindDesc.binding   = 0;
-    VtxInputBindDesc.stride    = sizeof( vertex );
+    VtxInputBindDesc.stride    = sizeof(vertex);
     VtxInputBindDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     auto PosVtxInputAttrDesc     = VkVertexInputAttributeDescription();
     PosVtxInputAttrDesc.binding  = 0;
     PosVtxInputAttrDesc.location = 0;
     PosVtxInputAttrDesc.format   = VK_FORMAT_R32G32B32_SFLOAT;
-    PosVtxInputAttrDesc.offset   = offsetof( vertex, pos );
+    PosVtxInputAttrDesc.offset   = offsetof(vertex, pos);
 
     auto ColorVtxInputAttrDesc     = VkVertexInputAttributeDescription();
     ColorVtxInputAttrDesc.binding  = 0;
     ColorVtxInputAttrDesc.location = 1;
     ColorVtxInputAttrDesc.format   = VK_FORMAT_R32G32B32_SFLOAT;
-    ColorVtxInputAttrDesc.offset   = offsetof( vertex, color );
+    ColorVtxInputAttrDesc.offset   = offsetof(vertex, color);
 
     auto TexCoordVtxInputAttrDesc     = VkVertexInputAttributeDescription();
     TexCoordVtxInputAttrDesc.binding  = 0;
     TexCoordVtxInputAttrDesc.location = 2;
     TexCoordVtxInputAttrDesc.format   = VK_FORMAT_R32G32_SFLOAT;
-    TexCoordVtxInputAttrDesc.offset   = offsetof( vertex, texture_coord );
+    TexCoordVtxInputAttrDesc.offset   = offsetof(vertex, texture_coord);
 
     auto const VtxAttrs = std::array{ PosVtxInputAttrDesc, ColorVtxInputAttrDesc, TexCoordVtxInputAttrDesc };
 
@@ -858,8 +859,8 @@ namespace mvk::engine
     PipelineVtxInputStateCrtInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     PipelineVtxInputStateCrtInfo.vertexBindingDescriptionCount   = 1;
     PipelineVtxInputStateCrtInfo.pVertexBindingDescriptions      = &VtxInputBindDesc;
-    PipelineVtxInputStateCrtInfo.vertexAttributeDescriptionCount = static_cast< uint32_t >( std::size( VtxAttrs ) );
-    PipelineVtxInputStateCrtInfo.pVertexAttributeDescriptions    = std::data( VtxAttrs );
+    PipelineVtxInputStateCrtInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(std::size(VtxAttrs));
+    PipelineVtxInputStateCrtInfo.pVertexAttributeDescriptions    = std::data(VtxAttrs);
 
     auto PipelineVtxInputAssemStateCrtInfo     = VkPipelineInputAssemblyStateCreateInfo();
     PipelineVtxInputAssemStateCrtInfo.sType    = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -869,15 +870,15 @@ namespace mvk::engine
     auto Viewport     = VkViewport();
     Viewport.x        = 0.0F;
     Viewport.y        = 0.0F;
-    Viewport.width    = static_cast< float >( Ctx.SwapchainExtent.width );
-    Viewport.height   = static_cast< float >( Ctx.SwapchainExtent.height );
+    Viewport.width    = static_cast<float>(Ctx->SwapchainExtent.width);
+    Viewport.height   = static_cast<float>(Ctx->SwapchainExtent.height);
     Viewport.minDepth = 0.0F;
     Viewport.maxDepth = 1.0F;
 
     auto Scissor     = VkRect2D();
     Scissor.offset.x = 0;
     Scissor.offset.y = 0;
-    Scissor.extent   = Ctx.SwapchainExtent;
+    Scissor.extent   = Ctx->SwapchainExtent;
 
     auto PipelineViewportStateCrtInfo          = VkPipelineViewportStateCreateInfo();
     PipelineViewportStateCrtInfo.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -919,16 +920,16 @@ namespace mvk::engine
     PipelineColorBlendAttachState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     PipelineColorBlendAttachState.alphaBlendOp        = VK_BLEND_OP_ADD;
 
-    auto PipelineColorBlendCrtInfo                = VkPipelineColorBlendStateCreateInfo();
-    PipelineColorBlendCrtInfo.sType               = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    PipelineColorBlendCrtInfo.logicOpEnable       = VK_FALSE;
-    PipelineColorBlendCrtInfo.logicOp             = VK_LOGIC_OP_COPY;
-    PipelineColorBlendCrtInfo.attachmentCount     = 1;
-    PipelineColorBlendCrtInfo.pAttachments        = &PipelineColorBlendAttachState;
-    PipelineColorBlendCrtInfo.blendConstants[ 0 ] = 0.0F;
-    PipelineColorBlendCrtInfo.blendConstants[ 1 ] = 0.0F;
-    PipelineColorBlendCrtInfo.blendConstants[ 2 ] = 0.0F;
-    PipelineColorBlendCrtInfo.blendConstants[ 3 ] = 0.0F;
+    auto PipelineColorBlendCrtInfo              = VkPipelineColorBlendStateCreateInfo();
+    PipelineColorBlendCrtInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    PipelineColorBlendCrtInfo.logicOpEnable     = VK_FALSE;
+    PipelineColorBlendCrtInfo.logicOp           = VK_LOGIC_OP_COPY;
+    PipelineColorBlendCrtInfo.attachmentCount   = 1;
+    PipelineColorBlendCrtInfo.pAttachments      = &PipelineColorBlendAttachState;
+    PipelineColorBlendCrtInfo.blendConstants[0] = 0.0F;
+    PipelineColorBlendCrtInfo.blendConstants[1] = 0.0F;
+    PipelineColorBlendCrtInfo.blendConstants[2] = 0.0F;
+    PipelineColorBlendCrtInfo.blendConstants[3] = 0.0F;
 
     auto PipelineDepthStencilStateCrtInfo                  = VkPipelineDepthStencilStateCreateInfo();
     PipelineDepthStencilStateCrtInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -943,21 +944,21 @@ namespace mvk::engine
     auto VtxPipelineShaderStageCrtInfo   = VkPipelineShaderStageCreateInfo();
     VtxPipelineShaderStageCrtInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     VtxPipelineShaderStageCrtInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
-    VtxPipelineShaderStageCrtInfo.module = Ctx.VtxShader;
+    VtxPipelineShaderStageCrtInfo.module = Ctx->VtxShader;
     VtxPipelineShaderStageCrtInfo.pName  = "main";
 
     auto FragPipelineShaderStageCrtInfo   = VkPipelineShaderStageCreateInfo();
     FragPipelineShaderStageCrtInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     FragPipelineShaderStageCrtInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-    FragPipelineShaderStageCrtInfo.module = Ctx.FragShader;
+    FragPipelineShaderStageCrtInfo.module = Ctx->FragShader;
     FragPipelineShaderStageCrtInfo.pName  = "main";
 
     auto const ShaderStages = std::array{ VtxPipelineShaderStageCrtInfo, FragPipelineShaderStageCrtInfo };
 
     auto PipelineCrtInfo                = VkGraphicsPipelineCreateInfo();
     PipelineCrtInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    PipelineCrtInfo.stageCount          = static_cast< uint32_t >( std::size( ShaderStages ) );
-    PipelineCrtInfo.pStages             = std::data( ShaderStages );
+    PipelineCrtInfo.stageCount          = static_cast<uint32_t>(std::size(ShaderStages));
+    PipelineCrtInfo.pStages             = std::data(ShaderStages);
     PipelineCrtInfo.pVertexInputState   = &PipelineVtxInputStateCrtInfo;
     PipelineCrtInfo.pInputAssemblyState = &PipelineVtxInputAssemStateCrtInfo;
     PipelineCrtInfo.pViewportState      = &PipelineViewportStateCrtInfo;
@@ -966,23 +967,23 @@ namespace mvk::engine
     PipelineCrtInfo.pDepthStencilState  = &PipelineDepthStencilStateCrtInfo;
     PipelineCrtInfo.pColorBlendState    = &PipelineColorBlendCrtInfo;
     PipelineCrtInfo.pDynamicState       = nullptr;
-    PipelineCrtInfo.layout              = Ctx.PipelineLay;
-    PipelineCrtInfo.renderPass          = Ctx.RdrPass;
+    PipelineCrtInfo.layout              = Ctx->PipelineLay;
+    PipelineCrtInfo.renderPass          = Ctx->RdrPass;
     PipelineCrtInfo.subpass             = 0;
     PipelineCrtInfo.basePipelineHandle  = nullptr;
     PipelineCrtInfo.basePipelineIndex   = -1;
 
     [[maybe_unused]] auto Result =
-      vkCreateGraphicsPipelines( Ctx.Dev, VK_NULL_HANDLE, 1, &PipelineCrtInfo, nullptr, &Ctx.Pipeline );
-    MVK_VERIFY( Result == VK_SUCCESS );
+      vkCreateGraphicsPipelines(Ctx->Dev, VK_NULL_HANDLE, 1, &PipelineCrtInfo, nullptr, &Ctx->Pipeline);
+    MVK_VERIFY(Result == VK_SUCCESS);
   }
 
-  void destroyPipelines( Context & Ctx ) noexcept
+  void dtyPipelines(InOut<Context> Ctx) noexcept
   {
-    vkDestroyPipeline( Ctx.Dev, Ctx.Pipeline, nullptr );
+    vkDestroyPipeline(Ctx->Dev, Ctx->Pipeline, nullptr);
   }
 
-  void initSync( Context & Ctx ) noexcept
+  void initSync(InOut<Context> Ctx) noexcept
   {
     auto SemaphoreCrtInfo  = VkSemaphoreCreateInfo();
     SemaphoreCrtInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -991,28 +992,28 @@ namespace mvk::engine
     FenceCrtInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     FenceCrtInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for ( auto i = size_t( 0 ); i < Context::MaxFramesInFlight; ++i )
+    for (auto i = size_t(0); i < Context::MaxFramesInFlight; ++i)
     {
-      auto Result = vkCreateSemaphore( Ctx.Dev, &SemaphoreCrtInfo, nullptr, &Ctx.ImgAvailableSemaphores[ i ] );
-      MVK_VERIFY( Result == VK_SUCCESS );
+      auto Result = vkCreateSemaphore(Ctx->Dev, &SemaphoreCrtInfo, nullptr, &Ctx->ImgAvailableSemaphores[i]);
+      MVK_VERIFY(Result == VK_SUCCESS);
 
-      Result = vkCreateSemaphore( Ctx.Dev, &SemaphoreCrtInfo, nullptr, &Ctx.RdrFinishedSemaphores[ i ] );
-      MVK_VERIFY( Result == VK_SUCCESS );
+      Result = vkCreateSemaphore(Ctx->Dev, &SemaphoreCrtInfo, nullptr, &Ctx->RdrFinishedSemaphores[i]);
+      MVK_VERIFY(Result == VK_SUCCESS);
 
-      Result = vkCreateFence( Ctx.Dev, &FenceCrtInfo, nullptr, &Ctx.FrameInFlightFences[ i ] );
-      MVK_VERIFY( Result == VK_SUCCESS );
+      Result = vkCreateFence(Ctx->Dev, &FenceCrtInfo, nullptr, &Ctx->FrameInFlightFences[i]);
+      MVK_VERIFY(Result == VK_SUCCESS);
     }
 
-    Ctx.ImgInFlightFences.resize( Ctx.SwapchainImgCnt, nullptr );
+    Ctx->ImgInFlightFences.resize(Ctx->SwapchainImgCnt, nullptr);
   }
 
-  void destroySync( Context & Ctx ) noexcept
+  void dtySync(InOut<Context> Ctx) noexcept
   {
-    for ( auto i = size_t( 0 ); i < Context::MaxFramesInFlight; ++i )
+    for (auto i = size_t(0); i < Context::MaxFramesInFlight; ++i)
     {
-      vkDestroySemaphore( Ctx.Dev, Ctx.ImgAvailableSemaphores[ i ], nullptr );
-      vkDestroySemaphore( Ctx.Dev, Ctx.RdrFinishedSemaphores[ i ], nullptr );
-      vkDestroyFence( Ctx.Dev, Ctx.FrameInFlightFences[ i ], nullptr );
+      vkDestroySemaphore(Ctx->Dev, Ctx->ImgAvailableSemaphores[i], nullptr);
+      vkDestroySemaphore(Ctx->Dev, Ctx->RdrFinishedSemaphores[i], nullptr);
+      vkDestroyFence(Ctx->Dev, Ctx->FrameInFlightFences[i], nullptr);
     }
   }
 

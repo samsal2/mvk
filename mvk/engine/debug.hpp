@@ -7,10 +7,10 @@
 namespace mvk::engine
 {
   static VKAPI_ATTR VKAPI_CALL VkBool32
-    debug_callback( [[maybe_unused]] VkDebugUtilsMessageSeverityFlagBitsEXT       severity,
-                    [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT              type,
-                    [[maybe_unused]] VkDebugUtilsMessengerCallbackDataEXT const * data,
-                    [[maybe_unused]] void *                                       p_user_data )
+    debug_callback([[maybe_unused]] VkDebugUtilsMessageSeverityFlagBitsEXT       severity,
+                   [[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT              type,
+                   [[maybe_unused]] VkDebugUtilsMessengerCallbackDataEXT const * data,
+                   [[maybe_unused]] void *                                       p_user_data)
   {
     std::cerr << data->pMessage << '\n';
     return VK_FALSE;

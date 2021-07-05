@@ -1,67 +1,67 @@
 #ifndef MVK_ENGINE_initHPP_INCLUDED
 #define MVK_ENGINE_initHPP_INCLUDED
 
-#include "engine/Context.hpp"
+#include "engine/context.hpp"
 
 namespace mvk::engine
 {
-  [[nodiscard]] Context createContext( char const * Name, VkExtent2D Extent ) noexcept;
+  void createContext(char const * Name, VkExtent2D Extent, InOut<Context> out) noexcept;
 
-  void destroyContext( Context & Ctx ) noexcept;
+  void dtyContext(InOut<Context> Ctx) noexcept;
 
-  void initWindow( Context & Ctx, VkExtent2D Extent ) noexcept;
-  void destroyWindow( Context & Ctx ) noexcept;
+  void initWindow(InOut<Context> Ctx, VkExtent2D Extent) noexcept;
+  void dtyWindow(InOut<Context> Ctx) noexcept;
 
-  void initInst( Context & Ctx, char const * Name ) noexcept;
-  void destroyInst( Context & Ctx ) noexcept;
+  void initInst(InOut<Context> Ctx, char const * Name) noexcept;
+  void dtyInst(InOut<Context> Ctx) noexcept;
 
-  void initDbgMsngr( Context & Ctx ) noexcept;
-  void destroyDbgMsngr( Context & Ctx ) noexcept;
+  void initDbgMsngr(InOut<Context> Ctx) noexcept;
+  void dtyDbgMsngr(InOut<Context> Ctx) noexcept;
 
-  void initSurf( Context & Ctx ) noexcept;
-  void destroySurf( Context & Ctx ) noexcept;
+  void initSurf(InOut<Context> Ctx) noexcept;
+  void dtySurf(InOut<Context> Ctx) noexcept;
 
-  void selectPhysicalDev( Context & Ctx ) noexcept;
-  void selectSurfFmt( Context & Ctx ) noexcept;
+  void selectPhysicalDev(InOut<Context> Ctx) noexcept;
+  void selectSurfFmt(InOut<Context> Ctx) noexcept;
 
-  void initDev( Context & Ctx ) noexcept;
-  void destroyDev( Context & Ctx ) noexcept;
+  void initDev(InOut<Context> Ctx) noexcept;
+  void dtyDev(InOut<Context> Ctx) noexcept;
 
-  void initLays( Context & Ctx ) noexcept;
-  void destroyLays( Context & Ctx ) noexcept;
+  void initLays(InOut<Context> Ctx) noexcept;
+  void dtyLays(InOut<Context> Ctx) noexcept;
 
-  void initPools( Context & Ctx ) noexcept;
-  void destroyPools( Context & Ctx ) noexcept;
+  void initPools(InOut<Context> Ctx) noexcept;
+  void dtyPools(InOut<Context> Ctx) noexcept;
 
-  void initSwapchain( Context & Ctx ) noexcept;
-  void destroySwapchain( Context & Ctx ) noexcept;
+  void initSwapchain(InOut<Context> Ctx) noexcept;
+  void dtySwapchain(InOut<Context> Ctx) noexcept;
 
-  void initDepthImg( Context & Ctx ) noexcept;
-  void destroyDepthImg( Context & Ctx ) noexcept;
+  void initDepthImg(InOut<Context> Ctx) noexcept;
+  void dtyDepthImg(InOut<Context> Ctx) noexcept;
 
-  void initFramebuffers( Context & Ctx ) noexcept;
-  void destroyFramebuffers( Context & Ctx ) noexcept;
+  void initFramebuffers(InOut<Context> Ctx) noexcept;
+  void dtyFramebuffers(InOut<Context> Ctx) noexcept;
 
-  void initRdrPass( Context & Ctx ) noexcept;
-  void destroyRdrPass( Context & Ctx ) noexcept;
+  void initRdrPass(InOut<Context> Ctx) noexcept;
+  void dtyRdrPass(InOut<Context> Ctx) noexcept;
 
-  void initDoesntBelongHere( Context & Ctx ) noexcept;
-  void destroyDoesntBelongHere( Context & Ctx ) noexcept;
+  void initDoesntBelongHere(InOut<Context> Ctx) noexcept;
+  void dtyDoesntBelongHere(InOut<Context> Ctx) noexcept;
 
-  void initCmdBuffs( Context & Ctx ) noexcept;
-  void destroyCmdBuffs( Context & Ctx ) noexcept;
+  void initCmdBuffs(InOut<Context> Ctx) noexcept;
+  void dtyCmdBuffs(InOut<Context> Ctx) noexcept;
 
-  void initShaders( Context & Ctx ) noexcept;
-  void destroyShaders( Context & Ctx ) noexcept;
+  void initShaders(InOut<Context> Ctx) noexcept;
+  void dtyShaders(InOut<Context> Ctx) noexcept;
 
-  void initSamplers( Context & Ctx ) noexcept;
-  void destroySamplers( Context & Ctx ) noexcept;
+  void initSamplers(InOut<Context> Ctx) noexcept;
+  void dtySamplers(InOut<Context> Ctx) noexcept;
 
-  void initPipeline( Context & Ctx ) noexcept;
-  void destroyPipelines( Context & Ctx ) noexcept;
+  void initPipeline(InOut<Context> Ctx) noexcept;
+  void dtyPipelines(InOut<Context> Ctx) noexcept;
 
-  void initSync( Context & Ctx ) noexcept;
-  void destroySync( Context & Ctx ) noexcept;
+  void initSync(InOut<Context> Ctx) noexcept;
+  void dtySync(InOut<Context> Ctx) noexcept;
 }  // namespace mvk::engine
 
 #endif

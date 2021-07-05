@@ -1,136 +1,143 @@
 #ifndef MVK_UTILITY_OUT_HPP_INCLUDED
 #define MVK_UTILITY_OUT_HPP_INCLUDED
 
+#include "utility/concepts.hpp"
 #include "utility/types.hpp"
 
+#include <cstddef>
 #include <type_traits>
 
 namespace mvk
 {
   template <typename T>
-  class non_null
+  class NonNull;
+
+  template <typename T>
+  class Out;
+
+  template <typename T>
+  class InOut;
+
+  template <typename T>
+  class In;
+
+  template <typename T>
+  class NonNull
   {
   public:
-    using value_type      = T;
-    using pointer         = T *;
-    using reference       = T &;
-    using const_reference = T const &;
+    constexpr NonNull(T * Val) noexcept : Ptr(Val) {}
 
-    constexpr non_null(pointer ptr) noexcept : ptr_(ptr) {}
+    constexpr NonNull(std::nullptr_t) noexcept = delete;
+    NonNull   operator=(std::nullptr_t) noexcept = delete;
+    NonNull & operator++()                       = delete;
+    NonNull & operator--()                       = delete;
+    NonNull   operator++(int)                    = delete;
+    NonNull   operator--(int)                    = delete;
+    NonNull & operator+=(std::ptrdiff_t)         = delete;
+    NonNull & operator-=(std::ptrdiff_t)         = delete;
+    void      operator[](std::ptrdiff_t) const   = delete;
 
-    constexpr non_null(std::nullptr_t) noexcept = delete;
-    non_null & operator=(std::nullptr_t) noexcept = delete;
-
-    constexpr reference get() const noexcept
+    constexpr T const & operator*() const noexcept
     {
-      return *ptr_;
+      return *Ptr;
     }
 
-    constexpr operator const_reference() const
+    constexpr T & operator*() noexcept
     {
-      return get();
+      return *Ptr;
     }
 
-    constexpr pointer operator->() const
+    constexpr T const * operator->() const noexcept
     {
-      return &get();
+      return Ptr;
     }
 
-    constexpr reference operator*() const
+    constexpr T * operator->() noexcept
     {
-      return get();
+      return Ptr;
     }
-
-    constexpr operator pointer() const
-    {
-      return &get();
-    }
-
-    non_null & operator++() noexcept               = delete;
-    non_null & operator--() noexcept               = delete;
-    non_null   operator++(int) noexcept            = delete;
-    non_null   operator--(int) noexcept            = delete;
-    non_null & operator+=(std::ptrdiff_t) noexcept = delete;
-    non_null & operator-=(std::ptrdiff_t) noexcept = delete;
-    void       operator[](std::ptrdiff_t) const    = delete;
 
   private:
-    pointer ptr_;
+    friend NonNull<T const>;
+
+    T * Ptr;
   };
 
   template <typename T>
-  class nullable
+  class NonNull<T const>
   {
   public:
-    using value_type      = T;
-    using pointer         = T *;
-    using reference       = T &;
-    using const_reference = T const &;
+    constexpr NonNull(T const * Val) noexcept : Ptr(Val) {}
+    constexpr NonNull(NonNull<T> Other) noexcept : Ptr(Other.Ptr) {}
 
-    constexpr nullable(pointer ptr) noexcept : ptr_(ptr) {}
+    constexpr NonNull(std::nullptr_t) noexcept = delete;
+    NonNull   operator=(std::nullptr_t) noexcept = delete;
+    NonNull & operator++()                       = delete;
+    NonNull & operator--()                       = delete;
+    NonNull   operator++(int)                    = delete;
+    NonNull   operator--(int)                    = delete;
+    NonNull & operator+=(std::ptrdiff_t)         = delete;
+    NonNull & operator-=(std::ptrdiff_t)         = delete;
+    void      operator[](std::ptrdiff_t) const   = delete;
 
-    constexpr reference get() const noexcept
+    constexpr T const & operator*() const noexcept
     {
-      return *ptr_;
+      return *Ptr;
     }
 
-    constexpr operator const_reference() const
+    constexpr T const * operator->() const noexcept
     {
-      return get();
+      return Ptr;
     }
-
-    constexpr pointer operator->() const
-    {
-      return &get();
-    }
-    constexpr reference operator*() const
-    {
-      return get();
-    }
-
-    constexpr operator bool() const
-    {
-      return ptr_ != nullptr;
-    }
-
-    nullable & operator++() noexcept               = delete;
-    nullable & operator--() noexcept               = delete;
-    nullable   operator++(int) noexcept            = delete;
-    nullable   operator--(int) noexcept            = delete;
-    nullable & operator+=(std::ptrdiff_t) noexcept = delete;
-    nullable & operator-=(std::ptrdiff_t) noexcept = delete;
-    void       operator[](std::ptrdiff_t) const    = delete;
 
   private:
-    pointer ptr_;
+    T const * Ptr;
   };
 
   template <typename T>
-  class out;
+  NonNull(T *) -> NonNull<T>;
 
+  // Doesnt need the reference to be initialized
   template <typename T>
-  class in_out : public non_null<T>
+  class Out : public NonNull<T>
   {
   public:
-    static_assert(!std::is_const<T>::value, "T cannot be const");
+    static_assert(std::is_default_constructible_v<T>, "Out requires to be default constructible");
 
-    using non_null = non_null<T>;
-    using non_null::non_null;
-
-    constexpr in_out(out<T> ptr) noexcept : non_null(ptr) {}
+    using NonNull = NonNull<T>;
+    using NonNull::NonNull;
   };
 
   template <typename T>
-  class out : public non_null<T>
+  Out(T *) -> Out<T>;
+
+  // Expects the reference to be constructed
+  template <typename T>
+  class InOut : public NonNull<T>
   {
   public:
-    static_assert(!std::is_const<T>::value, "T cannot be const");
+    using NonNull = NonNull<T>;
+    using NonNull::NonNull;
 
-    using non_null = non_null<T>;
-    using non_null::non_null;
-
-    constexpr out(in_out<T> ptr) noexcept : non_null(ptr) {}
+    constexpr InOut(Out<T> out) noexcept : NonNull(out) {}
   };
+
+  template <typename T>
+  InOut(T *) -> InOut<T>;
+
+  template <typename T>
+  class In : public NonNull<T const>
+  {
+  public:
+    using NonNull = NonNull<T const>;
+    using NonNull::NonNull;
+
+    constexpr In(InOut<T> InOut) noexcept : NonNull(InOut) {}
+  };
+
+  template <typename T>
+  In(T *) -> In<T>;
+
 }  // namespace mvk
 
 #endif

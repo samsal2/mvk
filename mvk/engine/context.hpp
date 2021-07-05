@@ -4,6 +4,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
 #include "shader_types.hpp"
+#include "utility/pointers.hpp"
 #include "utility/slice.hpp"
 
 #include <array>
@@ -24,142 +25,144 @@ namespace mvk::engine
     static constexpr auto ValInstExts = std::array{ VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
     static constexpr auto DevExts     = std::array{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-    static constexpr auto                                         MaxFramesInFlight = 2;
-    static constexpr size_t                                       DynamicBuffCnt    = 2;
-    static constexpr size_t                                       GarbageBuffCnt    = 2;
+    static constexpr auto                                       MaxFramesInFlight = 2;
+    static constexpr size_t                                     DynamicBuffCnt    = 2;
+    static constexpr size_t                                     GarbageBuffCnt    = 2;
     //
     // initwindow
-    GLFWwindow *                                                  Window;
-    bool                                                          FramebufferResized;
+    GLFWwindow *                                                Window;
+    bool                                                        FramebufferResized;
     //
     // initInstance
-    VkInstance                                                    Inst;
+    VkInstance                                                  Inst;
     //
     // initSurface
-    VkSurfaceKHR                                                  Surf;
-    VkSurfaceFormatKHR                                            SurfFmt;
+    VkSurfaceKHR                                                Surf;
+    VkSurfaceFormatKHR                                          SurfFmt;
     //
     // initDebugMessenger
-    VkDebugUtilsMessengerEXT                                      DbgMsngr;
+    VkDebugUtilsMessengerEXT                                    DbgMsngr;
     //
     // initDevice
-    VkPhysicalDevice                                              PhysicalDev;
-    VkDevice                                                      Dev;
-    uint32_t                                                      GfxQueueIdx;
-    uint32_t                                                      PresentQueueIdx;
-    VkQueue                                                       GfxQueue;
-    VkQueue                                                       PresentQueue;
+    VkPhysicalDevice                                            PhysicalDev;
+    VkDevice                                                    Dev;
+    uint32_t                                                    GfxQueueIdx;
+    uint32_t                                                    PresentQueueIdx;
+    VkQueue                                                     GfxQueue;
+    VkQueue                                                     PresentQueue;
     //
     // initLayoutss
-    VkDescriptorSetLayout                                         UboDescriptorSetLay;
-    VkDescriptorSetLayout                                         TexDescriptorSetLay;
+    VkDescriptorSetLayout                                       UboDescriptorSetLay;
+    VkDescriptorSetLayout                                       TexDescriptorSetLay;
     //
     // PipelineLayouts
-    VkPipelineLayout                                              PipelineLay;
+    VkPipelineLayout                                            PipelineLay;
     //
     // initPools
-    VkCommandPool                                                 CmdPool;
-    VkDescriptorPool                                              DescriptorPool;
+    VkCommandPool                                               CmdPool;
+    VkDescriptorPool                                            DescriptorPool;
     //
     // initSwapchain
-    uint32_t                                                      SwapchainImgCnt;
-    VkSwapchainKHR                                                Swapchain;
-    std::vector< VkImageView >                                    SwapchainImgViews;
-    VkExtent2D                                                    SwapchainExtent;
+    uint32_t                                                    SwapchainImgCnt;
+    VkSwapchainKHR                                              Swapchain;
+    std::vector<VkImageView>                                    SwapchainImgViews;
+    VkExtent2D                                                  SwapchainExtent;
     //
     // initDepthImage
-    VkImage                                                       DepthImg;
-    VkDeviceMemory                                                DepthImgMem;
-    VkImageView                                                   DepthImgView;
+    VkImage                                                     DepthImg;
+    VkDeviceMemory                                              DepthImgMem;
+    VkImageView                                                 DepthImgView;
     //
     // initFramebuffers
-    std::vector< VkFramebuffer >                                  Framebuffers;
+    std::vector<VkFramebuffer>                                  Framebuffers;
     //
     // initmain_RenderPass
-    VkRenderPass                                                  RdrPass;
+    VkRenderPass                                                RdrPass;
     //
     // doesnt belong here
     // ================================================================================================================
-    std::vector< unsigned char >                                  texture_;
-    uint32_t                                                      width_;
-    uint32_t                                                      height_;
-    VkImage                                                       image_;
-    VkDeviceMemory                                                image_memory_;
-    VkImageView                                                   image_view_;
-    VkDescriptorSet                                               image_descriptor_set_;
-    std::vector< vertex >                                         vertices_;
-    std::vector< uint32_t >                                       indices_;
+    std::vector<unsigned char>                                  texture_;
+    uint32_t                                                    width_;
+    uint32_t                                                    height_;
+    VkImage                                                     image_;
+    VkDeviceMemory                                              image_memory_;
+    VkImageView                                                 image_view_;
+    VkDescriptorSet                                             image_descriptor_set_;
+    std::vector<vertex>                                         vertices_;
+    std::vector<uint32_t>                                       indices_;
     // ================================================================================================================
     //
     // allocate_commands
-    std::array< VkCommandBuffer, DynamicBuffCnt >                 CmdBuffs;
+    std::array<VkCommandBuffer, DynamicBuffCnt>                 CmdBuffs;
     //
     // shaders
-    VkShaderModule                                                VtxShader;
-    VkShaderModule                                                FragShader;
+    VkShaderModule                                              VtxShader;
+    VkShaderModule                                              FragShader;
     //
     // samplers
-    VkSampler                                                     TexSampler;
+    VkSampler                                                   TexSampler;
     //
     // initPipeline
-    VkPipeline                                                    Pipeline;
+    VkPipeline                                                  Pipeline;
     //
     // initSync
-    std::array< VkSemaphore, MaxFramesInFlight >                  ImgAvailableSemaphores;
-    std::array< VkSemaphore, MaxFramesInFlight >                  RdrFinishedSemaphores;
-    std::array< VkFence, MaxFramesInFlight >                      FrameInFlightFences;
-    std::vector< VkFence * >                                      ImgInFlightFences;
+    std::array<VkSemaphore, MaxFramesInFlight>                  ImgAvailableSemaphores;
+    std::array<VkSemaphore, MaxFramesInFlight>                  RdrFinishedSemaphores;
+    std::array<VkFence, MaxFramesInFlight>                      FrameInFlightFences;
+    std::vector<VkFence *>                                      ImgInFlightFences;
     //
     // buffers
     // vertex
-    VkMemoryRequirements                                          VtxMemReq;
-    VkDeviceSize                                                  VtxAlignedSize;
-    std::array< VkBuffer, DynamicBuffCnt >                        VtxBuffs;
-    std::array< VkDeviceSize, DynamicBuffCnt >                    VtxOffs;
-    VkDeviceMemory                                                VtxMem;
+    VkMemoryRequirements                                        VtxMemReq;
+    VkDeviceSize                                                VtxAlignedSize;
+    std::array<VkBuffer, DynamicBuffCnt>                        VtxBuffs;
+    std::array<VkDeviceSize, DynamicBuffCnt>                    VtxOffs;
+    VkDeviceMemory                                              VtxMem;
     //
     // index
-    VkMemoryRequirements                                          IdxMemReq;
-    VkDeviceSize                                                  IdxAlignedSize;
-    std::array< VkBuffer, DynamicBuffCnt >                        IdxBuffs;
-    std::array< VkDeviceSize, DynamicBuffCnt >                    IdxOffs;
-    VkDeviceMemory                                                IdxMem;
+    VkMemoryRequirements                                        IdxMemReq;
+    VkDeviceSize                                                IdxAlignedSize;
+    std::array<VkBuffer, DynamicBuffCnt>                        IdxBuffs;
+    std::array<VkDeviceSize, DynamicBuffCnt>                    IdxOffs;
+    VkDeviceMemory                                              IdxMem;
     //
     // staging
-    VkMemoryRequirements                                          StagingMemReq;
-    VkDeviceSize                                                  StagingAlignedSize;
-    std::array< VkBuffer, DynamicBuffCnt >                        StagingBuffs;
-    std::array< VkDeviceSize, DynamicBuffCnt >                    StagingOffs;
-    VkDeviceMemory                                                StagingMem;
-    std::byte *                                                   StagingData;
+    VkMemoryRequirements                                        StagingMemReq;
+    VkDeviceSize                                                StagingAlignedSize;
+    std::array<VkBuffer, DynamicBuffCnt>                        StagingBuffs;
+    std::array<VkDeviceSize, DynamicBuffCnt>                    StagingOffs;
+    VkDeviceMemory                                              StagingMem;
+    std::byte *                                                 StagingData;
     //
     // ubo
-    VkMemoryRequirements                                          UboMemReq;
-    VkDeviceSize                                                  UboAlignedSize;
-    std::array< VkBuffer, DynamicBuffCnt >                        UboBuffs;
-    std::array< uint32_t, DynamicBuffCnt >                        UboOffs;
-    std::array< VkDescriptorSet, DynamicBuffCnt >                 UboDescriptorSets;
-    VkDeviceMemory                                                UboMem;
-    std::byte *                                                   UboData;
+    VkMemoryRequirements                                        UboMemReq;
+    VkDeviceSize                                                UboAlignedSize;
+    std::array<VkBuffer, DynamicBuffCnt>                        UboBuffs;
+    std::array<uint32_t, DynamicBuffCnt>                        UboOffs;
+    std::array<VkDescriptorSet, DynamicBuffCnt>                 UboDescriptorSets;
+    VkDeviceMemory                                              UboMem;
+    std::byte *                                                 UboData;
     //
     // garbage
-    std::array< std::vector< VkBuffer >, GarbageBuffCnt >         GarbageBuffs;
-    std::array< std::vector< VkDeviceMemory >, GarbageBuffCnt >   GarbageMems;
-    std::array< std::vector< VkDescriptorSet >, GarbageBuffCnt >  GarbageDescriptorSets;
+    std::array<std::vector<VkBuffer>, GarbageBuffCnt>           GarbageBuffs;
+    std::array<std::vector<VkDeviceMemory>, GarbageBuffCnt>     GarbageMems;
+    std::array<std::vector<VkDescriptorSet>, GarbageBuffCnt>    GarbageDescriptorSets;
     //
     // rendering counters
-    size_t                                                        CurrentFrameIdx   = 0;
-    size_t                                                        CurrentBuffIdx    = 0;
-    size_t                                                        CurrentGarbageIdx = 0;
-    uint32_t                                                      CurrentImgIdx     = 0;
-    VkCommandBuffer                                               CurrentCmdBuff    = VK_NULL_HANDLE;
+    size_t                                                      CurrentFrameIdx   = 0;
+    size_t                                                      CurrentBuffIdx    = 0;
+    size_t                                                      CurrentGarbageIdx = 0;
+    uint32_t                                                    CurrentImgIdx     = 0;
+    VkCommandBuffer                                             CurrentCmdBuff    = VK_NULL_HANDLE;
     //
-    std::chrono::time_point< std::chrono::high_resolution_clock > StartTime = std::chrono::high_resolution_clock::now();
+    std::chrono::time_point<std::chrono::high_resolution_clock> StartTime = std::chrono::high_resolution_clock::now();
   };
 
-  [[nodiscard]] float currentTime( Context const & Ctx ) noexcept;
+  using Seconds = float;
 
-  [[nodiscard]] VkExtent2D queryFramebufferSize( Context const & Ctx ) noexcept;
+  [[nodiscard]] Seconds getCurrentTime(In<Context> Ctx) noexcept;
+
+  void getFramebufferSize(In<Context> Ctx, Out<VkExtent2D> size) noexcept;
 
 }  // namespace mvk::engine
 
