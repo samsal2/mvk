@@ -44,19 +44,19 @@ namespace mvk::engine
     VkDebugUtilsMessengerEXT                                    DbgMsngr;
     //
     // initDevice
-    VkPhysicalDevice                                            PhysicalDev;
-    VkDevice                                                    Dev;
+    VkPhysicalDevice                                            PhysicalDevice;
+    VkDevice                                                    Device;
     uint32_t                                                    GfxQueueIdx;
     uint32_t                                                    PresentQueueIdx;
     VkQueue                                                     GfxQueue;
     VkQueue                                                     PresentQueue;
     //
     // initLayoutss
-    VkDescriptorSetLayout                                       UboDescriptorSetLay;
-    VkDescriptorSetLayout                                       TexDescriptorSetLay;
+    VkDescriptorSetLayout                                       UboDescriptorSetLayout;
+    VkDescriptorSetLayout                                       TextDescriptorSetLayout;
     //
     // PipelineLayouts
-    VkPipelineLayout                                            PipelineLay;
+    VkPipelineLayout                                            PipelineLayout;
     //
     // initPools
     VkCommandPool                                               CmdPool;

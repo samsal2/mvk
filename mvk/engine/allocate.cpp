@@ -19,7 +19,7 @@ namespace mvk::engine
 
     auto CmdBuf = VkCommandBuffer();
 
-    [[maybe_unused]] auto Result = vkAllocateCommandBuffers(Ctx->Dev, &Info, &CmdBuf);
+    [[maybe_unused]] auto Result = vkAllocateCommandBuffers(Ctx->Device, &Info, &CmdBuf);
     MVK_VERIFY(Result == VK_SUCCESS);
     return CmdBuf;
   }
@@ -34,15 +34,15 @@ namespace mvk::engine
 
     for (auto & VtxBuff : Ctx->VtxBuffs)
     {
-      [[maybe_unused]] auto Result = vkCreateBuffer(Ctx->Dev, &CrtInfo, nullptr, &VtxBuff);
+      [[maybe_unused]] auto Result = vkCreateBuffer(Ctx->Device, &CrtInfo, nullptr, &VtxBuff);
       MVK_VERIFY(Result == VK_SUCCESS);
     }
 
-    vkGetBufferMemoryRequirements(Ctx->Dev, Ctx->VtxBuffs[Ctx->CurrentBuffIdx], &Ctx->VtxMemReq);
+    vkGetBufferMemoryRequirements(Ctx->Device, Ctx->VtxBuffs[Ctx->CurrentBuffIdx], &Ctx->VtxMemReq);
     Ctx->VtxAlignedSize = detail::alignedSize(Ctx->VtxMemReq.size, Ctx->VtxMemReq.alignment);
 
     auto const MemTypeIdx =
-      detail::queryMemType(Ctx->PhysicalDev, Ctx->VtxMemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      detail::queryMemType(Ctx->PhysicalDevice, Ctx->VtxMemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     MVK_VERIFY(MemTypeIdx.has_value());
 
@@ -51,12 +51,12 @@ namespace mvk::engine
     VtxMemAllocInfo.allocationSize  = Context::DynamicBuffCnt * Ctx->VtxAlignedSize;
     VtxMemAllocInfo.memoryTypeIndex = MemTypeIdx.value();
 
-    [[maybe_unused]] auto Result = vkAllocateMemory(Ctx->Dev, &VtxMemAllocInfo, nullptr, &Ctx->VtxMem);
+    [[maybe_unused]] auto Result = vkAllocateMemory(Ctx->Device, &VtxMemAllocInfo, nullptr, &Ctx->VtxMem);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     for (size_t i = 0; i < Context::DynamicBuffCnt; ++i)
     {
-      vkBindBufferMemory(Ctx->Dev, Ctx->VtxBuffs[i], Ctx->VtxMem, i * Ctx->VtxAlignedSize);
+      vkBindBufferMemory(Ctx->Device, Ctx->VtxBuffs[i], Ctx->VtxMem, i * Ctx->VtxAlignedSize);
     }
   }
 
@@ -70,15 +70,15 @@ namespace mvk::engine
 
     for (auto & IdxBuff : Ctx->IdxBuffs)
     {
-      [[maybe_unused]] auto Result = vkCreateBuffer(Ctx->Dev, &IdxBuffCrtInfo, nullptr, &IdxBuff);
+      [[maybe_unused]] auto Result = vkCreateBuffer(Ctx->Device, &IdxBuffCrtInfo, nullptr, &IdxBuff);
       MVK_VERIFY(Result == VK_SUCCESS);
     }
 
-    vkGetBufferMemoryRequirements(Ctx->Dev, Ctx->IdxBuffs[Ctx->CurrentBuffIdx], &Ctx->IdxMemReq);
+    vkGetBufferMemoryRequirements(Ctx->Device, Ctx->IdxBuffs[Ctx->CurrentBuffIdx], &Ctx->IdxMemReq);
     Ctx->IdxAlignedSize = detail::alignedSize(Ctx->IdxMemReq.size, Ctx->IdxMemReq.alignment);
 
     auto const MemTypeIdx =
-      detail::queryMemType(Ctx->PhysicalDev, Ctx->IdxMemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      detail::queryMemType(Ctx->PhysicalDevice, Ctx->IdxMemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     MVK_VERIFY(MemTypeIdx.has_value());
 
@@ -87,12 +87,12 @@ namespace mvk::engine
     IdxMemAllocInfo.allocationSize  = Context::DynamicBuffCnt * Ctx->IdxAlignedSize;
     IdxMemAllocInfo.memoryTypeIndex = MemTypeIdx.value();
 
-    [[maybe_unused]] auto Result = vkAllocateMemory(Ctx->Dev, &IdxMemAllocInfo, nullptr, &Ctx->IdxMem);
+    [[maybe_unused]] auto Result = vkAllocateMemory(Ctx->Device, &IdxMemAllocInfo, nullptr, &Ctx->IdxMem);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     for (size_t i = 0; i < Context::DynamicBuffCnt; ++i)
     {
-      vkBindBufferMemory(Ctx->Dev, Ctx->IdxBuffs[i], Ctx->IdxMem, i * Ctx->IdxAlignedSize);
+      vkBindBufferMemory(Ctx->Device, Ctx->IdxBuffs[i], Ctx->IdxMem, i * Ctx->IdxAlignedSize);
     }
   }
 
@@ -106,15 +106,15 @@ namespace mvk::engine
 
     for (auto & StagingBuff : Ctx->StagingBuffs)
     {
-      [[maybe_unused]] auto Result = vkCreateBuffer(Ctx->Dev, &StagingBuffCrtInfo, nullptr, &StagingBuff);
+      [[maybe_unused]] auto Result = vkCreateBuffer(Ctx->Device, &StagingBuffCrtInfo, nullptr, &StagingBuff);
       MVK_VERIFY(Result == VK_SUCCESS);
     }
 
-    vkGetBufferMemoryRequirements(Ctx->Dev, Ctx->StagingBuffs[Ctx->CurrentBuffIdx], &Ctx->StagingMemReq);
+    vkGetBufferMemoryRequirements(Ctx->Device, Ctx->StagingBuffs[Ctx->CurrentBuffIdx], &Ctx->StagingMemReq);
     Ctx->StagingAlignedSize = detail::alignedSize(Ctx->StagingMemReq.size, Ctx->StagingMemReq.alignment);
 
     auto const MemTypeIdx =
-      detail::queryMemType(Ctx->PhysicalDev,
+      detail::queryMemType(Ctx->PhysicalDevice,
                            Ctx->StagingMemReq.memoryTypeBits,
                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
@@ -125,19 +125,19 @@ namespace mvk::engine
     StagingMemAllocInfo.allocationSize  = Context::DynamicBuffCnt * Ctx->StagingAlignedSize;
     StagingMemAllocInfo.memoryTypeIndex = MemTypeIdx.value();
 
-    [[maybe_unused]] auto Result = vkAllocateMemory(Ctx->Dev, &StagingMemAllocInfo, nullptr, &Ctx->StagingMem);
+    [[maybe_unused]] auto Result = vkAllocateMemory(Ctx->Device, &StagingMemAllocInfo, nullptr, &Ctx->StagingMem);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     void * Data = nullptr;
 
-    Result = vkMapMemory(Ctx->Dev, Ctx->StagingMem, 0, VK_WHOLE_SIZE, 0, &Data);
+    Result = vkMapMemory(Ctx->Device, Ctx->StagingMem, 0, VK_WHOLE_SIZE, 0, &Data);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     Ctx->StagingData = static_cast<std::byte *>(Data);
 
     for (size_t i = 0; i < Context::DynamicBuffCnt; ++i)
     {
-      vkBindBufferMemory(Ctx->Dev, Ctx->StagingBuffs[i], Ctx->StagingMem, i * Ctx->StagingAlignedSize);
+      vkBindBufferMemory(Ctx->Device, Ctx->StagingBuffs[i], Ctx->StagingMem, i * Ctx->StagingAlignedSize);
     }
   }
 
@@ -227,7 +227,7 @@ namespace mvk::engine
 
     vkQueueSubmit(Ctx->GfxQueue, 1, &SubmitInfo, nullptr);
     vkQueueWaitIdle(Ctx->GfxQueue);
-    vkFreeCommandBuffers(Ctx->Dev, Ctx->CmdPool, 1, &CmdBuf);
+    vkFreeCommandBuffers(Ctx->Device, Ctx->CmdPool, 1, &CmdBuf);
 
     Ctx->VtxOffs[Ctx->CurrentBuffIdx] += Alloc.Size;
 
@@ -271,7 +271,7 @@ namespace mvk::engine
 
     vkQueueSubmit(Ctx->GfxQueue, 1, &SubmitInfo, nullptr);
     vkQueueWaitIdle(Ctx->GfxQueue);
-    vkFreeCommandBuffers(Ctx->Dev, Ctx->CmdPool, 1, &CmdBuf);
+    vkFreeCommandBuffers(Ctx->Device, Ctx->CmdPool, 1, &CmdBuf);
 
     Ctx->IdxOffs[Ctx->CurrentBuffIdx] += Alloc.Size;
 
@@ -288,16 +288,16 @@ namespace mvk::engine
 
     for (auto & UboBuff : Ctx->UboBuffs)
     {
-      [[maybe_unused]] auto Result = vkCreateBuffer(Ctx->Dev, &UboBuffCrtInfo, nullptr, &UboBuff);
+      [[maybe_unused]] auto Result = vkCreateBuffer(Ctx->Device, &UboBuffCrtInfo, nullptr, &UboBuff);
       MVK_VERIFY(Result == VK_SUCCESS);
     }
 
-    vkGetBufferMemoryRequirements(Ctx->Dev, Ctx->UboBuffs[Ctx->CurrentBuffIdx], &Ctx->UboMemReq);
+    vkGetBufferMemoryRequirements(Ctx->Device, Ctx->UboBuffs[Ctx->CurrentBuffIdx], &Ctx->UboMemReq);
 
     Ctx->UboAlignedSize = detail::alignedSize(Ctx->UboMemReq.size, Ctx->UboMemReq.alignment);
 
     auto const MemTypeIdx =
-      detail::queryMemType(Ctx->PhysicalDev,
+      detail::queryMemType(Ctx->PhysicalDevice,
                            Ctx->UboMemReq.memoryTypeBits,
                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
@@ -308,19 +308,19 @@ namespace mvk::engine
     UboMemAllocInfo.allocationSize  = Context::DynamicBuffCnt * Ctx->UboAlignedSize;
     UboMemAllocInfo.memoryTypeIndex = MemTypeIdx.value();
 
-    [[maybe_unused]] auto Result = vkAllocateMemory(Ctx->Dev, &UboMemAllocInfo, nullptr, &Ctx->UboMem);
+    [[maybe_unused]] auto Result = vkAllocateMemory(Ctx->Device, &UboMemAllocInfo, nullptr, &Ctx->UboMem);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     void * Data  = nullptr;
-    Result       = vkMapMemory(Ctx->Dev, Ctx->UboMem, 0, VK_WHOLE_SIZE, 0, &Data);
+    Result       = vkMapMemory(Ctx->Device, Ctx->UboMem, 0, VK_WHOLE_SIZE, 0, &Data);
     Ctx->UboData = static_cast<std::byte *>(Data);
     MVK_VERIFY(Result == VK_SUCCESS);
 
-    Ctx->UboDescriptorSets = allocDescriptorSets<Context::DynamicBuffCnt>(Ctx, Ctx->UboDescriptorSetLay);
+    Ctx->UboDescriptorSets = allocDescriptorSets<Context::DynamicBuffCnt>(Ctx, Ctx->UboDescriptorSetLayout);
 
     for (size_t i = 0; i < Context::DynamicBuffCnt; ++i)
     {
-      vkBindBufferMemory(Ctx->Dev, Ctx->UboBuffs[i], Ctx->UboMem, i * Ctx->UboAlignedSize);
+      vkBindBufferMemory(Ctx->Device, Ctx->UboBuffs[i], Ctx->UboMem, i * Ctx->UboAlignedSize);
 
       auto UboDescriptorBuffInfo   = VkDescriptorBufferInfo();
       UboDescriptorBuffInfo.buffer = Ctx->UboBuffs[i];
@@ -338,7 +338,7 @@ namespace mvk::engine
       UboWriteDescriptorSet.pImageInfo       = nullptr;
       UboWriteDescriptorSet.pTexelBufferView = nullptr;
 
-      vkUpdateDescriptorSets(Ctx->Dev, 1, &UboWriteDescriptorSet, 0, nullptr);
+      vkUpdateDescriptorSets(Ctx->Device, 1, &UboWriteDescriptorSet, 0, nullptr);
     }
   }
 
@@ -365,42 +365,42 @@ namespace mvk::engine
 
   void dtyVtxBuffAndMem(InOut<Context> Ctx) noexcept
   {
-    vkFreeMemory(Ctx->Dev, Ctx->VtxMem, nullptr);
+    vkFreeMemory(Ctx->Device, Ctx->VtxMem, nullptr);
     for (auto const VtxBuff : Ctx->VtxBuffs)
     {
-      vkDestroyBuffer(Ctx->Dev, VtxBuff, nullptr);
+      vkDestroyBuffer(Ctx->Device, VtxBuff, nullptr);
     }
   }
 
   void dtyIdxBuffAndMem(InOut<Context> Ctx) noexcept
   {
-    vkFreeMemory(Ctx->Dev, Ctx->IdxMem, nullptr);
+    vkFreeMemory(Ctx->Device, Ctx->IdxMem, nullptr);
     for (auto const IdxBuff : Ctx->IdxBuffs)
     {
-      vkDestroyBuffer(Ctx->Dev, IdxBuff, nullptr);
+      vkDestroyBuffer(Ctx->Device, IdxBuff, nullptr);
     }
   }
 
   void dtyStagingBuffAndMem(InOut<Context> Ctx) noexcept
   {
-    vkFreeMemory(Ctx->Dev, Ctx->StagingMem, nullptr);
+    vkFreeMemory(Ctx->Device, Ctx->StagingMem, nullptr);
     for (auto const StagingBuff : Ctx->StagingBuffs)
     {
-      vkDestroyBuffer(Ctx->Dev, StagingBuff, nullptr);
+      vkDestroyBuffer(Ctx->Device, StagingBuff, nullptr);
     }
   }
 
   void dtyBuffMemAndSet(InOut<Context> Ctx) noexcept
   {
-    vkFreeDescriptorSets(Ctx->Dev,
+    vkFreeDescriptorSets(Ctx->Device,
                          Ctx->DescriptorPool,
                          static_cast<uint32_t>(std::size(Ctx->UboDescriptorSets)),
                          std::data(Ctx->UboDescriptorSets));
 
-    vkFreeMemory(Ctx->Dev, Ctx->UboMem, nullptr);
+    vkFreeMemory(Ctx->Device, Ctx->UboMem, nullptr);
     for (auto const UboBuff : Ctx->UboBuffs)
     {
-      vkDestroyBuffer(Ctx->Dev, UboBuff, nullptr);
+      vkDestroyBuffer(Ctx->Device, UboBuff, nullptr);
     }
   }
 
@@ -410,7 +410,7 @@ namespace mvk::engine
     {
       for (auto const GarbageBuff : GarbageBuffs)
       {
-        vkDestroyBuffer(Ctx->Dev, GarbageBuff, nullptr);
+        vkDestroyBuffer(Ctx->Device, GarbageBuff, nullptr);
       }
     }
   }
@@ -422,7 +422,7 @@ namespace mvk::engine
       {
         for (auto const GarbageMem : GarbageMems)
         {
-          vkFreeMemory(Ctx->Dev, GarbageMem, nullptr);
+          vkFreeMemory(Ctx->Device, GarbageMem, nullptr);
         }
       }
     }
@@ -433,7 +433,7 @@ namespace mvk::engine
     {
       for (auto const GarbageDescriptorSet : GarbageDescriptorSets)
       {
-        vkFreeDescriptorSets(Ctx->Dev, Ctx->DescriptorPool, 1, &GarbageDescriptorSet);
+        vkFreeDescriptorSets(Ctx->Device, Ctx->DescriptorPool, 1, &GarbageDescriptorSet);
       }
     }
   }

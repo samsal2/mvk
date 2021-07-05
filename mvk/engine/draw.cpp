@@ -34,7 +34,7 @@ namespace mvk::engine
   {
     auto const ImgAvailableSemaphores = Ctx->ImgAvailableSemaphores[Ctx->CurrentFrameIdx];
 
-    auto const CurrentImgIdx = detail::querySwapchainImg(Ctx->Dev, Ctx->Swapchain, ImgAvailableSemaphores, nullptr);
+    auto const CurrentImgIdx = detail::querySwapchainImg(Ctx->Device, Ctx->Swapchain, ImgAvailableSemaphores, nullptr);
 
     if (!CurrentImgIdx.has_value())
     {
@@ -94,7 +94,7 @@ namespace mvk::engine
     vkCmdBindIndexBuffer(Ctx->CurrentCmdBuff, IdxBuff, 0, VK_INDEX_TYPE_UINT32);
     vkCmdBindDescriptorSets(Ctx->CurrentCmdBuff,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            Ctx->PipelineLay,
+                            Ctx->PipelineLayout,
                             0,
                             static_cast<uint32_t>(std::size(DescriptorSets)),
                             std::data(DescriptorSets),
@@ -112,7 +112,7 @@ namespace mvk::engine
 
     if (ImgInFlightFence != nullptr)
     {
-      vkWaitForFences(Ctx->Dev, 1, ImgInFlightFence, VK_TRUE, std::numeric_limits<int64_t>::max());
+      vkWaitForFences(Ctx->Device, 1, ImgInFlightFence, VK_TRUE, std::numeric_limits<int64_t>::max());
     }
 
     Ctx->ImgInFlightFences[Ctx->CurrentImgIdx] = &Ctx->FrameInFlightFences[Ctx->CurrentFrameIdx];
@@ -136,7 +136,7 @@ namespace mvk::engine
     SubmitInfo.signalSemaphoreCount = static_cast<uint32_t>(std::size(SigSemaphore));
     SubmitInfo.pSignalSemaphores    = std::data(SigSemaphore);
 
-    vkResetFences(Ctx->Dev, 1, &Ctx->FrameInFlightFences[Ctx->CurrentFrameIdx]);
+    vkResetFences(Ctx->Device, 1, &Ctx->FrameInFlightFences[Ctx->CurrentFrameIdx]);
     vkQueueSubmit(Ctx->GfxQueue, 1, &SubmitInfo, Ctx->FrameInFlightFences[Ctx->CurrentFrameIdx]);
 
     auto const PresentSignalSemaphore = std::array{ RdrFinishedSemaphore };

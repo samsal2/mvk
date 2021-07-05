@@ -79,7 +79,7 @@ namespace mvk::engine
 
     vkQueueSubmit(Ctx->GfxQueue, 1, &SubmitInfo, nullptr);
     vkQueueWaitIdle(Ctx->GfxQueue);
-    vkFreeCommandBuffers(Ctx->Dev, Ctx->CmdPool, 1, &CmdBuff);
+    vkFreeCommandBuffers(Ctx->Device, Ctx->CmdPool, 1, &CmdBuff);
   }
 
   void generateMip(In<Context> Ctx, VkImage Img, uint32_t Width, uint32_t Height, uint32_t MipLvl) noexcept
@@ -214,7 +214,7 @@ namespace mvk::engine
 
     vkQueueSubmit(Ctx->GfxQueue, 1, &SubmitInfo, nullptr);
     vkQueueWaitIdle(Ctx->GfxQueue);
-    vkFreeCommandBuffers(Ctx->Dev, Ctx->CmdPool, 1, &CmdBuff);
+    vkFreeCommandBuffers(Ctx->Device, Ctx->CmdPool, 1, &CmdBuff);
   }
 
   // buffers
@@ -256,7 +256,7 @@ namespace mvk::engine
 
     vkQueueSubmit(Ctx->GfxQueue, 1, &SubmitInfo, nullptr);
     vkQueueWaitIdle(Ctx->GfxQueue);
-    vkFreeCommandBuffers(Ctx->Dev, Ctx->CmdPool, 1, &CmdBuff);
+    vkFreeCommandBuffers(Ctx->Device, Ctx->CmdPool, 1, &CmdBuff);
   }
 
 }  // namespace mvk::engine

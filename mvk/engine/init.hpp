@@ -21,14 +21,14 @@ namespace mvk::engine
   void initSurf(InOut<Context> Ctx) noexcept;
   void dtySurf(InOut<Context> Ctx) noexcept;
 
-  void selectPhysicalDev(InOut<Context> Ctx) noexcept;
+  void selectPhysicalDevice(InOut<Context> Ctx) noexcept;
   void selectSurfFmt(InOut<Context> Ctx) noexcept;
 
-  void initDev(InOut<Context> Ctx) noexcept;
-  void dtyDev(InOut<Context> Ctx) noexcept;
+  void initDevice(InOut<Context> Ctx) noexcept;
+  void dtyDevice(InOut<Context> Ctx) noexcept;
 
-  void initLays(InOut<Context> Ctx) noexcept;
-  void dtyLays(InOut<Context> Ctx) noexcept;
+  void initLayouts(InOut<Context> Ctx) noexcept;
+  void dtyLayouts(InOut<Context> Ctx) noexcept;
 
   void initPools(InOut<Context> Ctx) noexcept;
   void dtyPools(InOut<Context> Ctx) noexcept;

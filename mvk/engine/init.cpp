@@ -19,11 +19,11 @@ namespace mvk::engine
     initInst(Ctx, Name);
     initDbgMsngr(Ctx);
     initSurf(Ctx);
-    selectPhysicalDev(Ctx);
+    selectPhysicalDevice(Ctx);
     selectSurfFmt(Ctx);
-    initDev(Ctx);
+    initDevice(Ctx);
     crtStagingBuffAndMem(Ctx, 1024 * 1024);
-    initLays(Ctx);
+    initLayouts(Ctx);
     initPools(Ctx);
     initSwapchain(Ctx);
     initDepthImg(Ctx);
@@ -59,9 +59,9 @@ namespace mvk::engine
     dtyDepthImg(Ctx);
     dtySwapchain(Ctx);
     dtyPools(Ctx);
-    dtyLays(Ctx);
+    dtyLayouts(Ctx);
     dtyStagingBuffAndMem(Ctx);
-    dtyDev(Ctx);
+    dtyDevice(Ctx);
     dtySurf(Ctx);
     dtyDbgMsngr(Ctx);
     dtyInst(Ctx);
@@ -212,7 +212,7 @@ namespace mvk::engine
     vkDestroySurfaceKHR(Ctx->Inst, Ctx->Surf, nullptr);
   }
 
-  void selectPhysicalDev(InOut<Context> Ctx) noexcept
+  void selectPhysicalDevice(InOut<Context> Ctx) noexcept
   {
     auto PhysicalDeviceCnt = uint32_t(0);
     vkEnumeratePhysicalDevices(Ctx->Inst, &PhysicalDeviceCnt, nullptr);
@@ -229,7 +229,7 @@ namespace mvk::engine
           detail::chkFmtAndPresentModeAvailablity(PhysicalDevice, Ctx->Surf) &&
           detail::queryFamiliyIdxs(PhysicalDevice, Ctx->Surf).has_value() && features.samplerAnisotropy)
       {
-        Ctx->PhysicalDev = PhysicalDevice;
+        Ctx->PhysicalDevice = PhysicalDevice;
         return;
       }
     }
@@ -240,10 +240,10 @@ namespace mvk::engine
   void selectSurfFmt(InOut<Context> Ctx) noexcept
   {
     auto FmtCnt = uint32_t(0);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(Ctx->PhysicalDev, Ctx->Surf, &FmtCnt, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(Ctx->PhysicalDevice, Ctx->Surf, &FmtCnt, nullptr);
 
     auto Fmts = std::vector<VkSurfaceFormatKHR>(FmtCnt);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(Ctx->PhysicalDev, Ctx->Surf, &FmtCnt, std::data(Fmts));
+    vkGetPhysicalDeviceSurfaceFormatsKHR(Ctx->PhysicalDevice, Ctx->Surf, &FmtCnt, std::data(Fmts));
 
     for (auto const Fmt : Fmts)
     {
@@ -257,9 +257,9 @@ namespace mvk::engine
     Ctx->SurfFmt = Fmts[0];
   }
 
-  void initDev(InOut<Context> Ctx) noexcept
+  void initDevice(InOut<Context> Ctx) noexcept
   {
-    auto const OptQueueIdx = detail::queryFamiliyIdxs(Ctx->PhysicalDev, Ctx->Surf);
+    auto const OptQueueIdx = detail::queryFamiliyIdxs(Ctx->PhysicalDevice, Ctx->Surf);
 
     MVK_VERIFY(OptQueueIdx.has_value());
 
@@ -268,7 +268,7 @@ namespace mvk::engine
     Ctx->PresentQueueIdx = QueueIdxs.second;
 
     auto Features = VkPhysicalDeviceFeatures();
-    vkGetPhysicalDeviceFeatures(Ctx->PhysicalDev, &Features);
+    vkGetPhysicalDeviceFeatures(Ctx->PhysicalDevice, &Features);
 
     auto const QueuePrio = 1.0F;
 
@@ -306,19 +306,19 @@ namespace mvk::engine
       Device_create_info.ppEnabledLayerNames = nullptr;
     }
 
-    [[maybe_unused]] auto Result = vkCreateDevice(Ctx->PhysicalDev, &Device_create_info, nullptr, &Ctx->Dev);
+    [[maybe_unused]] auto Result = vkCreateDevice(Ctx->PhysicalDevice, &Device_create_info, nullptr, &Ctx->Device);
     MVK_VERIFY(Result == VK_SUCCESS);
 
-    vkGetDeviceQueue(Ctx->Dev, Ctx->GfxQueueIdx, 0, &Ctx->GfxQueue);
-    vkGetDeviceQueue(Ctx->Dev, Ctx->PresentQueueIdx, 0, &Ctx->PresentQueue);
+    vkGetDeviceQueue(Ctx->Device, Ctx->GfxQueueIdx, 0, &Ctx->GfxQueue);
+    vkGetDeviceQueue(Ctx->Device, Ctx->PresentQueueIdx, 0, &Ctx->PresentQueue);
   }
 
-  void dtyDev(InOut<Context> Ctx) noexcept
+  void dtyDevice(InOut<Context> Ctx) noexcept
   {
-    vkDestroyDevice(Ctx->Dev, nullptr);
+    vkDestroyDevice(Ctx->Device, nullptr);
   }
 
-  void initLays(InOut<Context> Ctx) noexcept
+  void initLayouts(InOut<Context> Ctx) noexcept
   {
     auto UniformDescriptorSetLayBind               = VkDescriptorSetLayoutBinding();
     UniformDescriptorSetLayBind.binding            = 0;
@@ -332,8 +332,8 @@ namespace mvk::engine
     UniformDescriptorSetLayoutCrtInfo.bindingCount = 1;
     UniformDescriptorSetLayoutCrtInfo.pBindings    = &UniformDescriptorSetLayBind;
 
-    auto Result =
-      vkCreateDescriptorSetLayout(Ctx->Dev, &UniformDescriptorSetLayoutCrtInfo, nullptr, &Ctx->UboDescriptorSetLay);
+    auto Result = vkCreateDescriptorSetLayout(
+      Ctx->Device, &UniformDescriptorSetLayoutCrtInfo, nullptr, &Ctx->UboDescriptorSetLayout);
 
     MVK_VERIFY(Result == VK_SUCCESS);
 
@@ -349,11 +349,12 @@ namespace mvk::engine
     SamplerDescriptorSetLayCrtInfo.bindingCount = 1;
     SamplerDescriptorSetLayCrtInfo.pBindings    = &SamplerDescriptorSetLayBind;
 
-    Result = vkCreateDescriptorSetLayout(Ctx->Dev, &SamplerDescriptorSetLayCrtInfo, nullptr, &Ctx->TexDescriptorSetLay);
+    Result =
+      vkCreateDescriptorSetLayout(Ctx->Device, &SamplerDescriptorSetLayCrtInfo, nullptr, &Ctx->TextDescriptorSetLayout);
 
     MVK_VERIFY(Result == VK_SUCCESS);
 
-    auto DescriptorSetLays = std::array{ Ctx->UboDescriptorSetLay, Ctx->TexDescriptorSetLay };
+    auto DescriptorSetLays = std::array{ Ctx->UboDescriptorSetLayout, Ctx->TextDescriptorSetLayout };
 
     auto PipelineLayCrtInfo                   = VkPipelineLayoutCreateInfo();
     PipelineLayCrtInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -362,16 +363,16 @@ namespace mvk::engine
     PipelineLayCrtInfo.pushConstantRangeCount = 0;
     PipelineLayCrtInfo.pPushConstantRanges    = nullptr;
 
-    Result = vkCreatePipelineLayout(Ctx->Dev, &PipelineLayCrtInfo, nullptr, &Ctx->PipelineLay);
+    Result = vkCreatePipelineLayout(Ctx->Device, &PipelineLayCrtInfo, nullptr, &Ctx->PipelineLayout);
 
     MVK_VERIFY(Result == VK_SUCCESS);
   }
 
-  void dtyLays(InOut<Context> Ctx) noexcept
+  void dtyLayouts(InOut<Context> Ctx) noexcept
   {
-    vkDestroyPipelineLayout(Ctx->Dev, Ctx->PipelineLay, nullptr);
-    vkDestroyDescriptorSetLayout(Ctx->Dev, Ctx->TexDescriptorSetLay, nullptr);
-    vkDestroyDescriptorSetLayout(Ctx->Dev, Ctx->UboDescriptorSetLay, nullptr);
+    vkDestroyPipelineLayout(Ctx->Device, Ctx->PipelineLayout, nullptr);
+    vkDestroyDescriptorSetLayout(Ctx->Device, Ctx->TextDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(Ctx->Device, Ctx->UboDescriptorSetLayout, nullptr);
   }
 
   void initPools(InOut<Context> Ctx) noexcept
@@ -381,7 +382,7 @@ namespace mvk::engine
     CmdPoolCrtInfo.queueFamilyIndex = Ctx->GfxQueueIdx;
     CmdPoolCrtInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    [[maybe_unused]] auto Result = vkCreateCommandPool(Ctx->Dev, &CmdPoolCrtInfo, nullptr, &Ctx->CmdPool);
+    [[maybe_unused]] auto Result = vkCreateCommandPool(Ctx->Device, &CmdPoolCrtInfo, nullptr, &Ctx->CmdPool);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     auto UniformDescriptorPoolSize            = VkDescriptorPoolSize();
@@ -401,13 +402,13 @@ namespace mvk::engine
     DescriptorPoolCrtInfo.maxSets       = 128;
     DescriptorPoolCrtInfo.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
-    vkCreateDescriptorPool(Ctx->Dev, &DescriptorPoolCrtInfo, nullptr, &Ctx->DescriptorPool);
+    vkCreateDescriptorPool(Ctx->Device, &DescriptorPoolCrtInfo, nullptr, &Ctx->DescriptorPool);
   }
 
   void dtyPools(InOut<Context> Ctx) noexcept
   {
-    vkDestroyDescriptorPool(Ctx->Dev, Ctx->DescriptorPool, nullptr);
-    vkDestroyCommandPool(Ctx->Dev, Ctx->CmdPool, nullptr);
+    vkDestroyDescriptorPool(Ctx->Device, Ctx->DescriptorPool, nullptr);
+    vkDestroyCommandPool(Ctx->Device, Ctx->CmdPool, nullptr);
   }
 
   void initSwapchain(InOut<Context> Ctx) noexcept
@@ -418,9 +419,9 @@ namespace mvk::engine
     getFramebufferSize(Ctx, &FramebufferSize);
 
     VkSurfaceCapabilitiesKHR Capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Ctx->PhysicalDev, Ctx->Surf, &Capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Ctx->PhysicalDevice, Ctx->Surf, &Capabilities);
 
-    auto const present_mode = detail::choosePresentMode(Ctx->PhysicalDev, Ctx->Surf);
+    auto const present_mode = detail::choosePresentMode(Ctx->PhysicalDevice, Ctx->Surf);
     Ctx->SwapchainExtent    = detail::chooseExtent(Capabilities, FramebufferSize);
     auto const image_count  = detail::chooseImgCnt(Capabilities);
 
@@ -452,14 +453,14 @@ namespace mvk::engine
       SwapchainCrtInfo.pQueueFamilyIndices   = nullptr;
     }
 
-    auto Result = vkCreateSwapchainKHR(Ctx->Dev, &SwapchainCrtInfo, nullptr, &Ctx->Swapchain);
+    auto Result = vkCreateSwapchainKHR(Ctx->Device, &SwapchainCrtInfo, nullptr, &Ctx->Swapchain);
     MVK_VERIFY(Result == VK_SUCCESS);
 
-    Result = vkGetSwapchainImagesKHR(Ctx->Dev, Ctx->Swapchain, &Ctx->SwapchainImgCnt, nullptr);
+    Result = vkGetSwapchainImagesKHR(Ctx->Device, Ctx->Swapchain, &Ctx->SwapchainImgCnt, nullptr);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     auto SwapchainImgs = std::vector<VkImage>(Ctx->SwapchainImgCnt);
-    vkGetSwapchainImagesKHR(Ctx->Dev, Ctx->Swapchain, &Ctx->SwapchainImgCnt, std::data(SwapchainImgs));
+    vkGetSwapchainImagesKHR(Ctx->Device, Ctx->Swapchain, &Ctx->SwapchainImgCnt, std::data(SwapchainImgs));
 
     Ctx->SwapchainImgViews.reserve(Ctx->SwapchainImgCnt);
 
@@ -481,7 +482,7 @@ namespace mvk::engine
       SwapchainImgViewCrtInfo.subresourceRange.layerCount     = 1;
 
       auto ImgView = VkImageView();
-      Result       = vkCreateImageView(Ctx->Dev, &SwapchainImgViewCrtInfo, nullptr, &ImgView);
+      Result       = vkCreateImageView(Ctx->Device, &SwapchainImgViewCrtInfo, nullptr, &ImgView);
       Ctx->SwapchainImgViews.push_back(ImgView);
     }
   }
@@ -490,10 +491,10 @@ namespace mvk::engine
   {
     for (auto const ImgView : Ctx->SwapchainImgViews)
     {
-      vkDestroyImageView(Ctx->Dev, ImgView, nullptr);
+      vkDestroyImageView(Ctx->Device, ImgView, nullptr);
     }
 
-    vkDestroySwapchainKHR(Ctx->Dev, Ctx->Swapchain, nullptr);
+    vkDestroySwapchainKHR(Ctx->Device, Ctx->Swapchain, nullptr);
   }
 
   void initDepthImg(InOut<Context> Ctx) noexcept
@@ -514,14 +515,14 @@ namespace mvk::engine
     DepthImgCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
     DepthImgCreateInfo.flags         = 0;
 
-    auto Result = vkCreateImage(Ctx->Dev, &DepthImgCreateInfo, nullptr, &Ctx->DepthImg);
+    auto Result = vkCreateImage(Ctx->Device, &DepthImgCreateInfo, nullptr, &Ctx->DepthImg);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     auto DepthImgReq = VkMemoryRequirements();
-    vkGetImageMemoryRequirements(Ctx->Dev, Ctx->DepthImg, &DepthImgReq);
+    vkGetImageMemoryRequirements(Ctx->Device, Ctx->DepthImg, &DepthImgReq);
 
     auto const MemTypeIdx =
-      detail::queryMemType(Ctx->PhysicalDev, DepthImgReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      detail::queryMemType(Ctx->PhysicalDevice, DepthImgReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     MVK_VERIFY(MemTypeIdx.has_value());
 
@@ -530,10 +531,10 @@ namespace mvk::engine
     DepthImgMemAllocInfo.allocationSize  = DepthImgReq.size;
     DepthImgMemAllocInfo.memoryTypeIndex = MemTypeIdx.value();
 
-    Result = vkAllocateMemory(Ctx->Dev, &DepthImgMemAllocInfo, nullptr, &Ctx->DepthImgMem);
+    Result = vkAllocateMemory(Ctx->Device, &DepthImgMemAllocInfo, nullptr, &Ctx->DepthImgMem);
     MVK_VERIFY(Result == VK_SUCCESS);
 
-    Result = vkBindImageMemory(Ctx->Dev, Ctx->DepthImg, Ctx->DepthImgMem, 0);
+    Result = vkBindImageMemory(Ctx->Device, Ctx->DepthImg, Ctx->DepthImgMem, 0);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     auto DepthImgViewCrtInfo                            = VkImageViewCreateInfo();
@@ -551,7 +552,7 @@ namespace mvk::engine
     DepthImgViewCrtInfo.subresourceRange.baseArrayLayer = 0;
     DepthImgViewCrtInfo.subresourceRange.layerCount     = 1;
 
-    Result = vkCreateImageView(Ctx->Dev, &DepthImgViewCrtInfo, nullptr, &Ctx->DepthImgView);
+    Result = vkCreateImageView(Ctx->Device, &DepthImgViewCrtInfo, nullptr, &Ctx->DepthImgView);
 
     MVK_VERIFY(Result == VK_SUCCESS);
 
@@ -560,9 +561,9 @@ namespace mvk::engine
 
   void dtyDepthImg(InOut<Context> Ctx) noexcept
   {
-    vkDestroyImageView(Ctx->Dev, Ctx->DepthImgView, nullptr);
-    vkFreeMemory(Ctx->Dev, Ctx->DepthImgMem, nullptr);
-    vkDestroyImage(Ctx->Dev, Ctx->DepthImg, nullptr);
+    vkDestroyImageView(Ctx->Device, Ctx->DepthImgView, nullptr);
+    vkFreeMemory(Ctx->Device, Ctx->DepthImgMem, nullptr);
+    vkDestroyImage(Ctx->Device, Ctx->DepthImg, nullptr);
   }
 
   void initFramebuffers(InOut<Context> Ctx) noexcept
@@ -584,7 +585,7 @@ namespace mvk::engine
 
       auto Framebuffer = VkFramebuffer();
 
-      [[maybe_unused]] auto Result = vkCreateFramebuffer(Ctx->Dev, &FramebufferCrtInfo, nullptr, &Framebuffer);
+      [[maybe_unused]] auto Result = vkCreateFramebuffer(Ctx->Device, &FramebufferCrtInfo, nullptr, &Framebuffer);
       Ctx->Framebuffers.push_back(Framebuffer);
       MVK_VERIFY(Result == VK_SUCCESS);
     }
@@ -594,7 +595,7 @@ namespace mvk::engine
   {
     for (auto const Framebuffer : Ctx->Framebuffers)
 
-      vkDestroyFramebuffer(Ctx->Dev, Framebuffer, nullptr);
+      vkDestroyFramebuffer(Ctx->Device, Framebuffer, nullptr);
   }
 
   void initRdrPass(InOut<Context> Ctx) noexcept
@@ -652,13 +653,13 @@ namespace mvk::engine
     RdrPassCrtInfo.dependencyCount = 1;
     RdrPassCrtInfo.pDependencies   = &SubpassDep;
 
-    [[maybe_unused]] auto Result = vkCreateRenderPass(Ctx->Dev, &RdrPassCrtInfo, nullptr, &Ctx->RdrPass);
+    [[maybe_unused]] auto Result = vkCreateRenderPass(Ctx->Device, &RdrPassCrtInfo, nullptr, &Ctx->RdrPass);
     MVK_VERIFY(Result == VK_SUCCESS);
   }
 
   void dtyRdrPass(InOut<Context> Ctx) noexcept
   {
-    vkDestroyRenderPass(Ctx->Dev, Ctx->RdrPass, nullptr);
+    vkDestroyRenderPass(Ctx->Device, Ctx->RdrPass, nullptr);
   }
 
   void initDoesntBelongHere(InOut<Context> Ctx) noexcept
@@ -681,14 +682,14 @@ namespace mvk::engine
     ImgCrtInfo.samples     = VK_SAMPLE_COUNT_1_BIT;
     ImgCrtInfo.flags       = 0;
 
-    auto Result = vkCreateImage(Ctx->Dev, &ImgCrtInfo, nullptr, &Ctx->image_);
+    auto Result = vkCreateImage(Ctx->Device, &ImgCrtInfo, nullptr, &Ctx->image_);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     auto ImgMemReq = VkMemoryRequirements();
-    vkGetImageMemoryRequirements(Ctx->Dev, Ctx->image_, &ImgMemReq);
+    vkGetImageMemoryRequirements(Ctx->Device, Ctx->image_, &ImgMemReq);
 
     auto const MemTypeIdx =
-      detail::queryMemType(Ctx->PhysicalDev, ImgMemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+      detail::queryMemType(Ctx->PhysicalDevice, ImgMemReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     MVK_VERIFY(MemTypeIdx.has_value());
 
@@ -697,10 +698,10 @@ namespace mvk::engine
     ImgMemAllocInfo.allocationSize  = ImgMemReq.size;
     ImgMemAllocInfo.memoryTypeIndex = MemTypeIdx.value();
 
-    Result = vkAllocateMemory(Ctx->Dev, &ImgMemAllocInfo, nullptr, &Ctx->image_memory_);
+    Result = vkAllocateMemory(Ctx->Device, &ImgMemAllocInfo, nullptr, &Ctx->image_memory_);
     MVK_VERIFY(Result == VK_SUCCESS);
 
-    vkBindImageMemory(Ctx->Dev, Ctx->image_, Ctx->image_memory_, 0);
+    vkBindImageMemory(Ctx->Device, Ctx->image_, Ctx->image_memory_, 0);
 
     trainstionLay(
       Ctx, Ctx->image_, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ImgCrtInfo.mipLevels);
@@ -724,12 +725,12 @@ namespace mvk::engine
     ImgViewCrtInfo.subresourceRange.baseArrayLayer = 0;
     ImgViewCrtInfo.subresourceRange.layerCount     = 1;
 
-    Result = vkCreateImageView(Ctx->Dev, &ImgViewCrtInfo, nullptr, &Ctx->image_view_);
+    Result = vkCreateImageView(Ctx->Device, &ImgViewCrtInfo, nullptr, &Ctx->image_view_);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     std::tie(Ctx->vertices_, Ctx->indices_) = detail::readObj("../../assets/viking_room.obj");
 
-    Ctx->image_descriptor_set_ = allocDescriptorSets<1>(Ctx, Ctx->TexDescriptorSetLay)[0];
+    Ctx->image_descriptor_set_ = allocDescriptorSets<1>(Ctx, Ctx->TextDescriptorSetLayout)[0];
 
     auto ImgDescriptorImgCreateInfo        = VkDescriptorImageInfo();
     ImgDescriptorImgCreateInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -747,15 +748,15 @@ namespace mvk::engine
     ImgWriteDescriptorSet.pImageInfo       = &ImgDescriptorImgCreateInfo;
     ImgWriteDescriptorSet.pTexelBufferView = nullptr;
 
-    vkUpdateDescriptorSets(Ctx->Dev, 1, &ImgWriteDescriptorSet, 0, nullptr);
+    vkUpdateDescriptorSets(Ctx->Device, 1, &ImgWriteDescriptorSet, 0, nullptr);
   }
 
   void dtyDoesntBelongHere(InOut<Context> Ctx) noexcept
   {
-    vkFreeDescriptorSets(Ctx->Dev, Ctx->DescriptorPool, 1, &Ctx->image_descriptor_set_);
-    vkDestroyImageView(Ctx->Dev, Ctx->image_view_, nullptr);
-    vkFreeMemory(Ctx->Dev, Ctx->image_memory_, nullptr);
-    vkDestroyImage(Ctx->Dev, Ctx->image_, nullptr);
+    vkFreeDescriptorSets(Ctx->Device, Ctx->DescriptorPool, 1, &Ctx->image_descriptor_set_);
+    vkDestroyImageView(Ctx->Device, Ctx->image_view_, nullptr);
+    vkFreeMemory(Ctx->Device, Ctx->image_memory_, nullptr);
+    vkDestroyImage(Ctx->Device, Ctx->image_, nullptr);
   }
 
   void initCmdBuffs(InOut<Context> Ctx) noexcept
@@ -766,7 +767,7 @@ namespace mvk::engine
   void dtyCmdBuffs(InOut<Context> Ctx) noexcept
   {
     vkFreeCommandBuffers(
-      Ctx->Dev, Ctx->CmdPool, static_cast<uint32_t>(std::size(Ctx->CmdBuffs)), std::data(Ctx->CmdBuffs));
+      Ctx->Device, Ctx->CmdPool, static_cast<uint32_t>(std::size(Ctx->CmdBuffs)), std::data(Ctx->CmdBuffs));
   }
 
   void initShaders(InOut<Context> Ctx) noexcept
@@ -778,7 +779,7 @@ namespace mvk::engine
     VtxShaderModuleCrtInfo.codeSize = static_cast<uint32_t>(std::size(VtxCode));
     VtxShaderModuleCrtInfo.pCode    = reinterpret_cast<uint32_t const *>(std::data(VtxCode));
 
-    auto Result = vkCreateShaderModule(Ctx->Dev, &VtxShaderModuleCrtInfo, nullptr, &Ctx->VtxShader);
+    auto Result = vkCreateShaderModule(Ctx->Device, &VtxShaderModuleCrtInfo, nullptr, &Ctx->VtxShader);
     MVK_VERIFY(Result == VK_SUCCESS);
 
     auto const FragCode = detail::readFile("../../shaders/frag.spv");
@@ -788,14 +789,14 @@ namespace mvk::engine
     FragShaderModuleCrtInfo.codeSize = static_cast<uint32_t>(std::size(FragCode));
     FragShaderModuleCrtInfo.pCode    = reinterpret_cast<uint32_t const *>(std::data(FragCode));
 
-    Result = vkCreateShaderModule(Ctx->Dev, &FragShaderModuleCrtInfo, nullptr, &Ctx->FragShader);
+    Result = vkCreateShaderModule(Ctx->Device, &FragShaderModuleCrtInfo, nullptr, &Ctx->FragShader);
     MVK_VERIFY(Result == VK_SUCCESS);
   }
 
   void dtyShaders(InOut<Context> Ctx) noexcept
   {
-    vkDestroyShaderModule(Ctx->Dev, Ctx->FragShader, nullptr);
-    vkDestroyShaderModule(Ctx->Dev, Ctx->VtxShader, nullptr);
+    vkDestroyShaderModule(Ctx->Device, Ctx->FragShader, nullptr);
+    vkDestroyShaderModule(Ctx->Device, Ctx->VtxShader, nullptr);
   }
 
   void initSamplers(InOut<Context> Ctx) noexcept
@@ -819,13 +820,13 @@ namespace mvk::engine
     SamplerCrtInfo.minLod                  = 0.0F;
     SamplerCrtInfo.maxLod                  = std::numeric_limits<float>::max();
 
-    [[maybe_unused]] auto Result = vkCreateSampler(Ctx->Dev, &SamplerCrtInfo, nullptr, &Ctx->TexSampler);
+    [[maybe_unused]] auto Result = vkCreateSampler(Ctx->Device, &SamplerCrtInfo, nullptr, &Ctx->TexSampler);
     MVK_VERIFY(Result == VK_SUCCESS);
   }
 
   void dtySamplers(InOut<Context> Ctx) noexcept
   {
-    vkDestroySampler(Ctx->Dev, Ctx->TexSampler, nullptr);
+    vkDestroySampler(Ctx->Device, Ctx->TexSampler, nullptr);
   }
 
   void initPipeline(InOut<Context> Ctx) noexcept
@@ -967,20 +968,20 @@ namespace mvk::engine
     PipelineCrtInfo.pDepthStencilState  = &PipelineDepthStencilStateCrtInfo;
     PipelineCrtInfo.pColorBlendState    = &PipelineColorBlendCrtInfo;
     PipelineCrtInfo.pDynamicState       = nullptr;
-    PipelineCrtInfo.layout              = Ctx->PipelineLay;
+    PipelineCrtInfo.layout              = Ctx->PipelineLayout;
     PipelineCrtInfo.renderPass          = Ctx->RdrPass;
     PipelineCrtInfo.subpass             = 0;
     PipelineCrtInfo.basePipelineHandle  = nullptr;
     PipelineCrtInfo.basePipelineIndex   = -1;
 
     [[maybe_unused]] auto Result =
-      vkCreateGraphicsPipelines(Ctx->Dev, VK_NULL_HANDLE, 1, &PipelineCrtInfo, nullptr, &Ctx->Pipeline);
+      vkCreateGraphicsPipelines(Ctx->Device, VK_NULL_HANDLE, 1, &PipelineCrtInfo, nullptr, &Ctx->Pipeline);
     MVK_VERIFY(Result == VK_SUCCESS);
   }
 
   void dtyPipelines(InOut<Context> Ctx) noexcept
   {
-    vkDestroyPipeline(Ctx->Dev, Ctx->Pipeline, nullptr);
+    vkDestroyPipeline(Ctx->Device, Ctx->Pipeline, nullptr);
   }
 
   void initSync(InOut<Context> Ctx) noexcept
@@ -994,13 +995,13 @@ namespace mvk::engine
 
     for (auto i = size_t(0); i < Context::MaxFramesInFlight; ++i)
     {
-      auto Result = vkCreateSemaphore(Ctx->Dev, &SemaphoreCrtInfo, nullptr, &Ctx->ImgAvailableSemaphores[i]);
+      auto Result = vkCreateSemaphore(Ctx->Device, &SemaphoreCrtInfo, nullptr, &Ctx->ImgAvailableSemaphores[i]);
       MVK_VERIFY(Result == VK_SUCCESS);
 
-      Result = vkCreateSemaphore(Ctx->Dev, &SemaphoreCrtInfo, nullptr, &Ctx->RdrFinishedSemaphores[i]);
+      Result = vkCreateSemaphore(Ctx->Device, &SemaphoreCrtInfo, nullptr, &Ctx->RdrFinishedSemaphores[i]);
       MVK_VERIFY(Result == VK_SUCCESS);
 
-      Result = vkCreateFence(Ctx->Dev, &FenceCrtInfo, nullptr, &Ctx->FrameInFlightFences[i]);
+      Result = vkCreateFence(Ctx->Device, &FenceCrtInfo, nullptr, &Ctx->FrameInFlightFences[i]);
       MVK_VERIFY(Result == VK_SUCCESS);
     }
 
@@ -1011,9 +1012,9 @@ namespace mvk::engine
   {
     for (auto i = size_t(0); i < Context::MaxFramesInFlight; ++i)
     {
-      vkDestroySemaphore(Ctx->Dev, Ctx->ImgAvailableSemaphores[i], nullptr);
-      vkDestroySemaphore(Ctx->Dev, Ctx->RdrFinishedSemaphores[i], nullptr);
-      vkDestroyFence(Ctx->Dev, Ctx->FrameInFlightFences[i], nullptr);
+      vkDestroySemaphore(Ctx->Device, Ctx->ImgAvailableSemaphores[i], nullptr);
+      vkDestroySemaphore(Ctx->Device, Ctx->RdrFinishedSemaphores[i], nullptr);
+      vkDestroyFence(Ctx->Device, Ctx->FrameInFlightFences[i], nullptr);
     }
   }
 

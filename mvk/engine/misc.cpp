@@ -19,7 +19,7 @@ namespace mvk::engine
       endDraw(Ctx);
     }
 
-    vkDeviceWaitIdle(Ctx->Dev);
+    vkDeviceWaitIdle(Ctx->Device);
   }
 
   [[nodiscard]] pvm createTestPvm(In<Context> Ctx) noexcept

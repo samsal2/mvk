@@ -74,7 +74,7 @@ namespace mvk::engine
     auto DescriptorSetLays = std::array<VkDescriptorSetLayout, Size>();
     std::fill(std::begin(DescriptorSetLays), std::end(DescriptorSetLays), Lay);
 
-    auto const AllocInfo = [&Ctx, &DescriptorSetLays]
+    auto const AllocInfo = [Ctx, &DescriptorSetLays]
     {
       auto info               = VkDescriptorSetAllocateInfo();
       info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -86,7 +86,7 @@ namespace mvk::engine
 
     auto DescriptorSets = std::array<VkDescriptorSet, Size>();
 
-    [[maybe_unused]] auto Result = vkAllocateDescriptorSets(Ctx->Dev, &AllocInfo, std::data(DescriptorSets));
+    [[maybe_unused]] auto Result = vkAllocateDescriptorSets(Ctx->Device, &AllocInfo, std::data(DescriptorSets));
     MVK_VERIFY(Result == VK_SUCCESS);
     return DescriptorSets;
   }
@@ -94,7 +94,7 @@ namespace mvk::engine
   template <size_t Size>
   [[nodiscard]] std::array<VkCommandBuffer, Size> allocCmdBuff(In<Context> Ctx, VkCommandBufferLevel Lvl) noexcept
   {
-    auto const AllocInfo = [&Ctx, Lvl]
+    auto const AllocInfo = [Ctx, Lvl]
     {
       auto info               = VkCommandBufferAllocateInfo();
       info.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -106,7 +106,7 @@ namespace mvk::engine
 
     auto CommandBuffers = std::array<VkCommandBuffer, Size>();
 
-    [[maybe_unused]] auto result = vkAllocateCommandBuffers(Ctx->Dev, &AllocInfo, std::data(CommandBuffers));
+    [[maybe_unused]] auto result = vkAllocateCommandBuffers(Ctx->Device, &AllocInfo, std::data(CommandBuffers));
     MVK_VERIFY(result == VK_SUCCESS);
     return CommandBuffers;
   }
