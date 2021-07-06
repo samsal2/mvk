@@ -1,7 +1,7 @@
 
-target_sources(${PROJECT_NAME} PRIVATE shader_types.hpp
+target_sources(${PROJECT_NAME} PRIVATE ShaderTypes.hpp
                                        main.cpp)
 
-add_subdirectory(utility)
-add_subdirectory(detail)
-add_subdirectory(engine)
+add_subdirectory(Utility)
+add_subdirectory(Detail)
+add_subdirectory(Engine)

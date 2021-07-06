@@ -1,12 +1,9 @@
-#include "engine/init.hpp"
-#include "engine/misc.hpp"
+#include "Engine/Misc.hpp"
+#include "Engine/Renderer.hpp"
 
-int main()
-{
-  mvk::engine::Context Ctx;
-  mvk::engine::createContext("stan loona", { 600, 600 }, &Ctx);
-  mvk::engine::testRun(&Ctx);
-  mvk::engine::dtyContext(&Ctx);
+int main() {
+  auto Render = Mvk::Engine::Renderer(std::string("stan loona"), {600, 600});
+  Mvk::Engine::testRun(Render);
 
   return 0;
 }

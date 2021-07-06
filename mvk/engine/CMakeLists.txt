@@ -1,13 +1,20 @@
 
-target_sources(${PROJECT_NAME} PRIVATE allocate.hpp
-                                       allocate.cpp
-                                       draw.hpp
-                                       draw.cpp
-                                       image.hpp
-                                       image.cpp
-                                       init.hpp
-                                       init.cpp
-                                       misc.hpp
-                                       misc.cpp
-                                       context.hpp 
-                                       context.cpp)
+target_sources(${PROJECT_NAME} PRIVATE 
+                                       Misc.hpp
+                                       Misc.cpp
+                                       Context.hpp 
+                                       Context.cpp
+                                       DrawCallGenerator.hpp
+                                       DrawCallGenerator.cpp
+                                       IdxBuff.hpp
+                                       IdxBuff.cpp
+                                       Renderer.hpp
+                                       Renderer.cpp
+                                       StagingBuff.hpp
+                                       StagingBuff.cpp
+                                       Tex.hpp
+                                       Tex.cpp
+                                       UboBuff.hpp
+                                       UboBuff.cpp
+                                       VtxBuff.hpp
+                                       VtxBuff.cpp)
