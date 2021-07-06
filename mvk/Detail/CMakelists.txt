@@ -1,0 +1,8 @@
+
+target_sources(${PROJECT_NAME} PRIVATE 
+                                       Misc.hpp 
+                                       Misc.cpp
+                                       Readers.hpp 
+                                       Readers.cpp
+                                       Helpers.hpp
+                                       Helpers.cpp)
