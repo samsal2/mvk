@@ -60,7 +60,7 @@ void Renderer::endDraw() noexcept {
   auto const Device = Ctx->getDevice();
 
   // Wait for the Img in flight to end if it is
-  auto const ImgInFlightFence = Ctx->getCurrentImginFlightFence();
+  auto const ImgInFlightFence = Ctx->getCurrentImgInFlightFence();
 
   if (ImgInFlightFence.has_value()) {
     vkWaitForFences(Device, 1, &ImgInFlightFence.value(), VK_TRUE,

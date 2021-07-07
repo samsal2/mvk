@@ -28,7 +28,8 @@ public:
 
   [[nodiscard]] StageResult stage(StagingBuff::MapResult From) noexcept;
 
-  [[nodiscard]] Context &getContext() const noexcept { return Ctx; }
+  [[nodiscard]] constexpr Context &getContext() const noexcept;
+  void nextBuffer() noexcept;
 
 private:
   void allocate(VkDeviceSize Size) noexcept;
@@ -40,11 +41,17 @@ private:
   AllocState State;
   Context &Ctx;
   VkMemoryRequirements MemReq;
+  VkDeviceSize LastReqSize;
   VkDeviceSize AlignedSize;
   std::array<VkBuffer, BuffCount> Buffs;
   std::array<VkDeviceSize, BuffCount> Offs;
   VkDeviceMemory Mem;
+  size_t BuffIdx;
 };
+
+[[nodiscard]] constexpr Context &VtxBuff::getContext() const noexcept {
+  return Ctx;
+}
 
 } // namespace Mvk::Engine
 

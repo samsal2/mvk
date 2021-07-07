@@ -24,4 +24,11 @@ void DrawCallGenerator::updatePvm(PVM const &Pvm, DrawCmd &Cmd) noexcept {
   Cmd.Ubo = UBO.map(Utility::as_bytes(Pvm));
 }
 
+void DrawCallGenerator::nextBuffers() noexcept {
+  Staging.nextBuffer();
+  VBO.nextBuffer();
+  IBO.nextBuffer();
+  UBO.nextBuffer();
+}
+
 } // namespace Mvk::Engine

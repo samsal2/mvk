@@ -43,96 +43,80 @@ struct Context {
 
   ~Context() noexcept;
 
-  [[nodiscard]] GLFWwindow *getWindow() const noexcept { return Window; }
-  [[nodiscard]] VkPhysicalDevice getPhysicalDevice() const noexcept {
-    return PhysicalDevice;
-  }
-  [[nodiscard]] VkDevice getDevice() const noexcept { return Device; }
-  [[nodiscard]] VkQueue getPresentQueue() const noexcept {
-    return PresentQueue;
-  }
-  [[nodiscard]] VkQueue getGfxQueue() const noexcept { return GfxQueue; }
-  [[nodiscard]] VkSurfaceFormatKHR getSurfaceFmt() const noexcept {
-    return SurfaceFmt;
-  }
-  [[nodiscard]] uint32_t getSwapchainImgCount() const noexcept {
-    return SwapchainImgCount;
-  }
-  [[nodiscard]] VkExtent2D getSwapchainExtent() const noexcept {
-    return SwapchainExtent;
-  }
-  [[nodiscard]] VkDescriptorPool getDescPool() const noexcept {
-    return DescPool;
-  }
-  [[nodiscard]] VkDescriptorSetLayout
-  getTexDescriptorSetLayout() const noexcept {
-    return TexDescSetLayout;
-  }
-  [[nodiscard]] VkDescriptorSetLayout getUboDescSetLayout() const noexcept {
-    return UboDescSetLayout;
-  }
-  [[nodiscard]] size_t getCurrentBuffIdx() const noexcept {
-    return CurrentBuffIdx;
-  }
-  [[nodiscard]] VkFramebuffer getCurrentFramebuffer() const noexcept {
-    return Framebuffers[CurrentImgIdx];
-  }
-  [[nodiscard]] VkCommandBuffer getCurrentCmdBuff() const noexcept {
-    return CurrentCmdBuff;
-  }
-  [[nodiscard]] VkFence getCurrentFrameInFlightFence() const noexcept {
-    return FrameInFlightFences[CurrentFrameIdx];
-  }
-  [[nodiscard]] VkSampler getTexSampler() const noexcept { return TexSampler; }
-  [[nodiscard]] VkRenderPass getMainRenderPass() const noexcept {
-    return RenderPass;
-  }
-  [[nodiscard]] VkSwapchainKHR getSwapchain() const noexcept {
-    return Swapchain;
-  }
-  [[nodiscard]] uint32_t getCurrentImgIdx() const noexcept {
-    return CurrentImgIdx;
-  }
-  [[nodiscard]] bool isFramebufferResized() const noexcept {
-    return FramebufferResized;
-  }
-  [[nodiscard]] VkPipeline getMainPipeline() const noexcept {
-    return MainPipeline;
-  }
-  [[nodiscard]] VkPipelineLayout getMainPipelineLayout() const noexcept {
-    return MainPipelineLayout;
-  }
-  void setFramebufferResized(bool State) noexcept {
-    FramebufferResized = State;
-  }
+  [[nodiscard]] constexpr GLFWwindow *getWindow() const noexcept;
 
-  [[nodiscard]] VkSemaphore getCurrentImgAvailableSemaphore() const noexcept {
-    return ImgAvailableSemaphores[CurrentFrameIdx];
-  }
+  [[nodiscard]] constexpr VkPhysicalDevice getPhysicalDevice() const noexcept;
 
-  [[nodiscard]] VkSemaphore getCurrentRenderFinishedSemaphore() const noexcept {
-    return RenderFinishedSemaphores[CurrentFrameIdx];
-  }
+  [[nodiscard]] constexpr VkDevice getDevice() const noexcept;
 
-  [[nodiscard]] std::optional<VkFence>
-  getCurrentImginFlightFence() const noexcept {
-    return ImgInFlightFences[CurrentImgIdx];
-  }
+  [[nodiscard]] constexpr VkQueue getPresentQueue() const noexcept;
 
-  void setCurrentImgInFlightFence(VkFence Fence) noexcept {
-    ImgInFlightFences[CurrentImgIdx] = Fence;
-  }
+  [[nodiscard]] constexpr VkQueue getGfxQueue() const noexcept;
+
+  [[nodiscard]] constexpr VkSurfaceFormatKHR getSurfaceFmt() const noexcept;
+
+  [[nodiscard]] constexpr uint32_t getSwapchainImgCount() const noexcept;
+
+  [[nodiscard]] constexpr VkExtent2D getSwapchainExtent() const noexcept;
+
+  [[nodiscard]] constexpr VkDescriptorPool getDescPool() const noexcept;
+
+  [[nodiscard]] constexpr VkDescriptorSetLayout
+  getTexDescriptorSetLayout() const noexcept;
+
+  [[nodiscard]] constexpr VkDescriptorSetLayout
+  getUboDescSetLayout() const noexcept;
+
+  [[nodiscard]] constexpr size_t getCurrentBuffIdx() const noexcept;
+
+  [[nodiscard]] constexpr VkFramebuffer getCurrentFramebuffer() const noexcept;
+
+  [[nodiscard]] constexpr VkCommandBuffer getCurrentCmdBuff() const noexcept;
+
+  [[nodiscard]] constexpr VkFence getCurrentFrameInFlightFence() const noexcept;
+
+  [[nodiscard]] constexpr VkSampler getTexSampler() const noexcept;
+
+  [[nodiscard]] constexpr VkRenderPass getMainRenderPass() const noexcept;
+
+  [[nodiscard]] constexpr VkSwapchainKHR getSwapchain() const noexcept;
+
+  [[nodiscard]] constexpr uint32_t getCurrentImgIdx() const noexcept;
+
+  [[nodiscard]] constexpr bool isFramebufferResized() const noexcept;
+
+  [[nodiscard]] constexpr VkPipeline getMainPipeline() const noexcept;
+
+  [[nodiscard]] constexpr VkPipelineLayout
+  getMainPipelineLayout() const noexcept;
+
+  constexpr void setFramebufferResized(bool State) noexcept;
+
+  [[nodiscard]] constexpr VkSemaphore
+  getCurrentImgAvailableSemaphore() const noexcept;
+
+  [[nodiscard]] constexpr VkSemaphore
+  getCurrentRenderFinishedSemaphore() const noexcept;
+
+  [[nodiscard]] constexpr std::optional<VkFence>
+  getCurrentImgInFlightFence() const noexcept;
+
+  constexpr void setCurrentImgInFlightFence(VkFence Fence) noexcept;
+
   [[nodiscard]] VkExtent2D getFramebufferSize() const noexcept;
 
   void updateImgIdx(Utility::Badge<Renderer> Badge) noexcept;
+
   void updateIdx(Utility::Badge<Renderer> Badge) noexcept;
 
   using Seconds = float;
   [[nodiscard]] Seconds getCurrentTime() const noexcept;
 
   void addMemoryToGarbage(VkDeviceMemory Mem) noexcept;
+
   void addDescriptorSetsToGarbage(
       Utility::Slice<VkDescriptorSet const> Sets) noexcept;
+
   void addBuffersToGarbage(Utility::Slice<VkBuffer const> Buffs) noexcept;
 
   void recreateAfterFramebufferChange() noexcept;
@@ -267,6 +251,107 @@ private:
   std::chrono::time_point<std::chrono::high_resolution_clock> StartTime =
       std::chrono::high_resolution_clock::now();
 };
+
+[[nodiscard]] constexpr GLFWwindow *Context::getWindow() const noexcept {
+  return Window;
+}
+[[nodiscard]] constexpr VkPhysicalDevice
+Context::getPhysicalDevice() const noexcept {
+  return PhysicalDevice;
+}
+[[nodiscard]] constexpr VkDevice Context::getDevice() const noexcept {
+  return Device;
+}
+[[nodiscard]] constexpr VkQueue Context::getPresentQueue() const noexcept {
+  return PresentQueue;
+}
+[[nodiscard]] constexpr VkQueue Context::getGfxQueue() const noexcept {
+  return GfxQueue;
+}
+[[nodiscard]] constexpr VkSurfaceFormatKHR
+Context::getSurfaceFmt() const noexcept {
+  return SurfaceFmt;
+}
+[[nodiscard]] constexpr uint32_t
+Context::getSwapchainImgCount() const noexcept {
+  return SwapchainImgCount;
+}
+[[nodiscard]] constexpr VkExtent2D
+Context::getSwapchainExtent() const noexcept {
+  return SwapchainExtent;
+}
+[[nodiscard]] constexpr VkDescriptorPool Context::getDescPool() const noexcept {
+  return DescPool;
+}
+[[nodiscard]] constexpr VkDescriptorSetLayout
+Context::getTexDescriptorSetLayout() const noexcept {
+  return TexDescSetLayout;
+}
+[[nodiscard]] constexpr VkDescriptorSetLayout
+Context::getUboDescSetLayout() const noexcept {
+  return UboDescSetLayout;
+}
+[[nodiscard]] constexpr size_t Context::getCurrentBuffIdx() const noexcept {
+  return CurrentBuffIdx;
+}
+[[nodiscard]] constexpr VkFramebuffer
+Context::getCurrentFramebuffer() const noexcept {
+  return Framebuffers[CurrentImgIdx];
+}
+[[nodiscard]] constexpr VkCommandBuffer
+Context::getCurrentCmdBuff() const noexcept {
+  return CurrentCmdBuff;
+}
+[[nodiscard]] constexpr VkFence
+Context::getCurrentFrameInFlightFence() const noexcept {
+  return FrameInFlightFences[CurrentFrameIdx];
+}
+[[nodiscard]] constexpr VkSampler Context::getTexSampler() const noexcept {
+  return TexSampler;
+}
+[[nodiscard]] constexpr VkRenderPass
+Context::getMainRenderPass() const noexcept {
+  return RenderPass;
+}
+[[nodiscard]] constexpr VkSwapchainKHR Context::getSwapchain() const noexcept {
+  return Swapchain;
+}
+[[nodiscard]] constexpr uint32_t Context::getCurrentImgIdx() const noexcept {
+  return CurrentImgIdx;
+}
+[[nodiscard]] constexpr bool Context::isFramebufferResized() const noexcept {
+  return FramebufferResized;
+}
+[[nodiscard]] constexpr VkPipeline Context::getMainPipeline() const noexcept {
+  return MainPipeline;
+}
+[[nodiscard]] constexpr VkPipelineLayout
+Context::getMainPipelineLayout() const noexcept {
+  return MainPipelineLayout;
+}
+
+constexpr void Context::setFramebufferResized(bool State) noexcept {
+  FramebufferResized = State;
+}
+
+[[nodiscard]] constexpr VkSemaphore
+Context::getCurrentImgAvailableSemaphore() const noexcept {
+  return ImgAvailableSemaphores[CurrentFrameIdx];
+}
+
+[[nodiscard]] constexpr VkSemaphore
+Context::getCurrentRenderFinishedSemaphore() const noexcept {
+  return RenderFinishedSemaphores[CurrentFrameIdx];
+}
+
+[[nodiscard]] constexpr std::optional<VkFence>
+Context::getCurrentImgInFlightFence() const noexcept {
+  return ImgInFlightFences[CurrentImgIdx];
+}
+
+constexpr void Context::setCurrentImgInFlightFence(VkFence Fence) noexcept {
+  ImgInFlightFences[CurrentImgIdx] = Fence;
+}
 
 } // namespace Mvk::Engine
 

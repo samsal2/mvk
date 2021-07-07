@@ -6,8 +6,8 @@
 namespace Mvk::Engine {
 
 StagingBuff::StagingBuff(Context &Ctx, VkDeviceSize Size) noexcept
-    : State(AllocState::Deallocated), Ctx(Ctx), MemReq(), AlignedSize(0),
-      Buffs(), Offs(), Mem(VK_NULL_HANDLE), Data() {
+    : State(AllocState::Deallocated), Ctx(Ctx), MemReq(), LastReqSize(0),
+      AlignedSize(0), Buffs(), Offs(), Mem(VK_NULL_HANDLE), Data(), BuffIdx(0) {
   allocate(Size);
 }
 
@@ -16,12 +16,14 @@ StagingBuff::~StagingBuff() noexcept {
     deallocate();
 }
 
-void StagingBuff::allocate(VkDeviceSize size) noexcept {
+void StagingBuff::allocate(VkDeviceSize Size) noexcept {
   MVK_VERIFY(State == AllocState::Deallocated);
+
+  LastReqSize = Size;
 
   auto CrtInfo = VkBufferCreateInfo();
   CrtInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  CrtInfo.size = size;
+  CrtInfo.size = Size;
   CrtInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
   CrtInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -31,8 +33,6 @@ void StagingBuff::allocate(VkDeviceSize size) noexcept {
     auto Result = vkCreateBuffer(Device, &CrtInfo, nullptr, &Buff);
     MVK_VERIFY(Result == VK_SUCCESS);
   }
-
-  auto const BuffIdx = Ctx.getCurrentBuffIdx();
 
   vkGetBufferMemoryRequirements(Device, Buffs[BuffIdx], &MemReq);
   AlignedSize = Detail::alignedSize(MemReq.size, MemReq.alignment);
@@ -91,12 +91,11 @@ void StagingBuff::moveToGarbage() noexcept {
 // Tries simple map, if it fails it reallocates * 2 de memory required
 [[nodiscard]] StagingBuff::MapResult
 StagingBuff::map(Utility::Slice<std::byte const> Src) noexcept {
-  auto const BuffIdx = Ctx.getCurrentBuffIdx();
   auto const SrcSize = std::size(Src);
 
   Offs[BuffIdx] = Detail::alignedSize(Offs[BuffIdx], MemReq.alignment);
 
-  if (auto ReqSize = Offs[BuffIdx] + SrcSize; ReqSize > AlignedSize) {
+  if (auto ReqSize = Offs[BuffIdx] + SrcSize; ReqSize > LastReqSize) {
     // TODO(samuel): moveToGarbage should be part of Ctx
     moveToGarbage();
     allocate(ReqSize * 2);
@@ -109,6 +108,11 @@ StagingBuff::map(Utility::Slice<std::byte const> Src) noexcept {
   std::copy(std::begin(Src), std::end(Src), std::begin(To));
 
   return {Buffs[BuffIdx], StagingOff, SrcSize};
+}
+
+void StagingBuff::nextBuffer() noexcept {
+  BuffIdx = (BuffIdx + 1) % BuffCount;
+  Offs[BuffIdx] = 0;
 }
 
 } // namespace Mvk::Engine

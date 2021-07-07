@@ -28,6 +28,8 @@ void testRun(Renderer &Render) noexcept {
     Render.beginDraw();
     Render.draw(Cmd);
     Render.endDraw();
+
+    Generator->nextBuffers();
   }
 
   Render.waitIdle();

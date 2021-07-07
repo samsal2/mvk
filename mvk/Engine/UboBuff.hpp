@@ -26,7 +26,8 @@ public:
 
   [[nodiscard]] MapResult map(Utility::Slice<std::byte const> src) noexcept;
 
-  [[nodiscard]] Context &getContext() const noexcept { return Ctx; }
+  [[nodiscard]] constexpr Context &getContext() const noexcept;
+  void nextBuffer() noexcept;
 
 private:
   void allocate(VkDeviceSize size) noexcept;
@@ -42,13 +43,19 @@ private:
   AllocState State;
   Context &Ctx;
   VkMemoryRequirements MemReq;
+  VkDeviceSize LastReqSize;
   VkDeviceSize AlignedSize;
   std::array<VkDescriptorSet, BuffCount> DescSets;
   std::array<VkBuffer, BuffCount> Buffs;
   std::array<uint32_t, BuffCount> Offs;
   VkDeviceMemory Mem;
   Utility::Slice<std::byte> Data;
+  size_t BuffIdx;
 };
+
+[[nodiscard]] constexpr Context &UboBuff::getContext() const noexcept {
+  return Ctx;
+}
 
 } // namespace Mvk::Engine
 #endif

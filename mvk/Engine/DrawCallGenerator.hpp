@@ -6,6 +6,7 @@
 #include "Engine/Tex.hpp"
 #include "Engine/UboBuff.hpp"
 #include "Engine/VtxBuff.hpp"
+#include "glm/gtc/constants.hpp"
 
 namespace Mvk::Engine {
 
@@ -36,6 +37,7 @@ public:
                                PVM const &Pvm, TexData TexInfo) noexcept;
 
   void updatePvm(PVM const &Pvm, DrawCmd &Cmd) noexcept;
+  void nextBuffers() noexcept;
 
 private:
   StagingBuff Staging;

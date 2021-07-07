@@ -6,8 +6,8 @@
 namespace Mvk::Engine {
 
 IdxBuff::IdxBuff(Context &Ctx, VkDeviceSize Size) noexcept
-    : State(AllocState::Deallocated), Ctx(Ctx), MemReq(), AlignedSize(0),
-      Buffs(), Offs(), Mem(VK_NULL_HANDLE) {
+    : State(AllocState::Deallocated), Ctx(Ctx), MemReq(), LastReqSize(0),
+      AlignedSize(0), Buffs(), Offs(), Mem(VK_NULL_HANDLE), BuffIdx(0) {
   allocate(Size);
 }
 
@@ -18,6 +18,8 @@ IdxBuff::~IdxBuff() noexcept {
 
 void IdxBuff::allocate(VkDeviceSize Size) noexcept {
   MVK_VERIFY(State == AllocState::Deallocated);
+
+  LastReqSize = Size;
 
   auto CrtInfo = VkBufferCreateInfo();
   CrtInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -32,8 +34,6 @@ void IdxBuff::allocate(VkDeviceSize Size) noexcept {
     auto Result = vkCreateBuffer(Device, &CrtInfo, nullptr, &IdxBuff);
     MVK_VERIFY(Result == VK_SUCCESS);
   }
-
-  auto const BuffIdx = Ctx.getCurrentBuffIdx();
 
   vkGetBufferMemoryRequirements(Device, Buffs[BuffIdx], &MemReq);
   AlignedSize = Detail::alignedSize(MemReq.size, MemReq.alignment);
@@ -82,17 +82,15 @@ void IdxBuff::moveToGarbage() noexcept {
 
 [[nodiscard]] IdxBuff::StageResult
 IdxBuff::stage(StagingBuff::MapResult From) noexcept {
-  auto const BuffIdx = Ctx.getCurrentBuffIdx();
   auto const SrcSize = From.Size;
 
-  if (auto ReqSize = Offs[BuffIdx] + SrcSize; ReqSize > AlignedSize) {
+  if (auto ReqSize = Offs[BuffIdx] + SrcSize; ReqSize > LastReqSize) {
     moveToGarbage();
     allocate(2 * ReqSize);
     Offs[BuffIdx] = 0;
   }
 
   auto const IdxOff = std::exchange(Offs[BuffIdx], Offs[BuffIdx] + SrcSize);
-
   auto const IdxBuff = Buffs[BuffIdx];
 
   auto CopyRegion = VkBufferCopy();
@@ -105,6 +103,11 @@ IdxBuff::stage(StagingBuff::MapResult From) noexcept {
   vkCmdCopyBuffer(CmdBuff, From.Buff, IdxBuff, 1, &CopyRegion);
 
   return {IdxBuff, IdxOff};
+}
+
+void IdxBuff::nextBuffer() noexcept {
+  BuffIdx = (BuffIdx + 1) % BuffCount;
+  Offs[BuffIdx] = 0;
 }
 
 } // namespace Mvk::Engine

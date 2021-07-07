@@ -7,8 +7,9 @@
 namespace Mvk::Engine {
 
 UboBuff::UboBuff(Context &Ctx, VkDeviceSize Size) noexcept
-    : State(AllocState::Deallocated), Ctx(Ctx), MemReq(), AlignedSize(0),
-      DescSets(), Buffs(), Offs(), Mem(VK_NULL_HANDLE) {
+    : State(AllocState::Deallocated), Ctx(Ctx), MemReq(), LastReqSize(0),
+      AlignedSize(0), DescSets(), Buffs(), Offs(), Mem(VK_NULL_HANDLE),
+      BuffIdx(0) {
   allocate(Size);
   write();
 }
@@ -20,6 +21,8 @@ UboBuff::~UboBuff() noexcept {
 
 void UboBuff::allocate(VkDeviceSize Size) noexcept {
   MVK_VERIFY(State == AllocState::Deallocated);
+
+  LastReqSize = Size;
 
   auto BuffCrtInfo = VkBufferCreateInfo();
   BuffCrtInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -33,8 +36,6 @@ void UboBuff::allocate(VkDeviceSize Size) noexcept {
     auto Result = vkCreateBuffer(Device, &BuffCrtInfo, nullptr, &Buff);
     MVK_VERIFY(Result == VK_SUCCESS);
   }
-
-  auto const BuffIdx = Ctx.getCurrentBuffIdx();
 
   vkGetBufferMemoryRequirements(Device, Buffs[BuffIdx], &MemReq);
   AlignedSize = Detail::alignedSize(MemReq.size, MemReq.alignment);
@@ -139,13 +140,12 @@ void UboBuff::moveToGarbage() noexcept {
 
 [[nodiscard]] UboBuff::MapResult
 UboBuff::map(Utility::Slice<std::byte const> Src) noexcept {
-  auto const BuffIdx = Ctx.getCurrentBuffIdx();
   auto const SrcSize = std::size(Src);
 
   Offs[BuffIdx] = Detail::alignedSize(Offs[BuffIdx],
                                       static_cast<uint32_t>(MemReq.alignment));
 
-  if (auto ReqSize = Offs[BuffIdx] + SrcSize; ReqSize > AlignedSize) {
+  if (auto ReqSize = Offs[BuffIdx] + SrcSize; ReqSize > LastReqSize) {
     moveToGarbage();
     allocate(2 * ReqSize);
     write();
@@ -158,6 +158,11 @@ UboBuff::map(Utility::Slice<std::byte const> Src) noexcept {
   std::copy(std::begin(Src), std::end(Src), std::begin(To));
 
   return {DescSets[BuffIdx], BuffOff};
+}
+
+void UboBuff::nextBuffer() noexcept {
+  BuffIdx = (BuffIdx + 1) % BuffCount;
+  Offs[BuffIdx] = 0;
 }
 
 } // namespace Mvk::Engine

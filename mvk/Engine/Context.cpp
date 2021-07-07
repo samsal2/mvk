@@ -1050,6 +1050,7 @@ void Context::recreateAfterFramebufferChange() noexcept {
   dstrPipelines();
   initPipelines();
 
+  dstrSync();
   ImgInFlightFences.clear();
   initSync();
 
