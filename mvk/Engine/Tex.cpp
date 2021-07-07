@@ -4,7 +4,7 @@
 
 namespace Mvk::Engine {
 
-Tex::Tex(Context &Ctx, StagingBuff::MapResult From, uint32_t Width,
+Tex::Tex(Context &Ctx, StagingMgr::MapResult From, uint32_t Width,
          uint32_t Height) noexcept
     : State(AllocState::Deallocated), Ctx(Ctx), Width(Width), Height(Height),
       Img(VK_NULL_HANDLE), ImgView(VK_NULL_HANDLE), Mem(VK_NULL_HANDLE),
@@ -18,7 +18,7 @@ Tex::~Tex() noexcept {
     deallocate();
 }
 
-void Tex::allocate(StagingBuff::MapResult From) noexcept {
+void Tex::allocate(StagingMgr::MapResult From) noexcept {
   MVK_VERIFY(State == AllocState::Deallocated);
 
   MipLvl = Detail::calcMipLvl(Width, Height);
@@ -289,7 +289,7 @@ void Tex::generateMip() noexcept {
                        nullptr, 1, &ImgMemBarrier);
 }
 
-void Tex::stage(StagingBuff::MapResult From) noexcept {
+void Tex::stage(StagingMgr::MapResult From) noexcept {
 
   MVK_VERIFY(From.Size == size());
 

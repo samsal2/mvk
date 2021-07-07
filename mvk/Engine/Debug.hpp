@@ -1,5 +1,4 @@
-#ifndef MVK_ENGINE_DEBUG_HPP_INCLUDED
-#define MVK_ENGINE_DEBUG_HPP_INCLUDED
+#pragma once
 
 #include <iostream>
 #include <vulkan/vulkan.h>
@@ -31,4 +30,3 @@ static constexpr auto DbgCrtInfo = [] {
 
 } // namespace Mvk::Engine
 
-#endif

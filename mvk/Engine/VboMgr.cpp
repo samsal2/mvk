@@ -1,22 +1,22 @@
-#include "Engine/StagingBuff.hpp"
-
 #include "Detail/Misc.hpp"
-#include "Utility/Types.hpp"
+#include "Engine/VboMgr.hpp"
+#include "Utility/Verify.hpp"
+#include "vulkan/vulkan_core.h"
 
 namespace Mvk::Engine {
 
-StagingBuff::StagingBuff(Context &Ctx, VkDeviceSize Size) noexcept
+VboMgr::VboMgr(Context &Ctx, VkDeviceSize Size) noexcept
     : State(AllocState::Deallocated), Ctx(Ctx), MemReq(), LastReqSize(0),
-      AlignedSize(0), Buffs(), Offs(), Mem(VK_NULL_HANDLE), Data(), BuffIdx(0) {
+      AlignedSize(0), Buffs(), Offs(), Mem(VK_NULL_HANDLE), BuffIdx(0) {
   allocate(Size);
 }
 
-StagingBuff::~StagingBuff() noexcept {
+VboMgr::~VboMgr() noexcept {
   if (State == AllocState::Allocated)
     deallocate();
 }
 
-void StagingBuff::allocate(VkDeviceSize Size) noexcept {
+void VboMgr::allocate(VkDeviceSize Size) noexcept {
   MVK_VERIFY(State == AllocState::Deallocated);
 
   LastReqSize = Size;
@@ -24,13 +24,14 @@ void StagingBuff::allocate(VkDeviceSize Size) noexcept {
   auto CrtInfo = VkBufferCreateInfo();
   CrtInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   CrtInfo.size = Size;
-  CrtInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  CrtInfo.usage =
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
   CrtInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   auto const Device = Ctx.getDevice();
 
-  for (auto &Buff : Buffs) {
-    auto Result = vkCreateBuffer(Device, &CrtInfo, nullptr, &Buff);
+  for (auto &VboMgr : Buffs) {
+    auto Result = vkCreateBuffer(Device, &CrtInfo, nullptr, &VboMgr);
     MVK_VERIFY(Result == VK_SUCCESS);
   }
 
@@ -38,13 +39,11 @@ void StagingBuff::allocate(VkDeviceSize Size) noexcept {
   AlignedSize = Detail::alignedSize(MemReq.size, MemReq.alignment);
 
   auto const PhysicalDevice = Ctx.getPhysicalDevice();
-
   auto const MemTypeIdx =
       Detail::queryMemType(PhysicalDevice, MemReq.memoryTypeBits,
-                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                           VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  MVK_VERIFY(MemTypeIdx.value());
+  MVK_VERIFY(MemTypeIdx.has_value());
 
   auto MemAllocInfo = VkMemoryAllocateInfo();
   MemAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -54,21 +53,13 @@ void StagingBuff::allocate(VkDeviceSize Size) noexcept {
   auto Result = vkAllocateMemory(Device, &MemAllocInfo, nullptr, &Mem);
   MVK_VERIFY(Result == VK_SUCCESS);
 
-  void *VoidData = nullptr;
-
-  Result = vkMapMemory(Device, Mem, 0, VK_WHOLE_SIZE, 0, &VoidData);
-  MVK_VERIFY(Result == VK_SUCCESS);
-
-  Data = Utility::Slice(Utility::forceCastToByte(VoidData),
-                        MemAllocInfo.allocationSize);
-
-  for (size_t i = 0; i < Context::DynamicBuffCount; ++i)
+  for (size_t i = 0; i < BuffCount; ++i)
     vkBindBufferMemory(Device, Buffs[i], Mem, i * AlignedSize);
 
   State = AllocState::Allocated;
 }
 
-void StagingBuff::deallocate() noexcept {
+void VboMgr::deallocate() noexcept {
   MVK_VERIFY(State == AllocState::Allocated);
 
   auto const Device = Ctx.getDevice();
@@ -81,36 +72,39 @@ void StagingBuff::deallocate() noexcept {
   State = AllocState::Deallocated;
 }
 
-void StagingBuff::moveToGarbage() noexcept {
+void VboMgr::moveToGarbage() noexcept {
   State = AllocState::Deallocated;
 
   Ctx.addBuffersToGarbage(Buffs);
   Ctx.addMemoryToGarbage(Mem);
 }
 
-// Tries simple map, if it fails it reallocates * 2 de memory required
-[[nodiscard]] StagingBuff::MapResult
-StagingBuff::map(Utility::Slice<std::byte const> Src) noexcept {
-  auto const SrcSize = std::size(Src);
-
-  Offs[BuffIdx] = Detail::alignedSize(Offs[BuffIdx], MemReq.alignment);
+[[nodiscard]] VboMgr::StageResult
+VboMgr::stage(StagingMgr::MapResult From) noexcept {
+  auto const SrcSize = From.Size;
 
   if (auto ReqSize = Offs[BuffIdx] + SrcSize; ReqSize > LastReqSize) {
-    // TODO(samuel): moveToGarbage should be part of Ctx
     moveToGarbage();
-    allocate(ReqSize * 2);
+    allocate(2 * ReqSize);
     Offs[BuffIdx] = 0;
   }
 
-  auto const StagingOff = std::exchange(Offs[BuffIdx], Offs[BuffIdx] + SrcSize);
-  auto const MemOff = BuffIdx * AlignedSize + StagingOff;
-  auto const To = Data.subSlice(MemOff, SrcSize);
-  std::copy(std::begin(Src), std::end(Src), std::begin(To));
+  auto const VtxOff = std::exchange(Offs[BuffIdx], Offs[BuffIdx] + SrcSize);
 
-  return {Buffs[BuffIdx], StagingOff, SrcSize};
+  auto const VboMgr = Buffs[BuffIdx];
+
+  auto CopyRegion = VkBufferCopy();
+  CopyRegion.srcOffset = From.Off;
+  CopyRegion.dstOffset = VtxOff;
+  CopyRegion.size = SrcSize;
+
+  auto const CmdBuff = Ctx.getCurrentCmdBuff();
+  vkCmdCopyBuffer(CmdBuff, From.Buff, VboMgr, 1, &CopyRegion);
+
+  return {VboMgr, VtxOff};
 }
 
-void StagingBuff::nextBuffer() noexcept {
+void VboMgr::nextBuffer() noexcept {
   BuffIdx = (BuffIdx + 1) % BuffCount;
   Offs[BuffIdx] = 0;
 }

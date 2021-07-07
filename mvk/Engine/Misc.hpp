@@ -1,5 +1,4 @@
-#ifndef MVK_ENGINE_MISC_HPP_INCLUDED
-#define MVK_ENGINE_MISC_HPP_INCLUDED
+#pragma once
 
 #include "Engine/Context.hpp"
 
@@ -11,4 +10,3 @@ void testRun(Renderer &Render) noexcept;
 
 } // namespace Mvk::Engine
 
-#endif

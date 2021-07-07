@@ -1,5 +1,4 @@
-#ifndef MVK_UTILITY_BADGE_HPP_INCLUDED
-#define MVK_UTILITY_BADGE_HPP_INCLUDED
+#pragma once
 
 namespace Mvk::Utility {
 
@@ -10,4 +9,3 @@ template <typename Owner> class Badge {
 
 } // namespace Mvk::Utility
 
-#endif

@@ -1,11 +1,10 @@
 
-#ifndef MVK_ENGINE_UBOBUFF_HPP_INCLUDED
-#define MVK_ENGINE_UBOBUFF_HPP_INCLUDED
+#pragma once
 
 #include "Engine/Context.hpp"
 
 namespace Mvk::Engine {
-class UboBuff {
+class UboMgr {
 public:
   struct MapResult {
     VkDescriptorSet DescriptorSet;
@@ -14,17 +13,17 @@ public:
 
   static constexpr size_t BuffCount = 2;
 
-  UboBuff(Context &Ctx, VkDeviceSize Size) noexcept;
+  UboMgr(Context &Ctx, VkDeviceSize Size) noexcept;
 
-  UboBuff(UboBuff const &Other) noexcept = delete;
-  UboBuff(UboBuff &&Other) noexcept = delete;
+  UboMgr(UboMgr const &Other) noexcept = delete;
+  UboMgr(UboMgr &&Other) noexcept = delete;
 
-  UboBuff &operator=(UboBuff const &Other) noexcept = delete;
-  UboBuff &operator=(UboBuff &&Other) noexcept = delete;
+  UboMgr &operator=(UboMgr const &Other) noexcept = delete;
+  UboMgr &operator=(UboMgr &&Other) noexcept = delete;
 
-  ~UboBuff() noexcept;
+  ~UboMgr() noexcept;
 
-  [[nodiscard]] MapResult map(Utility::Slice<std::byte const> src) noexcept;
+  [[nodiscard]] MapResult map(std::span<std::byte const> src) noexcept;
 
   [[nodiscard]] constexpr Context &getContext() const noexcept;
   void nextBuffer() noexcept;
@@ -49,13 +48,12 @@ private:
   std::array<VkBuffer, BuffCount> Buffs;
   std::array<uint32_t, BuffCount> Offs;
   VkDeviceMemory Mem;
-  Utility::Slice<std::byte> Data;
+  std::byte *Data;
   size_t BuffIdx;
 };
 
-[[nodiscard]] constexpr Context &UboBuff::getContext() const noexcept {
+[[nodiscard]] constexpr Context &UboMgr::getContext() const noexcept {
   return Ctx;
 }
 
 } // namespace Mvk::Engine
-#endif

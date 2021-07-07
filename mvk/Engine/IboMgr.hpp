@@ -1,13 +1,12 @@
 
-#ifndef MVK_ENGINE_IDXBUFF_HPP_INCLUDED
-#define MVK_ENGINE_IDXBUFF_HPP_INCLUDED
+#pragma once
 
 #include "Engine/Context.hpp"
-#include "Engine/StagingBuff.hpp"
+#include "Engine/StagingMgr.hpp"
 
 namespace Mvk::Engine {
 
-class IdxBuff {
+class IboMgr {
 public:
   static constexpr size_t BuffCount = 2;
 
@@ -16,17 +15,17 @@ public:
     VkDeviceSize Off;
   };
 
-  IdxBuff(Context &Ctx, VkDeviceSize Size) noexcept;
+  IboMgr(Context &Ctx, VkDeviceSize Size) noexcept;
 
-  IdxBuff(IdxBuff const &Other) noexcept = delete;
-  IdxBuff(IdxBuff &&Other) noexcept = delete;
+  IboMgr(IboMgr const &Other) noexcept = delete;
+  IboMgr(IboMgr &&Other) noexcept = delete;
 
-  IdxBuff &operator=(IdxBuff const &Other) noexcept = delete;
-  IdxBuff &operator=(IdxBuff &&Other) noexcept = delete;
+  IboMgr &operator=(IboMgr const &Other) noexcept = delete;
+  IboMgr &operator=(IboMgr &&Other) noexcept = delete;
 
-  ~IdxBuff() noexcept;
+  ~IboMgr() noexcept;
 
-  [[nodiscard]] StageResult stage(StagingBuff::MapResult From) noexcept;
+  [[nodiscard]] StageResult stage(StagingMgr::MapResult From) noexcept;
   [[nodiscard]] constexpr Context &getContext() const noexcept;
   void nextBuffer() noexcept;
 
@@ -49,10 +48,8 @@ private:
   size_t BuffIdx;
 };
 
-[[nodiscard]] constexpr Context &IdxBuff::getContext() const noexcept {
+[[nodiscard]] constexpr Context &IboMgr::getContext() const noexcept {
   return Ctx;
 }
 
 } // namespace Mvk::Engine
-
-#endif

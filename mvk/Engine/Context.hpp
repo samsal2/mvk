@@ -1,14 +1,13 @@
-#ifndef MVK_ENGINE_CONTEXT_HPP_INCLUDED
-#define MVK_ENGINE_CONTEXT_HPP_INCLUDED
+#pragma once
 
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
 #include "ShaderTypes.hpp"
 #include "Utility/Badge.hpp"
-#include "Utility/Slice.hpp"
 
 #include <array>
 #include <optional>
+#include <span>
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -114,10 +113,10 @@ struct Context {
 
   void addMemoryToGarbage(VkDeviceMemory Mem) noexcept;
 
-  void addDescriptorSetsToGarbage(
-      Utility::Slice<VkDescriptorSet const> Sets) noexcept;
+  void
+  addDescriptorSetsToGarbage(std::span<VkDescriptorSet const> Sets) noexcept;
 
-  void addBuffersToGarbage(Utility::Slice<VkBuffer const> Buffs) noexcept;
+  void addBuffersToGarbage(std::span<VkBuffer const> Buffs) noexcept;
 
   void recreateAfterFramebufferChange() noexcept;
 
@@ -355,4 +354,3 @@ constexpr void Context::setCurrentImgInFlightFence(VkFence Fence) noexcept {
 
 } // namespace Mvk::Engine
 
-#endif

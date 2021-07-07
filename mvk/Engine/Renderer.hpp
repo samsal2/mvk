@@ -1,5 +1,4 @@
-#ifndef MVK_ENGINE_RENDERER_HPP_INCLUDED
-#define MVK_ENGINE_RENDERER_HPP_INCLUDED
+#pragma once
 
 #include "Engine/Context.hpp"
 #include "Engine/DrawCallGenerator.hpp"
@@ -40,4 +39,3 @@ private:
 
 } // namespace Mvk::Engine
 
-#endif

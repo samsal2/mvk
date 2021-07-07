@@ -1,5 +1,4 @@
-#ifndef MVK_DETAIL_READERS_HPP_INCLUDED
-#define MVK_DETAIL_READERS_HPP_INCLUDED
+#pragma once
 
 #include "ShaderTypes.hpp"
 
@@ -16,4 +15,3 @@ readFile(std::filesystem::path const &Path) noexcept;
 
 } // namespace Mvk::Detail
 
-#endif

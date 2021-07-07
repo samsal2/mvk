@@ -78,12 +78,4 @@ querySwapchainImg(VkDevice const Device, VkSwapchainKHR const Swapchain,
                                1);
 }
 
-[[nodiscard]] Utility::Slice<std::byte> map_memory(VkDevice Device,
-                                                   VkDeviceMemory Mem,
-                                                   VkDeviceSize Size,
-                                                   VkDeviceSize Off) noexcept {
-  void *Data = nullptr;
-  vkMapMemory(Device, Mem, Off, Size, 0, &Data);
-  return {Utility::forceCastToByte(Data), Size};
-}
 } // namespace Mvk::Detail

@@ -1,12 +1,10 @@
-#include "Engine/UboBuff.hpp"
-
 #include "Detail/Misc.hpp"
-#include "Utility/Types.hpp"
+#include "Engine/UboMgr.hpp"
 #include "Utility/Verify.hpp"
 
 namespace Mvk::Engine {
 
-UboBuff::UboBuff(Context &Ctx, VkDeviceSize Size) noexcept
+UboMgr::UboMgr(Context &Ctx, VkDeviceSize Size) noexcept
     : State(AllocState::Deallocated), Ctx(Ctx), MemReq(), LastReqSize(0),
       AlignedSize(0), DescSets(), Buffs(), Offs(), Mem(VK_NULL_HANDLE),
       BuffIdx(0) {
@@ -14,12 +12,12 @@ UboBuff::UboBuff(Context &Ctx, VkDeviceSize Size) noexcept
   write();
 }
 
-UboBuff::~UboBuff() noexcept {
+UboMgr::~UboMgr() noexcept {
   if (State == AllocState::Allocated)
     deallocate();
 }
 
-void UboBuff::allocate(VkDeviceSize Size) noexcept {
+void UboMgr::allocate(VkDeviceSize Size) noexcept {
   MVK_VERIFY(State == AllocState::Deallocated);
 
   LastReqSize = Size;
@@ -59,8 +57,7 @@ void UboBuff::allocate(VkDeviceSize Size) noexcept {
 
   void *VoidData = nullptr;
   Result = vkMapMemory(Device, Mem, 0, VK_WHOLE_SIZE, 0, &VoidData);
-  Data = Utility::Slice(Utility::forceCastToByte(VoidData),
-                        MemAllocInfo.allocationSize);
+  Data = reinterpret_cast<std::byte *>(VoidData);
   MVK_VERIFY(Result == VK_SUCCESS);
 
   auto const UboDescSetLayout = Ctx.getUboDescSetLayout();
@@ -83,14 +80,13 @@ void UboBuff::allocate(VkDeviceSize Size) noexcept {
                                     std::data(DescSets));
   MVK_VERIFY(Result == VK_SUCCESS);
 
-  for (size_t i = 0; i < std::size(Buffs); ++i) {
+  for (size_t i = 0; i < std::size(Buffs); ++i)
     vkBindBufferMemory(Device, Buffs[i], Mem, i * AlignedSize);
-  }
 
   State = AllocState::Allocated;
 }
 
-void UboBuff::write() noexcept {
+void UboMgr::write() noexcept {
   for (size_t i = 0; i < std::size(Buffs); ++i) {
     auto DescriptorBuffInfo = VkDescriptorBufferInfo();
     DescriptorBuffInfo.buffer = Buffs[i];
@@ -114,7 +110,7 @@ void UboBuff::write() noexcept {
   }
 }
 
-void UboBuff::deallocate() noexcept {
+void UboMgr::deallocate() noexcept {
   MVK_VERIFY(State == AllocState::Allocated);
 
   auto const Device = Ctx.getDevice();
@@ -130,7 +126,7 @@ void UboBuff::deallocate() noexcept {
   State = AllocState::Deallocated;
 }
 
-void UboBuff::moveToGarbage() noexcept {
+void UboMgr::moveToGarbage() noexcept {
   State = AllocState::Deallocated;
 
   Ctx.addDescriptorSetsToGarbage(DescSets);
@@ -138,8 +134,8 @@ void UboBuff::moveToGarbage() noexcept {
   Ctx.addMemoryToGarbage(Mem);
 }
 
-[[nodiscard]] UboBuff::MapResult
-UboBuff::map(Utility::Slice<std::byte const> Src) noexcept {
+[[nodiscard]] UboMgr::MapResult
+UboMgr::map(std::span<std::byte const> Src) noexcept {
   auto const SrcSize = std::size(Src);
 
   Offs[BuffIdx] = Detail::alignedSize(Offs[BuffIdx],
@@ -154,13 +150,13 @@ UboBuff::map(Utility::Slice<std::byte const> Src) noexcept {
 
   auto const BuffOff = std::exchange(Offs[BuffIdx], Offs[BuffIdx] + SrcSize);
   auto const MemOff = BuffIdx * AlignedSize + BuffOff;
-  auto const To = Data.subSlice(MemOff, SrcSize);
-  std::copy(std::begin(Src), std::end(Src), std::begin(To));
+  auto const To = Data + MemOff;
+  std::memcpy(To, std::data(Src), SrcSize);
 
   return {DescSets[BuffIdx], BuffOff};
 }
 
-void UboBuff::nextBuffer() noexcept {
+void UboMgr::nextBuffer() noexcept {
   BuffIdx = (BuffIdx + 1) % BuffCount;
   Offs[BuffIdx] = 0;
 }

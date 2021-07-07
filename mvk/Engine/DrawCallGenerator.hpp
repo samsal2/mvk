@@ -1,19 +1,18 @@
-#ifndef MVK_ENGINE_DRAWCALLGENERATOR_HPP_INCLUDED
-#define MVK_ENGINE_DRAWCALLGENERATOR_HPP_INCLUDED
+#pragma once
 
-#include "Engine/IdxBuff.hpp"
-#include "Engine/StagingBuff.hpp"
+#include "Engine/IboMgr.hpp"
+#include "Engine/StagingMgr.hpp"
 #include "Engine/Tex.hpp"
-#include "Engine/UboBuff.hpp"
-#include "Engine/VtxBuff.hpp"
+#include "Engine/UboMgr.hpp"
+#include "Engine/VboMgr.hpp"
 #include "glm/gtc/constants.hpp"
 
 namespace Mvk::Engine {
 
 struct DrawCmd {
-  VtxBuff::StageResult Vtx;
-  IdxBuff::StageResult Idx;
-  UboBuff::MapResult Ubo;
+  VboMgr::StageResult Vtx;
+  IboMgr::StageResult Idx;
+  UboMgr::MapResult Ubo;
   Tex::StageResult Tex;
   uint32_t IdxCount;
 };
@@ -21,7 +20,7 @@ struct DrawCmd {
 struct TexData {
   uint32_t Width;
   uint32_t Height;
-  Utility::Slice<unsigned char const> Data;
+  std::span<unsigned char const> Data;
 };
 
 class DrawCallGenerator {
@@ -32,23 +31,21 @@ public:
       : Staging(Ctx, DefaultBuffSize), VBO(Ctx, DefaultBuffSize),
         IBO(Ctx, DefaultBuffSize), UBO(Ctx, DefaultBuffSize) {}
 
-  [[nodiscard]] DrawCmd create(Utility::Slice<vertex const> Vertices,
-                               Utility::Slice<uint32_t const> Indices,
+  [[nodiscard]] DrawCmd create(std::span<vertex const> Vertices,
+                               std::span<uint32_t const> Indices,
                                PVM const &Pvm, TexData TexInfo) noexcept;
 
   void updatePvm(PVM const &Pvm, DrawCmd &Cmd) noexcept;
   void nextBuffers() noexcept;
 
 private:
-  StagingBuff Staging;
-  VtxBuff VBO;
-  IdxBuff IBO;
-  UboBuff UBO;
+  StagingMgr Staging;
+  VboMgr VBO;
+  IboMgr IBO;
+  UboMgr UBO;
 
   // TODO(samuel): Temporary
   std::vector<std::unique_ptr<Tex>> Texs;
 };
 
 } // namespace Mvk::Engine
-
-#endif

@@ -1000,14 +1000,13 @@ void Context::addMemoryToGarbage(VkDeviceMemory Mem) noexcept {
 }
 
 void Context::addDescriptorSetsToGarbage(
-    Utility::Slice<VkDescriptorSet const> Sets) noexcept {
+    std::span<VkDescriptorSet const> Sets) noexcept {
   auto &CurrentGarbageDescriptorSets = GarbageDescriptorSets[CurrentGarbageIdx];
   CurrentGarbageDescriptorSets.insert(std::begin(CurrentGarbageDescriptorSets),
                                       std::begin(Sets), std::end(Sets));
 }
 
-void Context::addBuffersToGarbage(
-    Utility::Slice<VkBuffer const> Buffs) noexcept {
+void Context::addBuffersToGarbage(std::span<VkBuffer const> Buffs) noexcept {
   auto &CurrentGarbageBuffs = GarbageBuffs[CurrentGarbageIdx];
   CurrentGarbageBuffs.insert(std::begin(CurrentGarbageBuffs), std::begin(Buffs),
                              std::end(Buffs));

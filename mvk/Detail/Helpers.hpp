@@ -1,19 +1,17 @@
-#ifndef MVK_DETAIL_HELPERS_HPP_INCLUDED
-#define MVK_DETAIL_HELPERS_HPP_INCLUDED
-
-#include "Utility/Slice.hpp"
+#pragma once
 
 #include <optional>
+#include <span>
 #include <vulkan/vulkan.h>
 
 namespace Mvk::Detail {
 [[nodiscard]] bool
 isExtPresent(char const *ExtName,
-             Utility::Slice<VkExtensionProperties const> Exts) noexcept;
+             std::span<VkExtensionProperties const> Exts) noexcept;
 
 [[nodiscard]] bool
 chkExtSup(VkPhysicalDevice PhysicalDevice,
-          Utility::Slice<char const *const> DeviceExtensions) noexcept;
+          std::span<char const *const> DeviceExtensions) noexcept;
 
 [[nodiscard]] bool
 chkGfxReq(VkQueueFamilyProperties const &QueueFamily) noexcept;
@@ -41,4 +39,3 @@ chooseExtent(VkSurfaceCapabilitiesKHR const &Capabilities,
 
 } // namespace Mvk::Detail
 
-#endif

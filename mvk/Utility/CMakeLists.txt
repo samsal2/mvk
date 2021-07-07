@@ -1,1 +1,1 @@
-target_sources(${PROJECT_NAME} PRIVATE concepts.hpp slice.hpp types.hpp verify.hpp)
+target_sources(${PROJECT_NAME} PRIVATE verify.hpp)

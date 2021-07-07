@@ -1,11 +1,10 @@
-#ifndef MVK_DETAIL_MISC_HPP_INCLUDED
-#define MVK_DETAIL_MISC_HPP_INCLUDED
+#pragma once
 
-#include "Utility/Slice.hpp"
 #include "Utility/Verify.hpp"
 
 #include <filesystem>
 #include <optional>
+#include <span>
 #include <vulkan/vulkan.h>
 
 namespace Mvk::Detail {
@@ -22,9 +21,8 @@ querySwapchainImg(VkDevice Device, VkSwapchainKHR Swapchain,
 
 [[nodiscard]] uint32_t calcMipLvl(uint32_t Height, uint32_t Width) noexcept;
 
-[[nodiscard]] constexpr auto
-alignedSize(Utility::Integral auto Size,
-            Utility::Integral auto Alignment) noexcept {
+[[nodiscard]] constexpr auto alignedSize(size_t Size,
+                                         size_t Alignment) noexcept {
   if (auto Mod = Size % Alignment; Mod != 0) {
     return Size + Alignment - Mod;
   }
@@ -34,4 +32,3 @@ alignedSize(Utility::Integral auto Size,
 
 } // namespace Mvk::Detail
 
-#endif

@@ -1,13 +1,12 @@
-#ifndef MVK_ENGINE_VTXBUFF_HPP_INCLUDED
-#define MVK_ENGINE_VTXBUFF_HPP_INCLUDED
+#pragma once
 
 #include "Engine/Context.hpp"
-#include "Engine/StagingBuff.hpp"
+#include "Engine/StagingMgr.hpp"
 #include "Utility/Verify.hpp"
 
 namespace Mvk::Engine {
 // TODO(samuel): RAII
-class VtxBuff {
+class VboMgr {
 public:
   static constexpr size_t BuffCount = 2;
 
@@ -16,17 +15,17 @@ public:
     VkDeviceSize Off;
   };
 
-  VtxBuff(Context &Ctx, VkDeviceSize Size) noexcept;
+  VboMgr(Context &Ctx, VkDeviceSize Size) noexcept;
 
-  VtxBuff(VtxBuff const &Other) noexcept = delete;
-  VtxBuff(VtxBuff &&Other) noexcept = delete;
+  VboMgr(VboMgr const &Other) noexcept = delete;
+  VboMgr(VboMgr &&Other) noexcept = delete;
 
-  VtxBuff &operator=(VtxBuff const &Other) noexcept = delete;
-  VtxBuff &operator=(VtxBuff &&Other) noexcept = delete;
+  VboMgr &operator=(VboMgr const &Other) noexcept = delete;
+  VboMgr &operator=(VboMgr &&Other) noexcept = delete;
 
-  ~VtxBuff() noexcept;
+  ~VboMgr() noexcept;
 
-  [[nodiscard]] StageResult stage(StagingBuff::MapResult From) noexcept;
+  [[nodiscard]] StageResult stage(StagingMgr::MapResult From) noexcept;
 
   [[nodiscard]] constexpr Context &getContext() const noexcept;
   void nextBuffer() noexcept;
@@ -49,10 +48,8 @@ private:
   size_t BuffIdx;
 };
 
-[[nodiscard]] constexpr Context &VtxBuff::getContext() const noexcept {
+[[nodiscard]] constexpr Context &VboMgr::getContext() const noexcept {
   return Ctx;
 }
 
 } // namespace Mvk::Engine
-
-#endif

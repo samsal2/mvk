@@ -7,7 +7,7 @@
 namespace Mvk::Detail {
 [[nodiscard]] bool
 isExtPresent(char const *ExtName,
-             Utility::Slice<VkExtensionProperties const> const Exts) noexcept {
+             std::span<VkExtensionProperties const> const Exts) noexcept {
   for (auto const &Ext : Exts) {
     if (std::strcmp(Ext.extensionName, ExtName) == 0) {
       return true;
@@ -19,7 +19,7 @@ isExtPresent(char const *ExtName,
 
 [[nodiscard]] bool
 chkExtSup(VkPhysicalDevice PhysicalDevice,
-          Utility::Slice<char const *const> DeviceExtensions) noexcept {
+          std::span<char const *const> DeviceExtensions) noexcept {
   auto ExtCount = uint32_t(0);
   vkEnumerateDeviceExtensionProperties(PhysicalDevice, nullptr, &ExtCount,
                                        nullptr);

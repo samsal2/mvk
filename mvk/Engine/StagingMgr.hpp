@@ -1,10 +1,9 @@
-#ifndef MVK_ENGINE_STAGINGBUFF_HPP_INCLUDED
-#define MVK_ENGINE_STAGINGBUFF_HPP_INCLUDED
+#pragma once
 
 #include "Engine/Context.hpp"
 
 namespace Mvk::Engine {
-class StagingBuff {
+class StagingMgr {
 public:
   struct MapResult {
     VkBuffer Buff;
@@ -14,17 +13,17 @@ public:
 
   static constexpr size_t BuffCount = 2;
 
-  StagingBuff(Context &Ctx, VkDeviceSize Size) noexcept;
+  StagingMgr(Context &Ctx, VkDeviceSize Size) noexcept;
 
-  StagingBuff(StagingBuff const &Other) noexcept = delete;
-  StagingBuff(StagingBuff &&Other) noexcept = delete;
+  StagingMgr(StagingMgr const &Other) noexcept = delete;
+  StagingMgr(StagingMgr &&Other) noexcept = delete;
 
-  StagingBuff &operator=(StagingBuff const &Other) noexcept = delete;
-  StagingBuff &operator=(StagingBuff &&Other) noexcept = delete;
+  StagingMgr &operator=(StagingMgr const &Other) noexcept = delete;
+  StagingMgr &operator=(StagingMgr &&Other) noexcept = delete;
 
-  ~StagingBuff() noexcept;
+  ~StagingMgr() noexcept;
 
-  [[nodiscard]] MapResult map(Utility::Slice<std::byte const> Src) noexcept;
+  [[nodiscard]] MapResult map(std::span<std::byte const> Src) noexcept;
 
   [[nodiscard]] constexpr Context &getContext() const noexcept;
   void nextBuffer() noexcept;
@@ -44,13 +43,12 @@ private:
   std::array<VkBuffer, BuffCount> Buffs;
   std::array<VkDeviceSize, BuffCount> Offs;
   VkDeviceMemory Mem;
-  Utility::Slice<std::byte> Data;
+  std::byte *Data;
   size_t BuffIdx;
 };
 
-[[nodiscard]] constexpr Context &StagingBuff::getContext() const noexcept {
+[[nodiscard]] constexpr Context &StagingMgr::getContext() const noexcept {
   return Ctx;
 }
 
 } // namespace Mvk::Engine
-#endif

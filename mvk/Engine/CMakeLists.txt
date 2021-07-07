@@ -6,15 +6,15 @@ target_sources(${PROJECT_NAME} PRIVATE
                                        Context.cpp
                                        DrawCallGenerator.hpp
                                        DrawCallGenerator.cpp
-                                       IdxBuff.hpp
-                                       IdxBuff.cpp
+                                       IboMgr.hpp
+                                       IboMgr.cpp
                                        Renderer.hpp
                                        Renderer.cpp
-                                       StagingBuff.hpp
-                                       StagingBuff.cpp
+                                       StagingMgr.hpp
+                                       StagingMgr.cpp
                                        Tex.hpp
                                        Tex.cpp
-                                       UboBuff.hpp
-                                       UboBuff.cpp
-                                       VtxBuff.hpp
-                                       VtxBuff.cpp)
+                                       UboMgr.hpp
+                                       UboMgr.cpp
+                                       VboMgr.hpp
+                                       VboMgr.cpp)

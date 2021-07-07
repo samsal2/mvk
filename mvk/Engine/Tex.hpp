@@ -1,12 +1,12 @@
-#ifndef MVK_ENGINE_TEX_HPP_INCLUDED
-#define MVK_ENGINE_TEX_HPP_INCLUDED
+#pragma once
 
 #include "Engine/Context.hpp"
-#include "Engine/StagingBuff.hpp"
+#include "Engine/StagingMgr.hpp"
 
 namespace Mvk::Engine {
 
-// FIXME(samuel): This is not going anywhere
+// FIXME(samuel): This is all wrong
+
 class Tex {
 public:
   struct StageResult {
@@ -20,7 +20,7 @@ public:
   static void generateMip(VkCommandBuffer CmdBuff, VkImage Img, uint32_t Width,
                           uint32_t Height, uint32_t MipLvl) noexcept;
 
-  Tex(Context &Ctx, StagingBuff::MapResult Data, uint32_t Width,
+  Tex(Context &Ctx, StagingMgr::MapResult Data, uint32_t Width,
       uint32_t Height) noexcept;
 
   Tex(Tex const &Other) noexcept = delete;
@@ -38,10 +38,10 @@ public:
 private:
   enum class AllocState : int { Allocated, Deallocated };
 
-  void allocate(StagingBuff::MapResult From) noexcept;
+  void allocate(StagingMgr::MapResult From) noexcept;
   void deallocate() noexcept;
   void write() noexcept;
-  void stage(StagingBuff::MapResult From) noexcept;
+  void stage(StagingMgr::MapResult From) noexcept;
   void generateMip() noexcept;
 
   AllocState State;
@@ -56,5 +56,3 @@ private:
 };
 
 } // namespace Mvk::Engine
-
-#endif

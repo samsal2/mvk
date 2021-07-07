@@ -1,5 +1,4 @@
-#ifndef MVK_UTILITY_VERIFY_HPP
-#define MVK_UTILITY_VERIFY_HPP
+#pragma once
 
 #include <cassert>
 
@@ -14,4 +13,3 @@ namespace Mvk::Utility {
 
 } // namespace Mvk::Utility
 
-#endif

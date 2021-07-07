@@ -1,22 +1,21 @@
-#include "Engine/IdxBuff.hpp"
-
 #include "Detail/Misc.hpp"
+#include "Engine/IboMgr.hpp"
 #include "Utility/Verify.hpp"
 
 namespace Mvk::Engine {
 
-IdxBuff::IdxBuff(Context &Ctx, VkDeviceSize Size) noexcept
+IboMgr::IboMgr(Context &Ctx, VkDeviceSize Size) noexcept
     : State(AllocState::Deallocated), Ctx(Ctx), MemReq(), LastReqSize(0),
       AlignedSize(0), Buffs(), Offs(), Mem(VK_NULL_HANDLE), BuffIdx(0) {
   allocate(Size);
 }
 
-IdxBuff::~IdxBuff() noexcept {
+IboMgr::~IboMgr() noexcept {
   if (State == AllocState::Allocated)
     deallocate();
 }
 
-void IdxBuff::allocate(VkDeviceSize Size) noexcept {
+void IboMgr::allocate(VkDeviceSize Size) noexcept {
   MVK_VERIFY(State == AllocState::Deallocated);
 
   LastReqSize = Size;
@@ -30,8 +29,8 @@ void IdxBuff::allocate(VkDeviceSize Size) noexcept {
 
   auto const Device = Ctx.getDevice();
 
-  for (auto &IdxBuff : Buffs) {
-    auto Result = vkCreateBuffer(Device, &CrtInfo, nullptr, &IdxBuff);
+  for (auto &IboMgr : Buffs) {
+    auto Result = vkCreateBuffer(Device, &CrtInfo, nullptr, &IboMgr);
     MVK_VERIFY(Result == VK_SUCCESS);
   }
 
@@ -60,7 +59,7 @@ void IdxBuff::allocate(VkDeviceSize Size) noexcept {
   State = AllocState::Allocated;
 }
 
-void IdxBuff::deallocate() noexcept {
+void IboMgr::deallocate() noexcept {
   MVK_VERIFY(State == AllocState::Allocated);
 
   auto const Device = Ctx.getDevice();
@@ -73,15 +72,15 @@ void IdxBuff::deallocate() noexcept {
   State = AllocState::Allocated;
 }
 
-void IdxBuff::moveToGarbage() noexcept {
+void IboMgr::moveToGarbage() noexcept {
   State = AllocState::Deallocated;
 
   Ctx.addBuffersToGarbage(Buffs);
   Ctx.addMemoryToGarbage(Mem);
 }
 
-[[nodiscard]] IdxBuff::StageResult
-IdxBuff::stage(StagingBuff::MapResult From) noexcept {
+[[nodiscard]] IboMgr::StageResult
+IboMgr::stage(StagingMgr::MapResult From) noexcept {
   auto const SrcSize = From.Size;
 
   if (auto ReqSize = Offs[BuffIdx] + SrcSize; ReqSize > LastReqSize) {
@@ -91,7 +90,7 @@ IdxBuff::stage(StagingBuff::MapResult From) noexcept {
   }
 
   auto const IdxOff = std::exchange(Offs[BuffIdx], Offs[BuffIdx] + SrcSize);
-  auto const IdxBuff = Buffs[BuffIdx];
+  auto const IboMgr = Buffs[BuffIdx];
 
   auto CopyRegion = VkBufferCopy();
   CopyRegion.srcOffset = From.Off;
@@ -100,12 +99,12 @@ IdxBuff::stage(StagingBuff::MapResult From) noexcept {
 
   auto const CmdBuff = Ctx.getCurrentCmdBuff();
 
-  vkCmdCopyBuffer(CmdBuff, From.Buff, IdxBuff, 1, &CopyRegion);
+  vkCmdCopyBuffer(CmdBuff, From.Buff, IboMgr, 1, &CopyRegion);
 
-  return {IdxBuff, IdxOff};
+  return {IboMgr, IdxOff};
 }
 
-void IdxBuff::nextBuffer() noexcept {
+void IboMgr::nextBuffer() noexcept {
   BuffIdx = (BuffIdx + 1) % BuffCount;
   Offs[BuffIdx] = 0;
 }
