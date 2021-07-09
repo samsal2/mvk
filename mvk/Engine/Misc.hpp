@@ -1,12 +1,9 @@
 #pragma once
 
-#include "Engine/Context.hpp"
+#include "ShaderTypes.hpp"
 
-namespace Mvk::Engine {
+namespace Mvk::Engine
+{
+  [[nodiscard]] PVM createTestPvm() noexcept;
 
-[[nodiscard]] PVM createTestPvm(Renderer const &Render) noexcept;
-
-void testRun(Renderer &Render) noexcept;
-
-} // namespace Mvk::Engine
-
+}  // namespace Mvk::Engine

@@ -1,20 +1,25 @@
 
-target_sources(${PROJECT_NAME} PRIVATE 
-                                       Misc.hpp
+target_sources(${PROJECT_NAME} PRIVATE Allocator.hpp
+                                       AllocatorBlock.cpp
+                                       AllocatorBlock.hpp
+                                       AllocatorContext.cpp
+                                       AllocatorContext.hpp
+                                       Debug.hpp
+                                       IdxBuffObj.cpp
+                                       IdxBuffObj.hpp
+                                       ImgObj.cpp
+                                       ImgObj.hpp
                                        Misc.cpp
-                                       Context.hpp 
-                                       Context.cpp
-                                       DrawCallGenerator.hpp
-                                       DrawCallGenerator.cpp
-                                       IboMgr.hpp
-                                       IboMgr.cpp
-                                       Renderer.hpp
-                                       Renderer.cpp
-                                       StagingMgr.hpp
-                                       StagingMgr.cpp
-                                       Tex.hpp
-                                       Tex.cpp
-                                       UboMgr.hpp
-                                       UboMgr.cpp
-                                       VboMgr.hpp
-                                       VboMgr.cpp)
+                                       Misc.hpp
+                                       Model.cpp
+                                       Model.hpp
+                                       StagingBuffObj.cpp
+                                       StagingBuffObj.hpp
+                                       UniformBuffObj.cpp
+                                       UniformBuffObj.hpp
+                                       VtxBuffObj.cpp
+                                       VtxBuffObj.hpp
+                                       VulkanContext.cpp
+                                       VulkanContext.hpp
+                                       VulkanRenderer.cpp
+                                       VulkanRenderer.hpp)
